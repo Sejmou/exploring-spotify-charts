@@ -1,6 +1,6 @@
 name: sejmouvisds
 channels:
-  - defaults
+  - conda-forge
 dependencies:
   - python=3.10
   - tqdm
@@ -8,3 +8,5 @@ dependencies:
   - pandas
   - ipykernel
   - matplotlib
+  - python-dotenv
+  - spotipy
