@@ -6,6 +6,14 @@ import requests
 import os
 from pathlib import Path
 
+ROOT_DIR = Path(
+    os.path.abspath(os.path.join(os.path.abspath(__file__), os.path.pardir))
+).parent.parent
+
+DATA_DIR = os.path.join(
+    ROOT_DIR, "data"
+)
+
 
 class DownloadProgressBar(tqdm):
     def update_to(self, b=1, bsize=1, tsize=None):
@@ -44,24 +52,22 @@ def download_and_extract_zip(url, target_path):
                     out.write(content)
 
 
-def fetch_data(url, target_path, unzip=False):
-    if unzip:
-        download_and_extract_zip(url, target_path)
-    else:
-        download(url, target_path)
+def download_data(url: str, name: str, unzip=False):
+  """
+  Downloads a file from a URL to the DATA_DIR under the given name
+  """
+  target_path = os.path.join(DATA_DIR, name)
+  if unzip:
+      download_and_extract_zip(url, target_path)
+  else:
+      download(url, target_path)
 
-
-ROOT_DIR = Path(
-    os.path.abspath(os.path.join(os.path.abspath(__file__), os.path.pardir))
-).parent.parent
-DATA_DIR = os.path.join(
-    ROOT_DIR, "data"
-)  # import this from files using the data path to always get the correct path to the data no matter where script is executed from
 
 
 if __name__ == "__main__":
-    # testing stuff
-    fetch_data("https://www.tagtraum.com/genres/msd_tagtraum_cd2c.cls.zip", "test.zip")
-    fetch_data(
-        "https://www.tagtraum.com/genres/msd_tagtraum_cd2c.cls.zip", "test.cls", True
-    )
+    # example usage
+    # download_data("https://www.tagtraum.com/genres/msd_tagtraum_cd2c.cls.zip", "test.zip")
+    # download_data(
+    #     "https://www.tagtraum.com/genres/msd_tagtraum_cd2c.cls.zip", "test.cls", True
+    # )
+    pass
