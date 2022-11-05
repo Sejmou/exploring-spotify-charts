@@ -8,5 +8,6 @@ dependencies:
   - pandas
   - ipykernel
   - matplotlib
+  - seaborn
   - python-dotenv
   - spotipy

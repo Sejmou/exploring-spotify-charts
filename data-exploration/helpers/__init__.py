@@ -6,13 +6,9 @@ import requests
 import os
 from pathlib import Path
 
-ROOT_DIR = Path(
-    os.path.abspath(os.path.join(os.path.abspath(__file__), os.path.pardir))
-).parent.parent
+ROOT_DIR = Path(os.path.abspath(__file__)).parent.parent.parent
 
-DATA_DIR = os.path.join(
-    ROOT_DIR, "data"
-)
+DATA_DIR = os.path.join(ROOT_DIR, "data")
 
 
 class DownloadProgressBar(tqdm):
@@ -53,38 +49,62 @@ def download_and_extract_zip(url, target_path):
 
 
 def download_data(url: str, name: str, unzip=False):
-  """
-  Downloads a file from a URL to the DATA_DIR under the given name
-  """
-  target_path = os.path.join(DATA_DIR, name)
-  if unzip:
-      download_and_extract_zip(url, target_path)
-      print("Downloaded and extracted data")
-  else:
-      download(url, target_path)
-      print("Downloaded data")
-
-def get_data_path(name: str, download_url: str=None, unzip=False):
-  """
-  Returns the local absolute path for a file in DATA_DIR.
-  
-  If a download_url is provided and the data is not available locally, it will be fetched from this URL and stored inside the DATA_DIR under the given name. The path will be returned afterwards.
-
-  In the case that the remote file is a zip file that should be extracted, set unzip to True. 
-  """
-  target_path = os.path.join(DATA_DIR, name)
-  if not os.path.exists(target_path):
-    print(f"'{name}' not available locally")
-    if not download_url:
-      raise RuntimeError(f"No download_url provided, cannot fetch data! Add '{name}' to '{DATA_DIR}' by hand!")
+    """
+    Downloads a file from a URL to the DATA_DIR under the given name
+    """
+    target_path = os.path.join(DATA_DIR, name)
+    if unzip:
+        download_and_extract_zip(url, target_path)
+        print("Downloaded and extracted data")
     else:
-      print(f"Fetching data from '{download_url}'{'(will unzip afterwards)' if unzip else ''}")
-      download_data(download_url, name, unzip=unzip)
-  return target_path
+        download(url, target_path)
+        print("Downloaded data")
+
+
+def get_data_path(name: str, download_url: str = None, unzip=False):
+    """
+    Returns the local absolute path for a file in DATA_DIR.
+
+    If a download_url is provided and the data is not available locally, it will be fetched from this URL and stored inside the DATA_DIR under the given name. The path will be returned afterwards.
+
+    In the case that the remote file is a zip file that should be extracted, set unzip to True.
+    """
+    target_path = os.path.join(DATA_DIR, name)
+    if not os.path.exists(target_path):
+        print(f"'{name}' not available locally")
+        if not download_url:
+            raise RuntimeError(
+                f"No download_url provided, cannot fetch data! Add '{name}' to '{DATA_DIR}' by hand!"
+            )
+        else:
+            print(
+                f"Fetching data from '{download_url}'{'(will unzip afterwards)' if unzip else ''}"
+            )
+            download_data(download_url, name, unzip=unzip)
+    return target_path
+
+
+def create_data_out_path(name: str):
+    """
+    used by data fetching scripts to create a path inside DATA_DIR to write a newly created file to
+    """
+    out_path = Path(os.path.join(DATA_DIR, name))
+    print("Data output path:", out_path)
+    return out_path
 
 
 if __name__ == "__main__":
     # example usage
-    print(get_data_path("test.zip", "https://www.tagtraum.com/genres/msd_tagtraum_cd2c.cls.zip"))
-    print(get_data_path("test.cls", "https://www.tagtraum.com/genres/msd_tagtraum_cd2c.cls.zip", unzip=True))
+    print(
+        get_data_path(
+            "test.zip", "https://www.tagtraum.com/genres/msd_tagtraum_cd2c.cls.zip"
+        )
+    )
+    print(
+        get_data_path(
+            "test.cls",
+            "https://www.tagtraum.com/genres/msd_tagtraum_cd2c.cls.zip",
+            unzip=True,
+        )
+    )
     pass
