@@ -3,7 +3,11 @@ import pandas as pd
 from selenium import webdriver
 from helpers import get_data_path, create_data_out_path
 
-missing_data = pd.read_csv(get_data_path("missing_chart_data.csv"))
+# this script was run with two files:
+# missing_data = pd.read_csv(get_data_path("missing_chart_data.csv"))# data before Dec. 2021
+missing_data = pd.read_csv(
+    get_data_path("missing_chart_data_dec_2021.csv")
+)  # data for Dec. 2021
 missing_data.region
 
 country_iso_codes = pd.read_csv(
