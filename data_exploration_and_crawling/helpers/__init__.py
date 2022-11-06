@@ -102,6 +102,10 @@ def split_dataframe(df, chunk_size=100):
     return chunks
 
 
+def flatten(l):
+    return [item for sublist in l for item in sublist]
+
+
 if __name__ == "__main__":
     # example usage
     print(

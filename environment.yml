@@ -12,3 +12,4 @@ dependencies:
   - python-dotenv
   - spotipy
   - selenium
+  - pandarallel
