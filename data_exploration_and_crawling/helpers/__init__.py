@@ -93,6 +93,15 @@ def create_data_out_path(name: str):
     return out_path
 
 
+# https://stackoverflow.com/a/28882020/13727176
+def split_dataframe(df, chunk_size=100):
+    chunks = list()
+    num_chunks = len(df) // chunk_size + 1
+    for i in range(num_chunks):
+        chunks.append(df[i * chunk_size : (i + 1) * chunk_size])
+    return chunks
+
+
 if __name__ == "__main__":
     # example usage
     print(
