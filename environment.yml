@@ -13,5 +13,6 @@ dependencies:
   - spotipy
   - selenium
   - pandarallel
+  - musicbrainzngs
   - pip:
       - lyricsgenius
