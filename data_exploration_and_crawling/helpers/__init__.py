@@ -99,6 +99,9 @@ def split_dataframe(df, chunk_size=100):
     num_chunks = len(df) // chunk_size + 1
     for i in range(num_chunks):
         chunks.append(df[i * chunk_size : (i + 1) * chunk_size])
+    # sometimes we get an empty dataframe as the last dataframe -> remove it!
+    if len(chunks[-1]) == 0:
+        del chunks[-1]
     return chunks
 
 
