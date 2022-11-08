@@ -14,5 +14,6 @@ dependencies:
   - selenium
   - pandarallel
   - musicbrainzngs
+  - gdown
   - pip:
       - lyricsgenius
