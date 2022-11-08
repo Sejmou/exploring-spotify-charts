@@ -21,10 +21,12 @@ pandarallel.initialize(
     progress_bar=True
 )  # pandarallel should speed up processing a bit, hopefully
 # %%
-track_and_artist_names = pd.read_csv(get_data_path("track_and_artist_names.csv"))
+tracks_and_primary_artist = pd.read_csv(
+    get_data_path("track_and_primary_artist_names.csv")
+)
 
 # %%
-chunks = split_dataframe(track_and_artist_names, chunk_size=100)
+chunks = split_dataframe(tracks_and_primary_artist, chunk_size=100)
 
 genius = Genius(token)
 genius.verbose = False  # Turn off status messages

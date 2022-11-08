@@ -15,7 +15,7 @@ primary_artist_id_to_name = (
     artist_data.loc[artist_data.id.isin(primary_artists)].set_index("id").name
 )
 
-track_and_artist_names = (
+track_and_primary_artist_names = (
     tracks_primary_artist_only.merge(
         primary_artist_id_to_name, left_on="artist_id", right_index=True
     )
@@ -26,6 +26,6 @@ track_and_artist_names = (
     .drop(columns="index")
 )
 # %%
-track_and_artist_names.to_csv(
-    create_data_out_path("track_and_artist_names.csv"), index=False
+track_and_primary_artist_names.to_csv(
+    create_data_out_path("track_and_primary_artist_names.csv"), index=False
 )
