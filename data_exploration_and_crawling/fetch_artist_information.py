@@ -18,7 +18,7 @@ artist_ids.to_csv(create_data_out_path("artists.csv"), index=False)
 chunks = split_dataframe(pd.DataFrame(artist_ids), chunk_size=50)
 chunk_folder_path = create_data_out_path("artist_info_chunks")
 # %%
-def fetch_track_infos(chunk):
+def fetch_artist_infos(chunk):
     chunk_name = f"{chunk.index.min()}-{chunk.index.max()}.csv"
     print("current chunk:", chunk_name)
     out_path = os.path.join(chunk_folder_path, chunk_name)
@@ -35,10 +35,10 @@ def fetch_track_infos(chunk):
         return chunk_data
 
 
-track_infos = [fetch_track_infos(chunk) for chunk in chunks]
+artist_infos = [fetch_artist_infos(chunk) for chunk in chunks]
 print("done fetching data")
 
 # %%
-track_data = pd.concat(track_infos)
+artist_data = pd.concat(artist_infos)
 # %%
-track_data.to_csv(create_data_out_path("artist_data.csv"), index=False)
+artist_data.to_csv(create_data_out_path("artist_data.csv"), index=False)
