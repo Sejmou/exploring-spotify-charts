@@ -1,10 +1,13 @@
+# this script scrapes the Spotify Charts website, downloading CSVs for all the incomplete chart data mentioned in missing_chart_data.csv
 # %%
 import pandas as pd
 from selenium import webdriver
 from helpers import get_data_path, create_data_out_path
 import os
 
-missing_data = pd.read_csv(get_data_path("missing_chart_data.csv"))# data before Dec. 2021
+missing_data = pd.read_csv(
+    get_data_path("missing_chart_data.csv")
+)  # data before Dec. 2021
 
 country_iso_codes = pd.read_csv(
     get_data_path(
