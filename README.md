@@ -12,8 +12,10 @@ conda activate sejmouvisds
 pip install -e .
 ```
 
+The first two commands create and activate a conda environment with Python 3.10 and install the required Python package dependencies. The final command installs my custom helper Python package. Afterwards it should be possible to run all the data exploration scripts and notebooks in `data_exploration_and_crawling`.
+
 #### Addtional note regarding Spotify API
-The scripts related to fetching data from Spotify use `spotipy` (a lightweight python library for getting data from the Spotify API) and require some additional configuration. Create an `.env` file with the following content (you will need to create a Spotify Developer account and create a new application there to get the client ID and secret):
+The scripts related to fetching data from Spotify (e.g. `data_exploration_and_crawling/track_data_combined/data_crawling/fetch_audio_features.py`) use `spotipy`,a lightweight python library for getting data from the Spotify API, and require some additional configuration. Create an `.env` file with the following content (you will need to create a Spotify Developer account and create a new application there to get the client ID and secret):
 ```
 SPOTIPY_CLIENT_ID='our-client-id-would-be-here'
 SPOTIPY_CLIENT_SECRET='our-client-secret-would-be-here'
