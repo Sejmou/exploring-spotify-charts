@@ -9,8 +9,9 @@ If you have conda installed this is easy: just run
 ```bash
 conda create -f environment.yml
 conda activate sejmouvisds
+pip install -e .
 ```
 
-This will create and activate a conda environment with Python 3.10 and all the required package dependencies for the stuff I did with Python. So, afterwards it should be possible to also run all the data exploration scripts and notebooks in `data-exploration`.
+This will create and activate a conda environment with Python 3.10 and all the required Python package dependencies + my custom helper Python package. So, afterwards it should be possible to run all the data exploration scripts and notebooks in `data_exploration_and_crawling`.
 
 More info might follow later...
