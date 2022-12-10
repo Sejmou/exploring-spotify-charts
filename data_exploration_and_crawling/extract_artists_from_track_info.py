@@ -54,6 +54,6 @@ artist_chunks = [get_artist_data(chunk) for chunk in chunks]
 print("done")
 
 # %%
-audio_analysis = pd.concat(artist_chunks)
+artists = pd.concat(artist_chunks)
 # %%
-audio_analysis.to_csv(create_data_out_path("track_artists.csv"))
+artists.to_csv(create_data_out_path("track_artists.csv"))
