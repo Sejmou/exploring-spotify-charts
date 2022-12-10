@@ -7,6 +7,7 @@ import sys
 import time
 from pandarallel import pandarallel
 from helpers import get_data_path, create_data_out_path, split_dataframe
+import logging
 
 load_dotenv()  # loads GENIUS_ACCESS_TOKEN environment variable from .env, if it is present
 token = os.getenv("GENIUS_ACCESS_TOKEN")
@@ -20,7 +21,7 @@ if token is None:
 pandarallel.initialize(
     progress_bar=True
 )  # pandarallel should speed up processing a bit, hopefully
-# %%
+
 tracks_and_primary_artist = pd.read_csv(
     get_data_path("track_and_primary_artist_names.csv")
 )
@@ -37,6 +38,9 @@ def get_lyrics(row):
     while True:
         try:
             # this try...except is a workaround for request timeout issues; we just retry the song search until it works
+            if type(row.title) is not str:
+                print("title is", row.title, "skipping...")
+                break
             result = genius.search_song(row.title, row.artist, get_full_info=True)
             if result is not None:
                 data = result.to_dict()
@@ -44,6 +48,9 @@ def get_lyrics(row):
                 return pd.Series(
                     data
                 ).sort_index()  # not sure if sorting is really necessary, but at least JSON props always have same order than probably?
+            else:
+                print(" No result found for", row.title, "by", row.artist)
+                return pd.Series({"spotify_tid": row.track_id})
             break
         except:
             pass  # not interested in error, just try again lol
@@ -79,9 +86,11 @@ for i, chunk in enumerate(chunks):
         )
     processed_chunks[i] = chunk_data
     print("processed chunk in " + f"{(time.time() - start_time):.2f}" + " seconds")
-
+#%%
 print("combining chunk data")
-genius_data = pd.concat([processed_chunks])
+genius_data = pd.concat(processed_chunks)
 genius_data = genius_data.loc[genius_data.lyrics.notna()]
 print("obtained Genius data for", len(genius_data), "songs")
-genius_data.to_json(create_data_out_path("genius_track_data.json"), orient="index")
+genius_data.to_json(
+    create_data_out_path("genius_track_data_raw.jsonl"), orient="records", lines=True
+)
