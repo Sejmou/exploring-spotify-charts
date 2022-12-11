@@ -12,7 +12,7 @@ sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
 
 #%%
 charts = pd.read_csv(
-    get_data_path("spotify_charts_cleaned.csv"),
+    get_data_path("top50.csv"),
     parse_dates=["date"],
     dtype={"region": "category"},
 )

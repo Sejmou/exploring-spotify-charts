@@ -15,7 +15,7 @@ pandarallel.initialize(progress_bar=True)
 
 #%%
 charts = pd.read_csv(
-    get_data_path("spotify_charts_cleaned.csv"),
+    get_data_path("top50.csv"),
     parse_dates=["date"],
     dtype={"region": "category"},
 )
