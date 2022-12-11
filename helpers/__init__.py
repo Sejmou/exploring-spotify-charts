@@ -109,6 +109,10 @@ def flatten(l):
     return [item for sublist in l for item in sublist]
 
 
+def get_spotify_link(id: str, item_type: str = "track"):
+    return f"https://open.spotify.com/{item_type}/{id}"
+
+
 if __name__ == "__main__":
     # example usage
     print(
