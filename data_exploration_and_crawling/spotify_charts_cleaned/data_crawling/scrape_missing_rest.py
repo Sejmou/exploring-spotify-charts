@@ -75,7 +75,7 @@ def download_csv(row):
     file_name = "-".join(missing_with_iso_code.url.iloc[0].split("/")[-2:]) + ".csv"
     if os.path.exists(os.path.join(download_path, file_name)):
         print(file_name, "already exists, skipping...")
-        pass
+        return
     driver.get(row.url)
     driver.find_element_by_css_selector(
         "button[aria-labelledby='csv_download']"
