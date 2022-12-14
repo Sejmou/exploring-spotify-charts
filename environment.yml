@@ -15,5 +15,6 @@ dependencies:
   - pandarallel
   - musicbrainzngs
   - gdown
+  - plotly
   - pip:
       - lyricsgenius
