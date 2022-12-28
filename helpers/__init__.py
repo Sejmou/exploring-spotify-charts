@@ -5,6 +5,8 @@ from zipfile import ZipFile
 import requests
 import os
 from pathlib import Path
+import pandas as pd
+from ast import literal_eval
 
 ROOT_DIR = Path(os.path.abspath(__file__)).parent.parent
 
@@ -113,18 +115,62 @@ def get_spotify_link(id: str, item_type: str = "track"):
     return f"https://open.spotify.com/{item_type}/{id}"
 
 
+track_data = None
+charts = None
+spotify_country_data = None
+
+
+def get_track_data():
+    global track_data
+    if track_data is None:
+        track_data = pd.read_csv(
+            get_data_path("top50_track_data.csv"),
+            index_col="id",
+            dtype={"album_type": "category"},
+            converters={"genres": literal_eval},
+            parse_dates=["album_release_date"],
+        )
+    return track_data
+
+
+def get_charts():
+    global charts
+    if charts is None:
+        charts = pd.read_csv(
+            get_data_path("top50.csv"),
+            parse_dates=["date"],
+        )
+    return charts
+
+
+def get_country_data():
+    global spotify_country_data
+    if not spotify_country_data is not None:
+        spotify_country_data = pd.read_csv(
+            get_data_path("spotify_region_metadata.csv"),
+            index_col="spotify_region",
+            dtype={
+                "iso_alpha3": "category",
+                "iso_alpha2": "category",
+                "geo_region": "category",
+                "geo_subregion": "category",
+            },
+        )
+    return spotify_country_data
+
+
+def get_countries_charts():
+    charts = get_charts()
+    charts = charts[charts.region != "Global"].rename(columns={"region": "country"})
+    country_data = get_country_data()
+    return pd.merge(charts, country_data, left_on="country", right_index=True)
+
+
+def get_global_charts():
+    charts = get_charts()
+    return charts[charts.region == "Global"].drop(columns="region")
+
+
 if __name__ == "__main__":
-    # example usage
-    print(
-        get_data_path(
-            "test.zip", "https://www.tagtraum.com/genres/msd_tagtraum_cd2c.cls.zip"
-        )
-    )
-    print(
-        get_data_path(
-            "test.cls",
-            "https://www.tagtraum.com/genres/msd_tagtraum_cd2c.cls.zip",
-            unzip=True,
-        )
-    )
-    pass
+    charts = get_countries_charts()
+    print(charts.head())
