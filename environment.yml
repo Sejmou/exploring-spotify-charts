@@ -16,5 +16,6 @@ dependencies:
   - musicbrainzngs
   - gdown
   - plotly
+  - scikit-learn
   - pip:
       - lyricsgenius
