@@ -157,13 +157,17 @@ def get_countries_charts():
     charts = get_charts()
     charts = charts[charts.region != "Global"].rename(columns={"region": "country"})
     country_data = get_country_data()
-    return pd.merge(charts, country_data, left_on="country", right_index=True)
+    return pd.merge(
+        charts, country_data, left_on="country", right_index=True
+    ).reset_index(drop=True)
 
 
 @cache
 def get_global_charts():
     charts = get_charts()
-    return charts[charts.region == "Global"].drop(columns="region")
+    return (
+        charts[charts.region == "Global"].drop(columns="region").reset_index(drop=True)
+    )
 
 
 if __name__ == "__main__":
