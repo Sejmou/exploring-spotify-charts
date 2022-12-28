@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import pandas as pd
 from ast import literal_eval
+from functools import cache
 
 ROOT_DIR = Path(os.path.abspath(__file__)).parent.parent
 
@@ -115,50 +116,43 @@ def get_spotify_link(id: str, item_type: str = "track"):
     return f"https://open.spotify.com/{item_type}/{id}"
 
 
-track_data = None
-charts = None
-spotify_country_data = None
-
-
+@cache
 def get_track_data():
-    global track_data
-    if track_data is None:
-        track_data = pd.read_csv(
-            get_data_path("top50_track_data.csv"),
-            index_col="id",
-            dtype={"album_type": "category"},
-            converters={"genres": literal_eval},
-            parse_dates=["album_release_date"],
-        )
+    track_data = pd.read_csv(
+        get_data_path("top50_track_data.csv"),
+        index_col="id",
+        dtype={"album_type": "category"},
+        converters={"genres": literal_eval},
+        parse_dates=["album_release_date"],
+    )
     return track_data
 
 
+@cache
 def get_charts():
-    global charts
-    if charts is None:
-        charts = pd.read_csv(
-            get_data_path("top50.csv"),
-            parse_dates=["date"],
-        )
+    charts = pd.read_csv(
+        get_data_path("top50.csv"),
+        parse_dates=["date"],
+    )
     return charts
 
 
+@cache
 def get_country_data():
-    global spotify_country_data
-    if not spotify_country_data is not None:
-        spotify_country_data = pd.read_csv(
-            get_data_path("spotify_region_metadata.csv"),
-            index_col="spotify_region",
-            dtype={
-                "iso_alpha3": "category",
-                "iso_alpha2": "category",
-                "geo_region": "category",
-                "geo_subregion": "category",
-            },
-        )
+    spotify_country_data = pd.read_csv(
+        get_data_path("spotify_region_metadata.csv"),
+        index_col="spotify_region",
+        dtype={
+            "iso_alpha3": "category",
+            "iso_alpha2": "category",
+            "geo_region": "category",
+            "geo_subregion": "category",
+        },
+    )
     return spotify_country_data
 
 
+@cache
 def get_countries_charts():
     charts = get_charts()
     charts = charts[charts.region != "Global"].rename(columns={"region": "country"})
@@ -166,6 +160,7 @@ def get_countries_charts():
     return pd.merge(charts, country_data, left_on="country", right_index=True)
 
 
+@cache
 def get_global_charts():
     charts = get_charts()
     return charts[charts.region == "Global"].drop(columns="region")
