@@ -17,5 +17,7 @@ dependencies:
   - gdown
   - plotly
   - scikit-learn
+  # skops.io is a library for persisting trained sklearn models
+  - skops
   - pip:
       - lyricsgenius
