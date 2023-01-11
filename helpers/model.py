@@ -1,26 +1,68 @@
-# helpers for training and evaluating models on data collected for this project
-from sklearn.model_selection import train_test_split
+from functools import cache
+from . import get_track_data, get_countries_charts
+import pandas as pd
 
 
-def train_val_test_split(X, y, random_state=2022):
+@cache
+def get_basic_track_features():
+    tracks = get_track_data()
+    isrc_cols = tracks.columns[tracks.columns.str.contains("isrc")].tolist()
+    album_cols = tracks.columns[tracks.columns.str.contains("album")].tolist()
+    artist_cols = tracks.columns[tracks.columns.str.contains("artist")].tolist()
+    other_irrelevant_cols = ["name", "preview_url", "genres"]
+    irrelevant_cols = isrc_cols + album_cols + artist_cols + other_irrelevant_cols
+
+    track_feats = tracks.drop(columns=irrelevant_cols)
+    track_feats["single_release"] = tracks.album_type == "single"
+    track_feats = track_feats.dropna()
+    return track_feats
+
+
+countries_charts = get_countries_charts()
+track_feats = get_basic_track_features()
+
+
+@cache
+def get_track_feature_region_dataset():
     """
-    Creates a split of input data into train/test/val parts, according to the following strategy:
-    1. randomly pick 80% of original data for "temporary train" split and 20% for (final) test split
-    2. randomly pick 80% of "temporary train" split for training and remaining 20% for validation split
-
-    The splits are stratified as well (i.e., we have same target frequency distributions between train, test, and validation)
-
-    Returns X_train, X_val, X_test and y_train, y_val, y_test
+    Returns a dataframe with the track features for each track that only charted in one region. Oceania is removed because of low number of observations.
     """
-    X_train_and_val, X_test, y_train_and_val, y_test = train_test_split(
-        X, y, random_state=random_state, test_size=0.2, stratify=y
+    charting_tracks_by_region = countries_charts.drop_duplicates(
+        subset=["id", "geo_region"]
+    )[["id", "geo_region"]].rename(columns={"geo_region": "region"})
+    tracks_charting_only_in_one_region = charting_tracks_by_region[
+        ~charting_tracks_by_region.duplicated(keep=False, subset=["id"])
+    ].reset_index(drop=True)
+    region_tracks_features = pd.merge(
+        track_feats, tracks_charting_only_in_one_region, on="id"
+    ).set_index("id")
+    region_track_feats_dataset = region_tracks_features.copy().loc[
+        region_tracks_features.region != "Oceania"
+    ]
+    region_track_feats_dataset.region = (
+        region_track_feats_dataset.region.cat.remove_unused_categories()
     )
-    X_train, X_val, y_train, y_val = train_test_split(
-        X_train_and_val,
-        y_train_and_val,
-        random_state=random_state,
-        test_size=0.2,
-        stratify=y_train_and_val,
-    )
+    return region_track_feats_dataset
 
-    return X_train, X_val, X_test, y_train, y_val, y_test
+
+@cache
+def get_track_feature_subregion_dataset():
+    """
+    Returns a dataframe with the track features for each track that only charted in one subregion.
+    """
+    charting_tracks_by_subregion = countries_charts.drop_duplicates(
+        subset=["id", "geo_subregion"]
+    )[["id", "geo_region", "geo_subregion"]].rename(
+        columns={"geo_region": "region", "geo_subregion": "subregion"}
+    )
+    tracks_charting_only_in_one_subregion = charting_tracks_by_subregion[
+        ~charting_tracks_by_subregion.duplicated(keep=False, subset="id")
+    ].reset_index(drop=True)
+    subregion_tracks_features = pd.merge(
+        track_feats, tracks_charting_only_in_one_subregion, on="id"
+    ).set_index("id")
+    return subregion_tracks_features
+
+
+if __name__ == "__main__":
+    print(get_track_feature_region_dataset())
