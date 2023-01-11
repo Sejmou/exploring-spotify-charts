@@ -48,7 +48,8 @@ def get_track_feature_region_dataset():
 @cache
 def get_track_feature_subregion_dataset():
     """
-    Returns a dataframe with the track features for each track that only charted in one subregion.
+    Returns a dataframe with the track features for each track that only charted in one out of four hand-picked subregion
+     (Western Europe, Northern America, Eastern Asia, or Latin America and the Caribbean).
     """
     charting_tracks_by_subregion = countries_charts.drop_duplicates(
         subset=["id", "geo_subregion"]
@@ -61,7 +62,23 @@ def get_track_feature_subregion_dataset():
     subregion_tracks_features = pd.merge(
         track_feats, tracks_charting_only_in_one_subregion, on="id"
     ).set_index("id")
-    return subregion_tracks_features
+    subregion_selection = subregion_tracks_features.copy().loc[
+        subregion_tracks_features.subregion.isin(
+            [
+                "Northern America",
+                "Latin America and the Caribbean",
+                "Western Europe",
+                "Eastern Asia",
+            ]
+        )
+    ]
+    subregion_selection.subregion = (
+        subregion_selection.subregion.cat.remove_unused_categories()
+    )
+    subregion_selection.region = (
+        subregion_selection.region.cat.remove_unused_categories()
+    )
+    return subregion_selection
 
 
 if __name__ == "__main__":
