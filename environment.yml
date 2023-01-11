@@ -19,5 +19,7 @@ dependencies:
   - scikit-learn
   # skops.io is a library for persisting trained sklearn models
   - skops
+  # imblearn is a library for dealing with imbalanced datasets in sklearn
+  - imbalanced-learn
   - pip:
       - lyricsgenius
