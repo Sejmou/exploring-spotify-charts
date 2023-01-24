@@ -1,0 +1,88 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "sqlite"
+    url      = env("DATABASE_URL")
+}
+
+model Example {
+    id        String   @id @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model Artist {
+    id     String  @id @default(cuid())
+    name   String
+    genres String
+    tracks Track[]
+}
+
+model Track {
+    id                        String             @id @default(cuid())
+    name                      String
+    artists                   Artist[]
+    regionChartEntries        RegionChartEntry[]
+    globalChartEntries        GlobalChartEntry[]
+    explicit                  Boolean
+    previewUrl                String?
+    albumType                 String
+    albumId                   String
+    albumReleaseDate          DateTime
+    albumReleaseDatePrecision String
+    isrc                      String
+    isrcYear                  Int
+    isrcAgency                String
+    isrcTerritory             String
+    danceability              Float
+    energy                    Float
+    key                       Float
+    loudness                  Float
+    mode                      Int
+    speechiness               Float
+    acousticness              Float
+    instrumentalness          Float
+    liveness                  Float
+    valence                   Float
+    tempo                     Float
+    durationMs                Float
+    timeSignature             Int
+}
+
+model Region {
+    name         String             @id @default(cuid())
+    isoAlpha3    String
+    isoAlpha2    String
+    geoRegion    String
+    geoSubregion String
+    chartEntries RegionChartEntry[]
+}
+
+model RegionChartEntry {
+    id         String   @id @default(cuid())
+    region     Region   @relation(fields: [regionName], references: [name])
+    regionName String
+    track      Track    @relation(fields: [trackId], references: [id])
+    trackId    String
+    date       DateTime
+    rank       Int
+    streams    Float
+
+    @@unique([regionName, trackId, date], name: "chartEntryId")
+}
+
+model GlobalChartEntry {
+    id      String   @id @default(cuid())
+    track   Track    @relation(fields: [trackId], references: [id])
+    trackId String
+    date    DateTime
+    rank    Int
+    streams Float
+
+    @@unique([trackId, date], name: "chartEntryId")
+}
