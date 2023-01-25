@@ -3,13 +3,13 @@ import Head from "next/head";
 import { api } from "../utils/api";
 import type { RouterOutputs } from "../utils/api";
 
-type GetAllTracksOutput = RouterOutputs["tracks"]["getAll"];
+type APIResponse = RouterOutputs["tracks"]["getNamesAndArtistNames"];
 
 const Dashboard: NextPage = () => {
-  const tracks = api.tracks.getAll.useQuery();
+  const tracks = api.tracks.getNamesAndArtistNames.useQuery();
 
-  const displayTrackData = (tracks: GetAllTracksOutput) => {
-    return tracks.map((track) => (
+  const displayTrackData = (trackAndArtistNames: APIResponse) => {
+    return trackAndArtistNames.map((track) => (
       <div key={track.id}>
         {`${track.name} - ${track.artists[0] ? track.artists[0].name : ""}`}
       </div>
