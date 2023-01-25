@@ -1,7 +1,8 @@
 import { type NextPage } from "next";
 import Head from "next/head";
-import { api } from "../utils/api";
-import type { RouterOutputs } from "../utils/api";
+import { api } from "../../utils/api";
+import type { RouterOutputs } from "../../utils/api";
+import TrackSelect from "../../components/TrackSelect";
 
 type APIResponse = RouterOutputs["tracks"]["getNamesAndArtistNames"];
 
@@ -33,7 +34,7 @@ const Dashboard: NextPage = () => {
             <span className="text-[#1ED760]">Work in Progress</span>
           </h1>
         </div>
-        {tracks.data ? displayTrackData(tracks.data) : "Loading tracks..."}
+        <TrackSelect resp={tracks.data} />
       </main>
     </>
   );
