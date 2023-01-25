@@ -1,4 +1,3 @@
-import * as React from "react";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
@@ -11,7 +10,6 @@ type Props = {
 };
 
 export default function TrackSelect({ resp }: Props) {
-  console.log(resp);
   const options = !resp ? [] : createOptions(resp);
   const filterOptions = createFilterOptions<(typeof options)[0]>({
     matchFrom: "any",
@@ -20,7 +18,6 @@ export default function TrackSelect({ resp }: Props) {
 
   return (
     <Autocomplete
-      id="track-select-demo"
       disabled={!resp}
       sx={{ width: 600 }}
       options={options}
@@ -50,9 +47,9 @@ export default function TrackSelect({ resp }: Props) {
 function createOptions(resp: TrackDataAPIResponse) {
   console.log("recalculating options...");
   const options = resp.map((track) => {
-    const firstArtist = track.artists[0];
+    const firstArtist = track.artistNames[0];
     const trackLabel = `${track.name} - ${
-      firstArtist ? firstArtist.name : "Unknown Artist"
+      firstArtist ? firstArtist : "Unknown Artist"
     }`;
     return {
       label: trackLabel,

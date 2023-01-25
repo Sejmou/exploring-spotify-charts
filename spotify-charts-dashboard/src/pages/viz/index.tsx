@@ -12,7 +12,9 @@ const Dashboard: NextPage = () => {
   const displayTrackData = (trackAndArtistNames: APIResponse) => {
     return trackAndArtistNames.map((track) => (
       <div key={track.id}>
-        {`${track.name} - ${track.artists[0] ? track.artists[0].name : ""}`}
+        {`${track.name} - ${
+          track.artistNames[0] ? track.artistNames[0].name : ""
+        }`}
       </div>
     ));
   };
