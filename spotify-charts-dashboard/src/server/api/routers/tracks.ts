@@ -12,13 +12,28 @@ export const tracksRouter = createTRPCRouter({
     });
     console.log(totalStreamCountGlobal);
 
-    const trackArtistsAndNames = await ctx.prisma.track.findMany({
-      select: {
-        name: true,
-        id: true,
-        artists: { select: { name: true } },
-      },
-    });
+    const trackArtistsAndNames = await ctx.prisma.track
+      .findMany({
+        select: {
+          name: true,
+          id: true,
+          featuringArtists: {
+            select: {
+              artist: {
+                select: { name: true },
+              },
+            },
+          },
+        },
+      })
+      .then((tracks) =>
+        tracks.map((track) => ({
+          ...track,
+          featuringArtists: track.featuringArtists.map(
+            (entry) => entry.artist.name
+          ),
+        }))
+      );
 
     const trackArtistsAndNamesWithStreams = trackArtistsAndNames.map(
       (track) => {
@@ -42,10 +57,7 @@ export const tracksRouter = createTRPCRouter({
     return trackArtistsAndNamesWithStreams.map((track) => ({
       id: track.id,
       name: track.name,
-      artistNames: track.artists.map((artist) => artist.name),
+      featuringArtists: track.featuringArtists,
     }));
-  }),
-  getAll: publicProcedure.query(({ ctx }) => {
-    return ctx.prisma.track.findMany({ include: { artists: true } });
   }),
 });

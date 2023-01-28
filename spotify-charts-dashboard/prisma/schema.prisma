@@ -37,7 +37,7 @@ model TrackArtistEntry {
 model Track {
     id                        String             @id @default(cuid())
     name                      String
-    artists                   TrackArtistEntry[]
+    featuringArtists          TrackArtistEntry[]
     regionChartEntries        RegionChartEntry[]
     globalChartEntries        GlobalChartEntry[]
     explicit                  Boolean
