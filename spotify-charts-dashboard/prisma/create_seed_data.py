@@ -33,8 +33,6 @@ artists_filtered = artists[artists.name.notna()]
 store_and_print_info(artists_filtered, "artists")
 
 track_artists = pd.read_csv(get_data_path("track_artists.csv"))
-track_artists[~track_artists.artist_id.isin(noname_artist_ids)]
-store_and_print_info(track_artists, "track_artists")
 
 tracks = pd.read_csv(get_data_path("top50_track_data.csv"))
 tracks_filtered = tracks.drop(
@@ -53,6 +51,12 @@ tracks_filtered = tracks_filtered[
 ]
 store_and_print_info(tracks_filtered, "tracks")
 
+# filter out non-existing tracks and artists as we would otherwise get foreign key constraint errors when adding track artists information to the database
+track_artists = track_artists[
+    (track_artists.artist_id.isin(artists_filtered.id))
+    & (track_artists.track_id.isin(tracks_filtered.id))
+]
+store_and_print_info(track_artists, "track_artists")
 
 top50 = (
     pd.read_csv(get_data_path("top50.csv"))

@@ -18,16 +18,26 @@ model Example {
 }
 
 model Artist {
-    id     String  @id @default(cuid())
+    id     String             @id @default(cuid())
     name   String
     genres String
-    tracks Track[]
+    tracks TrackArtistEntry[]
+}
+
+model TrackArtistEntry {
+    artistId String
+    artist   Artist @relation(fields: [artistId], references: [id])
+    rank     Int
+    trackId  String
+    track    Track  @relation(fields: [trackId], references: [id])
+
+    @@id([artistId, trackId], name: "trackFeatureId")
 }
 
 model Track {
     id                        String             @id @default(cuid())
     name                      String
-    artists                   Artist[]
+    artists                   TrackArtistEntry[]
     regionChartEntries        RegionChartEntry[]
     globalChartEntries        GlobalChartEntry[]
     explicit                  Boolean

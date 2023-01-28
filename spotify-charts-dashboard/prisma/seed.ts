@@ -41,12 +41,6 @@ async function main() {
   );
   console.log("inserted", artists.length, "artists");
 
-  const tracksAndArtists = await getSeedData<{
-    trackId: string;
-    artistId: string;
-    rank: number;
-  }>("track_artists.json");
-
   const tracks = await getSeedData<Track>("tracks.json");
   const tracksWithParsedDates = tracks.map((track) => {
     track.albumReleaseDate = new Date(track.albumReleaseDate); // albumReleaseDate is a string in the JSON file, but we want it to be a Date in the database
@@ -54,25 +48,35 @@ async function main() {
   });
   await prisma.$transaction(
     tracksWithParsedDates.map((track) => {
-      const trackArtistIds = tracksAndArtists
-        .filter((ta) => ta.trackId === track.id)
-        .sort((a, b) => a.rank - b.rank)
-        .map((ta) => ({
-          id: ta.artistId,
-        }));
       return prisma.track.upsert({
         where: { id: track.id },
         update: {},
-        create: {
-          ...track,
-          artists: {
-            connect: trackArtistIds, // link with existing artists from DB: https://www.prisma.io/docs/concepts/components/prisma-client/relation-queries#connect-an-existing-record
-          },
-        },
+        create: track,
       });
     })
   );
-  console.log("inserted", tracks.length, "tracks and linked them with artists");
+  console.log("inserted", tracks.length, "tracks");
+
+  const tracksAndArtists = await getSeedData<{
+    trackId: string;
+    artistId: string;
+    rank: number;
+  }>("track_artists.json");
+  await prisma.$transaction(
+    tracksAndArtists.map((feature) => {
+      return prisma.trackArtistEntry.upsert({
+        where: {
+          trackFeatureId: {
+            trackId: feature.trackId,
+            artistId: feature.artistId,
+          },
+        },
+        update: {},
+        create: feature,
+      });
+    })
+  );
+  console.log("inserted", tracksAndArtists.length, "track-artist entries");
 
   const regions = await getSeedData<Region>("regions.json");
   for (const region of regions) {
