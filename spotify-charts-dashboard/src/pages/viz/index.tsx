@@ -59,7 +59,7 @@ const Dashboard: NextPage = () => {
             />
             <TrackSelect
               filterParams={filterParams}
-              onChange={(newTrackId) => {
+              onAdd={(newTrackId) => {
                 if (newTrackId) {
                   setFilterParams({
                     ...filterParams,

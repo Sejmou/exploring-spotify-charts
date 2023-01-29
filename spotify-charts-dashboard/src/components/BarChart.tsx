@@ -38,7 +38,7 @@ const BarChart = ({ data }: Props) => {
     return (
       <rect
         key={d.name}
-        x={x(d.name as string)!}
+        x={x(d.name as string)}
         y={y(yValue(d))}
         width={x.bandwidth()}
         height={graphHeight - y(yValue(d))}
