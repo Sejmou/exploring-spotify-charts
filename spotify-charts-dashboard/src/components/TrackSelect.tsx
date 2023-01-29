@@ -11,9 +11,10 @@ type TrackDataAPIResponse = RouterOutputs["tracks"]["getNamesAndArtists"];
 
 type Props = {
   filterParams: VizFilterParams;
+  onChange: (trackId: string | null) => void;
 };
 
-export default function TrackSelect({ filterParams }: Props) {
+export default function TrackSelect({ filterParams, onChange }: Props) {
   const tracks = api.tracks.getNamesAndArtists.useQuery(filterParams, {
     enabled: !!filterParams.region,
   });
@@ -72,9 +73,8 @@ export default function TrackSelect({ filterParams }: Props) {
           }}
         />
       )}
-      onChange={(_, newValue) => {
-        console.log(newValue);
-      }}
+      onChange={(_, newValue) => onChange(newValue?.id ?? null)}
+      isOptionEqualToValue={(option, value) => option.id === value.id}
     />
   );
 }

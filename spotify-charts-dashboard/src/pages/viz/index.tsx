@@ -22,6 +22,8 @@ const Dashboard: NextPage = () => {
     trackIds: undefined,
   });
 
+  console.log("current filters:", filterParams);
+
   return (
     <>
       <Head>
@@ -46,14 +48,26 @@ const Dashboard: NextPage = () => {
             />
             <RegionSelect
               value={filterParams.region ? filterParams.region : null}
-              onChange={(newValue) => {
-                setFilterParams({
+              onChange={(newRegion) => {
+                setFilterParams((prev) => ({
                   ...filterParams,
-                  region: newValue ?? undefined,
-                });
+                  region: newRegion ?? undefined,
+                  trackIds:
+                    newRegion !== prev.region ? undefined : prev.trackIds,
+                }));
               }}
             />
-            <TrackSelect filterParams={filterParams} />
+            <TrackSelect
+              filterParams={filterParams}
+              onChange={(newTrackId) => {
+                if (newTrackId) {
+                  setFilterParams({
+                    ...filterParams,
+                    trackIds: [...(filterParams.trackIds || []), newTrackId],
+                  });
+                }
+              }}
+            />
           </div>
 
           <BarChart data={[]} xColumn={""} yColumn={""} />
