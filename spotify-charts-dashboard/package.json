@@ -10,19 +10,24 @@
     "start": "next start"
   },
   "dependencies": {
+    "@date-io/dayjs": "^2.16.0",
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",
     "@mui/material": "^5.11.6",
+    "@mui/x-date-pickers": "^5.0.16",
     "@prisma/client": "^4.8.0",
     "@tanstack/react-query": "^4.20.0",
     "@trpc/client": "^10.8.1",
     "@trpc/next": "^10.8.1",
     "@trpc/react-query": "^10.8.1",
     "@trpc/server": "^10.8.1",
+    "add": "^2.0.6",
+    "dayjs": "^1.11.7",
     "next": "13.1.2",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "superjson": "1.9.1",
+    "yarn": "^1.22.19",
     "zod": "^3.20.2"
   },
   "prisma": {
