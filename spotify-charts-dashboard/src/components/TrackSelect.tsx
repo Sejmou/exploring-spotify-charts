@@ -4,7 +4,7 @@ import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
 import type { RouterOutputs } from "../utils/api";
 import { ListItemText } from "@mui/material";
 
-type TrackDataAPIResponse = RouterOutputs["tracks"]["getNamesAndArtistNames"];
+type TrackDataAPIResponse = RouterOutputs["tracks"]["getNamesAndArtists"];
 
 type Props = {
   resp?: TrackDataAPIResponse;
@@ -24,7 +24,7 @@ export default function TrackSelect({ resp }: Props) {
       filterOptions={filterOptions}
       autoHighlight
       getOptionLabel={(option) =>
-        option.name + " " + option.featuringArtists.join(" ")
+        option.name + " - " + option.featuringArtists.join(", ")
       }
       renderOption={(props, option) => (
         // important: key should be LAST here, i.e. NOT before {...props}: https://stackoverflow.com/a/69396153/13727176
@@ -45,6 +45,9 @@ export default function TrackSelect({ resp }: Props) {
           }}
         />
       )}
+      onChange={(_, newValue) => {
+        console.log(newValue);
+      }}
     />
   );
 }

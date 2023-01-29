@@ -2,11 +2,11 @@ import { createTRPCRouter, publicProcedure } from "../trpc";
 import { z } from "zod";
 
 export const tracksRouter = createTRPCRouter({
-  getNamesAndArtistNames: publicProcedure
+  getNamesAndArtists: publicProcedure
     .input(
       z.object({
-        chartedOnOrAfter: z.date().optional(),
-        chartedOnOrBefore: z.date().optional(),
+        startInclusive: z.date().optional(),
+        endInclusive: z.date().optional(),
       })
     )
     .query(async ({ ctx, input }) => {
@@ -14,8 +14,8 @@ export const tracksRouter = createTRPCRouter({
         by: ["trackId"],
         where: {
           date: {
-            gte: input.chartedOnOrAfter,
-            lte: input.chartedOnOrBefore,
+            gte: input.startInclusive,
+            lte: input.endInclusive,
           },
         },
         _sum: { streams: true },
@@ -25,8 +25,8 @@ export const tracksRouter = createTRPCRouter({
           by: ["trackId"],
           where: {
             date: {
-              gte: input.chartedOnOrAfter,
-              lte: input.chartedOnOrBefore,
+              gte: input.startInclusive,
+              lte: input.endInclusive,
             },
           },
           _sum: { streams: true },
@@ -55,16 +55,16 @@ export const tracksRouter = createTRPCRouter({
               regionChartEntries: {
                 some: {
                   date: {
-                    gte: input.chartedOnOrAfter,
-                    lte: input.chartedOnOrBefore,
+                    gte: input.startInclusive,
+                    lte: input.endInclusive,
                   },
                 },
               },
               globalChartEntries: {
                 some: {
                   date: {
-                    gte: input.chartedOnOrAfter,
-                    lte: input.chartedOnOrBefore,
+                    gte: input.startInclusive,
+                    lte: input.endInclusive,
                   },
                 },
               },
