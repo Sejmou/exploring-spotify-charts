@@ -1,21 +1,25 @@
 import { type NextPage } from "next";
 import Head from "next/head";
-import { api } from "../../utils/api";
 import TrackSelect from "../../components/TrackSelect";
 import { useState } from "react";
-import type { RouterInputs } from "../../utils/api";
 import dayjs from "dayjs";
 import DateRangeFilter from "../../components/DateRangeFilter";
 import BarChart from "../../components/BarChart";
 import RegionSelect from "../../components/RegionSelect";
 
+export type VizFilterParams = {
+  startInclusive?: Date;
+  endInclusive?: Date;
+  region?: string;
+  trackIds?: string[];
+};
+
 const Dashboard: NextPage = () => {
-  const [filterParams, setFilterParams] = useState<
-    RouterInputs["tracks"]["getNamesAndArtists"]
-  >({
+  const [filterParams, setFilterParams] = useState<VizFilterParams>({
     startInclusive: dayjs("2021-01-01").toDate(),
     endInclusive: dayjs("2021-12-31").toDate(),
     region: undefined,
+    trackIds: undefined,
   });
 
   return (

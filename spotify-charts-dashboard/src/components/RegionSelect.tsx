@@ -1,7 +1,8 @@
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
-import { api, RouterOutputs } from "../utils/api";
+import type { RouterOutputs } from "../utils/api";
+import { api } from "../utils/api";
 
 type RegionsAPIResponse = RouterOutputs["regions"]["getAll"];
 

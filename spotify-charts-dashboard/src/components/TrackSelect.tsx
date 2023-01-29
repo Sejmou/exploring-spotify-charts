@@ -1,14 +1,16 @@
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
-import type { RouterInputs, RouterOutputs } from "../utils/api";
+import type { RouterOutputs } from "../utils/api";
 import { api } from "../utils/api";
 import { ListItemText } from "@mui/material";
+import type { VizFilterParams } from "../pages/viz";
+import { useEffect, useRef, useState } from "react";
 
 type TrackDataAPIResponse = RouterOutputs["tracks"]["getNamesAndArtists"];
 
 type Props = {
-  filterParams: RouterInputs["tracks"]["getNamesAndArtists"];
+  filterParams: VizFilterParams;
 };
 
 export default function TrackSelect({ filterParams }: Props) {
@@ -35,11 +37,17 @@ export default function TrackSelect({ filterParams }: Props) {
     inputText = "Error loading tracks";
   }
 
+  const [key, setKey] = useState(0); // need this hack to force re-render when filterParams.region changes: https://stackoverflow.com/a/59845474/13727176
+  useEffect(() => {
+    setKey((key) => key + 1);
+  }, [filterParams.region]);
+
   return (
     <Autocomplete
+      key={key}
       disabled={!filterParams.region}
       sx={{ width: 600 }}
-      options={tracks.data ? tracks.data : []}
+      options={filterParams.region && tracks.data ? tracks.data : []}
       filterOptions={autocompleteFilterOptions}
       autoHighlight
       getOptionLabel={(option) =>
