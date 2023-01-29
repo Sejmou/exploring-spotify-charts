@@ -7,6 +7,7 @@ export const tracksRouter = createTRPCRouter({
       z.object({
         startInclusive: z.date().optional(),
         endInclusive: z.date().optional(),
+        region: z.string().optional(),
       })
     )
     .query(async ({ ctx, input }) => {
@@ -27,6 +28,9 @@ export const tracksRouter = createTRPCRouter({
             date: {
               gte: input.startInclusive,
               lte: input.endInclusive,
+            },
+            region: {
+              name: input.region,
             },
           },
           _sum: { streams: true },
@@ -65,6 +69,15 @@ export const tracksRouter = createTRPCRouter({
                   date: {
                     gte: input.startInclusive,
                     lte: input.endInclusive,
+                  },
+                },
+              },
+            },
+            AND: {
+              regionChartEntries: {
+                some: {
+                  region: {
+                    name: input.region,
                   },
                 },
               },

@@ -1,27 +1,46 @@
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
-import type { RouterOutputs } from "../utils/api";
+import type { RouterInputs, RouterOutputs } from "../utils/api";
+import { api } from "../utils/api";
 import { ListItemText } from "@mui/material";
 
 type TrackDataAPIResponse = RouterOutputs["tracks"]["getNamesAndArtists"];
 
 type Props = {
-  resp?: TrackDataAPIResponse;
+  filterParams: RouterInputs["tracks"]["getNamesAndArtists"];
 };
 
-export default function TrackSelect({ resp }: Props) {
-  const filterOptions = createFilterOptions<TrackDataAPIResponse[0]>({
+export default function TrackSelect({ filterParams }: Props) {
+  const tracks = api.tracks.getNamesAndArtists.useQuery(filterParams, {
+    enabled: !!filterParams.region,
+  });
+  const autocompleteFilterOptions = createFilterOptions<
+    TrackDataAPIResponse[0]
+  >({
     matchFrom: "any",
     limit: 100,
   });
 
+  let inputText = "";
+  if (!filterParams.region) {
+    inputText = "... then you can select a track here";
+  } else if (tracks.isLoading) {
+    inputText = "Loading tracks...";
+  }
+  if (tracks.data) {
+    inputText = "Find a track";
+  }
+  if (tracks.error) {
+    inputText = "Error loading tracks";
+  }
+
   return (
     <Autocomplete
-      disabled={!resp}
+      disabled={!filterParams.region}
       sx={{ width: 600 }}
-      options={resp ? resp : []}
-      filterOptions={filterOptions}
+      options={tracks.data ? tracks.data : []}
+      filterOptions={autocompleteFilterOptions}
       autoHighlight
       getOptionLabel={(option) =>
         option.name + " - " + option.featuringArtists.join(", ")
@@ -38,7 +57,7 @@ export default function TrackSelect({ resp }: Props) {
       renderInput={(params) => (
         <TextField
           {...params}
-          label={!resp ? "Loading tracks..." : "Find a track"}
+          label={inputText}
           inputProps={{
             ...params.inputProps,
             autoComplete: "new-password", // disable autocomplete and autofill

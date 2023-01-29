@@ -15,12 +15,8 @@ const Dashboard: NextPage = () => {
   >({
     startInclusive: dayjs("2021-01-01").toDate(),
     endInclusive: dayjs("2021-12-31").toDate(),
+    region: undefined,
   });
-  const availableTracks = api.tracks.getNamesAndArtists.useQuery(filterParams);
-
-  const [currentRegion, setCurrentRegion] = useState<"global" | string>(
-    "global"
-  );
 
   return (
     <>
@@ -35,8 +31,7 @@ const Dashboard: NextPage = () => {
       <main className="flex min-h-screen flex-col items-center gap-4 bg-[#121212] text-white">
         <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
           <h1 className="text-5xl font-extrabold tracking-tight text-white">
-            This is still{" "}
-            <span className="text-[#1ED760]">Work in Progress</span>
+            Explore <span className="text-[#1ED760]">Spotify</span> Charts
           </h1>
           <div className="flex gap-4">
             <DateRangeFilter
@@ -45,14 +40,18 @@ const Dashboard: NextPage = () => {
               minDate={dayjs("2017-01-01")}
               maxDate={dayjs("2021-12-31")}
             />
-            <TrackSelect resp={availableTracks.data} />
+            <RegionSelect
+              value={filterParams.region ? filterParams.region : null}
+              onChange={(newValue) => {
+                setFilterParams({
+                  ...filterParams,
+                  region: newValue ?? undefined,
+                });
+              }}
+            />
+            <TrackSelect filterParams={filterParams} />
           </div>
-          <RegionSelect
-            value={currentRegion !== "global" ? currentRegion : null}
-            onChange={(newValue) => {
-              setCurrentRegion(newValue ?? "global");
-            }}
-          />
+
           <BarChart data={[]} xColumn={""} yColumn={""} />
         </div>
       </main>
