@@ -6,6 +6,8 @@ import { useState } from "react";
 import type { RouterInputs } from "../../utils/api";
 import dayjs from "dayjs";
 import DateRangeFilter from "../../components/DateRangeFilter";
+import BarChart from "../../components/BarChart";
+import RegionSelect from "../../components/RegionSelect";
 
 const Dashboard: NextPage = () => {
   const [filterParams, setFilterParams] = useState<
@@ -15,6 +17,10 @@ const Dashboard: NextPage = () => {
     endInclusive: dayjs("2021-12-31").toDate(),
   });
   const availableTracks = api.tracks.getNamesAndArtists.useQuery(filterParams);
+
+  const [currentRegion, setCurrentRegion] = useState<"global" | string>(
+    "global"
+  );
 
   return (
     <>
@@ -28,7 +34,7 @@ const Dashboard: NextPage = () => {
       </Head>
       <main className="flex min-h-screen flex-col items-center gap-4 bg-[#121212] text-white">
         <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
-          <h1 className="text-xl font-extrabold tracking-tight text-white sm:text-[5rem]">
+          <h1 className="text-5xl font-extrabold tracking-tight text-white">
             This is still{" "}
             <span className="text-[#1ED760]">Work in Progress</span>
           </h1>
@@ -41,6 +47,13 @@ const Dashboard: NextPage = () => {
             />
             <TrackSelect resp={availableTracks.data} />
           </div>
+          <RegionSelect
+            value={currentRegion !== "global" ? currentRegion : null}
+            onChange={(newValue) => {
+              setCurrentRegion(newValue ?? "global");
+            }}
+          />
+          <BarChart data={[]} xColumn={""} yColumn={""} />
         </div>
       </main>
     </>
