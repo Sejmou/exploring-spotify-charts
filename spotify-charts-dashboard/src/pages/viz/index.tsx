@@ -53,12 +53,22 @@ const Dashboard: NextPage = () => {
     if (charts.isLoading) {
       vizArea = <div>Loading data...</div>;
     } else {
-      vizArea = (
-        <>
-          <ChartsViz data={charts.data} />
-          <RadarChart data={charts.data} />
-        </>
-      );
+      if (charts.data) {
+        const data = charts.data;
+        vizArea = (
+          <>
+            <ChartsViz data={data} />
+            <RadarChart data={data} />
+            <BarChart
+              data={data.trackData.map((d) => ({
+                x: d.name,
+                y: d.tempo,
+              }))}
+              propName="tempo"
+            />
+          </>
+        );
+      }
     }
   }
 
@@ -119,7 +129,6 @@ const Dashboard: NextPage = () => {
             />
           </div>
           {vizArea}
-          <BarChart data={[]} xColumn={""} yColumn={""} />
         </div>
       </main>
     </>

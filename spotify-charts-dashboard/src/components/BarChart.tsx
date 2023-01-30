@@ -1,68 +1,52 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import React from "react";
 import {
-  select,
-  json,
-  scaleLinear,
-  max,
-  scaleBand,
-  axisBottom,
-  axisLeft,
-} from "d3";
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
+import { Bar } from "react-chartjs-2";
+import { color } from "d3";
+import { divergingColors } from "../pages/viz";
 
-type GraphData = {
-  [key: string]: number | string;
+type Props = {
+  propName: string;
+  data: {
+    x: string;
+    y: number;
+  }[];
 };
 
-type Props = { data: GraphData[]; xColumn: string; yColumn: string };
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
-const margin = { top: 20, right: 20, bottom: 100, left: 100 };
-const graphWidth = 600 - margin.left - margin.right;
-const graphHeight = 600 - margin.top - margin.bottom;
-
-const BarChart = ({ data }: Props) => {
-  const x = scaleBand()
-    .domain(data.map((d) => d.name as string))
-    .range([0, graphWidth])
-    .paddingInner(0.2) // space between bars
-    .paddingOuter(0.1); // space between bars and edges of SVG
-
-  const yValue = (d: any) => d.streams as number;
-  const y = scaleLinear()
-    .domain([0, max(data, yValue)!])
-    .range([graphHeight, 0]);
-
-  const bars = data.map((d) => {
-    return (
-      <rect
-        key={d.name}
-        x={x(d.name as string)}
-        y={y(yValue(d))}
-        width={x.bandwidth()}
-        height={graphHeight - y(yValue(d))}
-        fill="#1ED760"
-      ></rect>
-    );
-  });
-
-  return (
-    <div>
-      <>
-        {data}
-        <svg>
-          <g
-            transform={`translate(${margin.left}, ${margin.top})`}
-            width={graphWidth}
-            height={graphHeight}
-          >
-            {bars}
-          </g>
-        </svg>
-      </>
-    </div>
-  );
+export const options = {
+  responsive: true,
+  plugins: {
+    // legend: {
+    //   display: false,
+    // },
+  },
 };
 
-export default BarChart;
+export default function BarChart({ data, propName }: Props) {
+  const chartData = {
+    labels: [propName],
+    datasets: data.map((d, i) => ({
+      label: d.x,
+      data: [d.y],
+      backgroundColor: divergingColors[i],
+      borderColor: color(divergingColors[i]!)?.darker(0.5).toString(),
+    })),
+  };
+  return <Bar options={options} data={chartData} />;
+}
