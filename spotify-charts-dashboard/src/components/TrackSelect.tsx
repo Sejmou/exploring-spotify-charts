@@ -23,7 +23,7 @@ export default function TrackSelect({ filterParams, onAdd }: Props) {
     TrackDataAPIResponse[0]
   >({
     matchFrom: "any",
-    limit: 100,
+    limit: 300,
   });
 
   let inputText = "";

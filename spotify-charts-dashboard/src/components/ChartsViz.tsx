@@ -72,7 +72,7 @@ const ChartsViz = ({ filterParams }: Props) => {
     }));
 
     const chartData = {
-      labels: data.datesWithData.map((d) => moment(d)),
+      labels: data.dateRange.map((d) => moment(d)),
       datasets: chartDatasets,
     };
 
@@ -99,6 +99,7 @@ const ChartsViz = ({ filterParams }: Props) => {
                 title: (context) => {
                   // for some reason, context is an array of length 1?!
                   // parsed.x is the date timestamp in milliseconds
+                  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                   return moment(new Date(context[0]!.parsed.x)).format(
                     "dddd, MMMM Do YYYY"
                   );

@@ -16,7 +16,7 @@ export const chartsRouter = createTRPCRouter({
       if (!input.trackIds) {
         return {
           trackData: [],
-          datesWithData: [],
+          dateRange: [],
         };
       }
       const trackIds = input.trackIds;
@@ -117,7 +117,7 @@ export const chartsRouter = createTRPCRouter({
       if (!minDate || !maxDate) {
         return {
           trackData: [],
-          datesWithData: [],
+          dateRange: [],
         };
       }
       const daysFromMinToMax = moment(maxDate).diff(moment(minDate), "days");
@@ -174,7 +174,7 @@ export const chartsRouter = createTRPCRouter({
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           charts: chartDataForStartToEndWithEmptyValues.get(track.id),
         })),
-        datesWithData: allDatesWithData.map((entry) => entry.date),
+        dateRange: datesFromMinToMax,
       };
     }),
 });
