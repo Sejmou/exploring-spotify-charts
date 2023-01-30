@@ -1,6 +1,6 @@
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import { z } from "zod";
-import { GlobalChartEntry } from "@prisma/client";
+import moment from "moment";
 
 export const chartsRouter = createTRPCRouter({
   getTrackCharts: publicProcedure
@@ -13,11 +13,18 @@ export const chartsRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
+      if (!input.trackIds) {
+        return {
+          trackData: [],
+          datesWithData: [],
+        };
+      }
+      const trackIds = input.trackIds;
       const trackCharts = input.region
         ? await ctx.prisma.regionChartEntry.findMany({
             where: {
               trackId: {
-                in: input.trackIds,
+                in: trackIds,
               },
               date: {
                 gte: input.startInclusive,
@@ -34,7 +41,7 @@ export const chartsRouter = createTRPCRouter({
         : await ctx.prisma.globalChartEntry.findMany({
             where: {
               trackId: {
-                in: input.trackIds,
+                in: trackIds,
               },
               date: {
                 gte: input.startInclusive,
@@ -47,7 +54,6 @@ export const chartsRouter = createTRPCRouter({
           });
 
       const chartsGroupedByTrackId = groupByTrackId(trackCharts);
-      const trackIds = Object.keys(chartsGroupedByTrackId);
       const tracks = await ctx.prisma.track.findMany({
         where: {
           id: {
@@ -55,9 +61,16 @@ export const chartsRouter = createTRPCRouter({
           },
         },
       });
+      const tracksSorted = tracks.sort((a, b) => {
+        const aIdx = trackIds.indexOf(a.id);
+        const bIdx = trackIds.indexOf(b.id);
+        return aIdx - bIdx;
+      });
+
+      console.log("TRACK IDS", trackIds);
 
       const allDatesWithData =
-        input.region || input.region === "Global"
+        !input.region || input.region === "Global"
           ? await ctx.prisma.globalChartEntry.findMany({
               where: {
                 trackId: {
@@ -81,6 +94,9 @@ export const chartsRouter = createTRPCRouter({
                 trackId: {
                   in: trackIds,
                 },
+                region: {
+                  name: input.region,
+                },
                 date: {
                   gte: input.startInclusive,
                   lte: input.endInclusive,
@@ -95,36 +111,65 @@ export const chartsRouter = createTRPCRouter({
               distinct: ["date"],
             });
 
+      const minDate = allDatesWithData[0]?.date;
+      const maxDate = allDatesWithData[allDatesWithData.length - 1]?.date;
+
+      if (!minDate || !maxDate) {
+        return {
+          trackData: [],
+          datesWithData: [],
+        };
+      }
+      const daysFromMinToMax = moment(maxDate).diff(moment(minDate), "days");
+      const datesFromMinToMax = Array.from(
+        { length: daysFromMinToMax + 1 },
+        (_, i) => moment(minDate).add(i, "days").toDate()
+      );
+
+      console.log("minDate", minDate);
+      console.log("maxDate", maxDate);
+
       // need arrays of equal length for all tracks for building the chart in the frontend
-      const getMatchingDateIdx = (date: Date, dates: Date[]) => {
-        const match = allDatesWithData.find((d) => d.date === date);
-        if (!match) {
-          return -1;
-        }
-        return dates.findIndex((d) => d.getTime() === match.date.getTime());
-      };
       const chartDataForStartToEndWithEmptyValues = new Map(
         Object.entries(chartsGroupedByTrackId).map(
           ([trackId, trackChartData]) => {
-            return [
-              trackId,
-              allDatesWithData.map((d) => {
-                const matchingDateIdx = getMatchingDateIdx(
-                  d.date,
-                  trackChartData.map((d) => d.date)
+            const chartEntriesIncludingNullForMissingDates =
+              datesFromMinToMax.map((d) => {
+                const chartEntryForDate = trackChartData.find((entry) =>
+                  moment(entry.date).isSame(moment(d), "day")
                 );
-                if (matchingDateIdx !== -1) {
-                  return trackChartData[matchingDateIdx]!;
-                }
-                return null;
-              }),
-            ];
+                return chartEntryForDate || null;
+              });
+            console.log(
+              "number of values in original track chart data",
+              trackChartData?.length
+            );
+            console.log(
+              "non-null values in chart data with nulls for missing",
+              chartEntriesIncludingNullForMissingDates.filter((c) => c !== null)
+                ?.length
+            );
+            console.log(
+              "first and last non-null value in chart data with nulls for missing",
+              chartEntriesIncludingNullForMissingDates.filter(
+                (c) => c !== null
+              )[0]?.date,
+              chartEntriesIncludingNullForMissingDates
+                .filter((c) => c !== null)
+                .at(-1)?.date
+            );
+            console.log(
+              "first and last value in original track chart data",
+              trackChartData[0]?.date,
+              trackChartData.at(-1)?.date
+            );
+            return [trackId, chartEntriesIncludingNullForMissingDates];
           }
         )
       );
 
       return {
-        trackData: tracks.map((track) => ({
+        trackData: tracksSorted.map((track) => ({
           ...track,
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           charts: chartDataForStartToEndWithEmptyValues.get(track.id),

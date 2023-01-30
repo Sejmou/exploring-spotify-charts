@@ -7,6 +7,8 @@ import DateRangeFilter from "../../components/DateRangeFilter";
 import BarChart from "../../components/BarChart";
 import RegionSelect from "../../components/RegionSelect";
 import ChartsViz from "../../components/ChartsViz";
+import RadarChart from "../../components/RadarChart";
+import { api } from "../../utils/api";
 
 export type VizFilterParams = {
   startInclusive?: Date;
@@ -35,6 +37,7 @@ const Dashboard: NextPage = () => {
   });
 
   console.log("current filters:", filterParams);
+  const utils = api.useContext();
 
   return (
     <>
@@ -67,6 +70,14 @@ const Dashboard: NextPage = () => {
                   trackIds:
                     newRegion !== prev.region ? undefined : prev.trackIds,
                 }));
+                utils
+                  .invalidate()
+                  .then(() => {
+                    console.log("invalidated");
+                  })
+                  .catch((e) => {
+                    console.log("error invalidating", e);
+                  });
               }}
             />
             <TrackSelect
@@ -84,6 +95,7 @@ const Dashboard: NextPage = () => {
 
           <ChartsViz filterParams={filterParams} />
           <BarChart data={[]} xColumn={""} yColumn={""} />
+          <RadarChart />
         </div>
       </main>
     </>

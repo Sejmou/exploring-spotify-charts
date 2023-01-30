@@ -47,7 +47,8 @@ type Props = {
 
 const ChartsViz = ({ filterParams }: Props) => {
   const charts = api.charts.getTrackCharts.useQuery(filterParams, {
-    enabled: !!filterParams.region && !!filterParams.trackIds,
+    enabled: !!filterParams.region,
+    keepPreviousData: true,
   });
 
   if (!filterParams.region || !filterParams.trackIds) {
@@ -90,9 +91,6 @@ const ChartsViz = ({ filterParams }: Props) => {
               reverse: true,
               min: 1,
               max: 50,
-              ticks: {
-                stepSize: 5,
-              },
             },
           },
         }}
