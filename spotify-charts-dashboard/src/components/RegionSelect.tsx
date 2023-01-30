@@ -48,7 +48,11 @@ export default function RegionSelect({ onChange, value }: Props) {
           }}
         />
       )}
-      value={regions.data?.find((region) => region.name === value) ?? null}
+      value={
+        value == "Global"
+          ? { name: "Global", geoSubregion: "Worldwide" }
+          : regions.data?.find((region) => region.name === value) ?? null
+      }
       onChange={(_, newValue) => {
         onChange(newValue?.name ?? null);
       }}
