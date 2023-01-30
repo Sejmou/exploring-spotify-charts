@@ -70,9 +70,17 @@ const ChartsViz = ({ filterParams }: Props) => {
       borderColor: color(divergingColors[i]!)?.darker(0.5).toString(),
     }));
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const labels = data[0]!.charts!.map((d) => moment(d.date));
+    const allDates = new Set(data.flatMap((d) => d.charts!.map((d) => d.date)));
+    const allDatesSorted = Array.from(allDates).sort((a, b) =>
+      moment(a).isBefore(b) ? -1 : 1
+    );
+    const allDatesSortedNoDuplicates = allDatesSorted.filter(
+      (d, i) => i === 0 || !moment(d).isSame(allDatesSorted[i - 1])
+    );
+    console.log(allDatesSortedNoDuplicates);
+
     const chartData = {
-      labels,
+      labels: allDatesSortedNoDuplicates,
       datasets: chartDatasets,
     };
 
@@ -81,6 +89,7 @@ const ChartsViz = ({ filterParams }: Props) => {
         data={chartData}
         datasetIdKey="id"
         options={{
+          spanGaps: false,
           scales: {
             x: {
               type: "time",
@@ -100,7 +109,7 @@ const ChartsViz = ({ filterParams }: Props) => {
     );
   }
 
-  return <div>ChartsViz</div>;
+  return <div>Loading visualization...</div>;
 };
 
 export default ChartsViz;
