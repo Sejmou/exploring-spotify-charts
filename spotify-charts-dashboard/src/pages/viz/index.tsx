@@ -6,6 +6,7 @@ import dayjs from "dayjs";
 import DateRangeFilter from "../../components/DateRangeFilter";
 import BarChart from "../../components/BarChart";
 import RegionSelect from "../../components/RegionSelect";
+import ChartsViz from "../../components/ChartsViz";
 
 export type VizFilterParams = {
   startInclusive?: Date;
@@ -13,6 +14,17 @@ export type VizFilterParams = {
   region?: string;
   trackIds?: string[];
 };
+
+export const divergingColors = [
+  "#7fc97f",
+  "#beaed4",
+  "#fdc086",
+  "#ffff99",
+  "#386cb0",
+  "#f0027f",
+  "#bf5b17",
+  "#666666",
+];
 
 const Dashboard: NextPage = () => {
   const [filterParams, setFilterParams] = useState<VizFilterParams>({
@@ -70,6 +82,7 @@ const Dashboard: NextPage = () => {
             />
           </div>
 
+          <ChartsViz filterParams={filterParams} />
           <BarChart data={[]} xColumn={""} yColumn={""} />
         </div>
       </main>
