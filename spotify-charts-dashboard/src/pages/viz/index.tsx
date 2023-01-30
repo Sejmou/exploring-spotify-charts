@@ -26,7 +26,7 @@ export const divergingColors = [
   "#f0027f",
   "#bf5b17",
   "#666666",
-];
+] as const;
 
 const Dashboard: NextPage = () => {
   const [filterParams, setFilterParams] = useState<VizFilterParams>({
@@ -35,6 +35,32 @@ const Dashboard: NextPage = () => {
     region: undefined,
     trackIds: undefined,
   });
+
+  const charts = api.charts.getTrackCharts.useQuery(filterParams, {
+    enabled: !!filterParams.region,
+    keepPreviousData: true,
+  });
+
+  let vizArea = <div>Please select a region and at least one track.</div>;
+  if (charts.isError) {
+    vizArea = <div>Error loading data, please try refreshing the page.</div>;
+  }
+  if (
+    filterParams.region &&
+    filterParams.trackIds &&
+    filterParams.trackIds.length > 0
+  ) {
+    if (charts.isLoading) {
+      vizArea = <div>Loading data...</div>;
+    } else {
+      vizArea = (
+        <>
+          <ChartsViz data={charts.data} />
+          <RadarChart data={charts.data} />
+        </>
+      );
+    }
+  }
 
   console.log("current filters:", filterParams);
   const utils = api.useContext();
@@ -92,10 +118,8 @@ const Dashboard: NextPage = () => {
               }}
             />
           </div>
-
-          <ChartsViz filterParams={filterParams} />
+          {vizArea}
           <BarChart data={[]} xColumn={""} yColumn={""} />
-          <RadarChart />
         </div>
       </main>
     </>

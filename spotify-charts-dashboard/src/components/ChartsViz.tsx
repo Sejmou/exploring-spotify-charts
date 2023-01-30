@@ -1,6 +1,5 @@
-import type { VizFilterParams } from "../pages/viz";
 import { divergingColors } from "../pages/viz";
-import { api } from "../utils/api";
+import type { RouterOutputs } from "../utils/api";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -42,24 +41,11 @@ export const options = {
 };
 
 type Props = {
-  filterParams: VizFilterParams;
+  data?: RouterOutputs["charts"]["getTrackCharts"];
 };
 
-const ChartsViz = ({ filterParams }: Props) => {
-  const charts = api.charts.getTrackCharts.useQuery(filterParams, {
-    enabled: !!filterParams.region,
-    keepPreviousData: true,
-  });
-
-  if (!filterParams.region || !filterParams.trackIds) {
-    return <div>Choose a region and at least one track to see charts</div>;
-  }
-  if (charts.error) {
-    return <div>Error loading charts</div>;
-  }
-
-  if (charts.data) {
-    const data = charts.data;
+const ChartsViz = ({ data }: Props) => {
+  if (data) {
     console.log(data);
     const chartDatasets = data.trackData.map((data, i) => ({
       id: data.id,
@@ -112,7 +98,7 @@ const ChartsViz = ({ filterParams }: Props) => {
     );
   }
 
-  return <div>Loading visualization...</div>;
+  return <div></div>;
 };
 
 export default ChartsViz;
