@@ -52,6 +52,14 @@ export const tracksRouter = createTRPCRouter({
                 rank: "asc",
               },
             },
+            album: {
+              select: {
+                name: true,
+                type: true,
+                thumbnailUrl: true,
+                releaseDate: true,
+              },
+            },
           },
           where:
             !input.region || input.region === "Global"
@@ -103,10 +111,6 @@ export const tracksRouter = createTRPCRouter({
         (a, b) => b.totalStreams - a.totalStreams
       );
 
-      return trackArtistsAndNamesWithStreams.map((track) => ({
-        id: track.id,
-        name: track.name,
-        featuringArtists: track.featuringArtists,
-      }));
+      return trackArtistsAndNamesWithStreams;
     }),
 });

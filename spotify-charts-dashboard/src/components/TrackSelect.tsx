@@ -1,12 +1,18 @@
-import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
 import type { RouterOutputs } from "../utils/api";
 import { api } from "../utils/api";
-import { Button, ListItemText } from "@mui/material";
+import {
+  Avatar,
+  Button,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+} from "@mui/material";
 import type { VizFilterParams } from "../pages/viz";
 import { useEffect, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
+import MusicNoteIcon from "@mui/icons-material/MusicNote";
 
 type TrackDataAPIResponse = RouterOutputs["tracks"]["getNamesAndArtists"];
 
@@ -23,7 +29,7 @@ export default function TrackSelect({ filterParams, onAdd }: Props) {
     TrackDataAPIResponse[0]
   >({
     matchFrom: "any",
-    limit: 300,
+    limit: 100,
   });
 
   let inputText = "";
@@ -66,12 +72,25 @@ export default function TrackSelect({ filterParams, onAdd }: Props) {
         }
         renderOption={(props, option) => (
           // important: key should be LAST here, i.e. NOT before {...props}: https://stackoverflow.com/a/69396153/13727176
-          <Box component="li" {...props} key={option.id}>
+          <ListItem component="li" {...props} key={option.id}>
+            <ListItemAvatar>
+              {!option.album.thumbnailUrl ? (
+                <Avatar variant="square">
+                  <MusicNoteIcon />
+                </Avatar>
+              ) : (
+                <Avatar
+                  variant="square"
+                  alt={option.album.name}
+                  src={option.album.thumbnailUrl}
+                />
+              )}
+            </ListItemAvatar>
             <ListItemText
               primary={option.name}
               secondary={option.featuringArtists.join(", ")}
             />
-          </Box>
+          </ListItem>
         )}
         renderInput={(params) => (
           <div>

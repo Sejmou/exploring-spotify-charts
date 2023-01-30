@@ -69,7 +69,7 @@ model Track {
     explicit           Boolean
     previewUrl         String?
     albumId            String
-    Album              Album              @relation(fields: [albumId], references: [id])
+    album              Album              @relation(fields: [albumId], references: [id])
     isrc               String
     isrcYear           Int
     isrcAgency         String
