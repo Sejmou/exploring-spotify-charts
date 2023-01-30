@@ -93,6 +93,19 @@ const ChartsViz = ({ filterParams }: Props) => {
               max: 50,
             },
           },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                title: (context) => {
+                  // for some reason, context is an array of length 1?!
+                  // parsed.x is the date timestamp in milliseconds
+                  return moment(new Date(context[0]!.parsed.x)).format(
+                    "dddd, MMMM Do YYYY"
+                  );
+                },
+              },
+            },
+          },
         }}
       />
     );
