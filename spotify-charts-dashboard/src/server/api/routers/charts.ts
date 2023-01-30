@@ -1,5 +1,6 @@
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import { z } from "zod";
+import { GlobalChartEntry } from "@prisma/client";
 
 export const chartsRouter = createTRPCRouter({
   getTrackCharts: publicProcedure
@@ -54,10 +55,82 @@ export const chartsRouter = createTRPCRouter({
           },
         },
       });
-      return tracks.map((track) => ({
-        ...track,
-        charts: chartsGroupedByTrackId[track.id],
-      }));
+
+      const allDatesWithData =
+        input.region || input.region === "Global"
+          ? await ctx.prisma.globalChartEntry.findMany({
+              where: {
+                trackId: {
+                  in: trackIds,
+                },
+                date: {
+                  gte: input.startInclusive,
+                  lte: input.endInclusive,
+                },
+              },
+              select: {
+                date: true,
+              },
+              orderBy: {
+                date: "asc",
+              },
+              distinct: ["date"],
+            })
+          : await ctx.prisma.regionChartEntry.findMany({
+              where: {
+                trackId: {
+                  in: trackIds,
+                },
+                date: {
+                  gte: input.startInclusive,
+                  lte: input.endInclusive,
+                },
+              },
+              select: {
+                date: true,
+              },
+              orderBy: {
+                date: "asc",
+              },
+              distinct: ["date"],
+            });
+
+      // need arrays of equal length for all tracks for building the chart in the frontend
+      const getMatchingDateIdx = (date: Date, dates: Date[]) => {
+        const match = allDatesWithData.find((d) => d.date === date);
+        if (!match) {
+          return -1;
+        }
+        return dates.findIndex((d) => d.getTime() === match.date.getTime());
+      };
+      const chartDataForStartToEndWithEmptyValues = new Map(
+        Object.entries(chartsGroupedByTrackId).map(
+          ([trackId, trackChartData]) => {
+            return [
+              trackId,
+              allDatesWithData.map((d) => {
+                const matchingDateIdx = getMatchingDateIdx(
+                  d.date,
+                  trackChartData.map((d) => d.date)
+                );
+                if (matchingDateIdx !== -1) {
+                  return trackChartData[matchingDateIdx]!;
+                }
+                return null;
+              }),
+            ];
+          }
+        )
+      );
+
+      return {
+        trackData: tracks.map((track) => ({
+          ...track,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          charts: chartDataForStartToEndWithEmptyValues.get(track.id),
+        })),
+        datesWithData: allDatesWithData.map((entry) => entry.date),
+      };
     }),
 });
 

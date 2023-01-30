@@ -60,27 +60,18 @@ const ChartsViz = ({ filterParams }: Props) => {
   if (charts.data) {
     const data = charts.data;
     console.log(data);
-    const chartDatasets = data.map((trackData, i) => ({
-      id: trackData.id,
-      label: trackData.name,
+    const chartDatasets = data.trackData.map((data, i) => ({
+      id: data.id,
+      label: data.name,
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      data: trackData.charts!.map((d) => d.rank),
+      data: data.charts!.map((c) => c?.rank || null),
       backgroundColor: divergingColors[i],
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       borderColor: color(divergingColors[i]!)?.darker(0.5).toString(),
     }));
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const allDates = new Set(data.flatMap((d) => d.charts!.map((d) => d.date)));
-    const allDatesSorted = Array.from(allDates).sort((a, b) =>
-      moment(a).isBefore(b) ? -1 : 1
-    );
-    const allDatesSortedNoDuplicates = allDatesSorted.filter(
-      (d, i) => i === 0 || !moment(d).isSame(allDatesSorted[i - 1])
-    );
-    console.log(allDatesSortedNoDuplicates);
 
     const chartData = {
-      labels: allDatesSortedNoDuplicates,
+      labels: data.datesWithData.map((d) => moment(d)),
       datasets: chartDatasets,
     };
 

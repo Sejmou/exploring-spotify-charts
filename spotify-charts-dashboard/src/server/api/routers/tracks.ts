@@ -11,32 +11,31 @@ export const tracksRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-      const totalStreamCountGlobal = await ctx.prisma.globalChartEntry.groupBy({
-        by: ["trackId"],
-        where: {
-          date: {
-            gte: input.startInclusive,
-            lte: input.endInclusive,
-          },
-        },
-        _sum: { streams: true },
-      });
-      const totalStreamCountRegions = await ctx.prisma.regionChartEntry.groupBy(
-        {
-          by: ["trackId"],
-          where: {
-            date: {
-              gte: input.startInclusive,
-              lte: input.endInclusive,
-            },
-            region: {
-              name: input.region,
-            },
-          },
-          _sum: { streams: true },
-        }
-      );
-      console.log(totalStreamCountGlobal);
+      const totalStreamCount =
+        input.region == "Global"
+          ? await ctx.prisma.globalChartEntry.groupBy({
+              by: ["trackId"],
+              where: {
+                date: {
+                  gte: input.startInclusive,
+                  lte: input.endInclusive,
+                },
+              },
+              _sum: { streams: true },
+            })
+          : await ctx.prisma.regionChartEntry.groupBy({
+              by: ["trackId"],
+              where: {
+                date: {
+                  gte: input.startInclusive,
+                  lte: input.endInclusive,
+                },
+                region: {
+                  name: input.region,
+                },
+              },
+              _sum: { streams: true },
+            });
 
       const trackArtistsAndNames = await ctx.prisma.track
         .findMany({
@@ -54,35 +53,31 @@ export const tracksRouter = createTRPCRouter({
               },
             },
           },
-          where: {
-            OR: {
-              regionChartEntries: {
-                some: {
-                  date: {
-                    gte: input.startInclusive,
-                    lte: input.endInclusive,
+          where:
+            !input.region || input.region === "Global"
+              ? {
+                  globalChartEntries: {
+                    some: {
+                      date: {
+                        gte: input.startInclusive,
+                        lte: input.endInclusive,
+                      },
+                    },
+                  },
+                }
+              : {
+                  regionChartEntries: {
+                    some: {
+                      date: {
+                        gte: input.startInclusive,
+                        lte: input.endInclusive,
+                      },
+                      region: {
+                        name: input.region,
+                      },
+                    },
                   },
                 },
-              },
-              globalChartEntries: {
-                some: {
-                  date: {
-                    gte: input.startInclusive,
-                    lte: input.endInclusive,
-                  },
-                },
-              },
-            },
-            AND: {
-              regionChartEntries: {
-                some: {
-                  region: {
-                    name: input.region,
-                  },
-                },
-              },
-            },
-          },
         })
         .then((tracks) =>
           tracks.map((track) => ({
@@ -95,13 +90,9 @@ export const tracksRouter = createTRPCRouter({
 
       const trackArtistsAndNamesWithStreams = trackArtistsAndNames.map(
         (track) => {
-          const globalStreams =
-            totalStreamCountGlobal.find((entry) => entry.trackId === track.id)
-              ?._sum?.streams || 0;
-          const regionStreams =
-            totalStreamCountRegions.find((entry) => entry.trackId === track.id)
-              ?._sum?.streams || 0;
-          const totalStreams = globalStreams + regionStreams;
+          const totalStreams =
+            totalStreamCount.find((entry) => entry.trackId === track.id)?._sum
+              ?.streams || 0;
           return {
             ...track,
             totalStreams,
