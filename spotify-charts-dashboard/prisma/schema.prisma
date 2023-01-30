@@ -18,10 +18,36 @@ model Example {
 }
 
 model Artist {
-    id     String             @id @default(cuid())
-    name   String
-    genres String
-    tracks TrackArtistEntry[]
+    id           String             @id @default(cuid())
+    name         String
+    genres       String
+    imgUrl       String?
+    thumbnailUrl String?
+    tracks       TrackArtistEntry[]
+    albums       AlbumArtistEntry[]
+}
+
+model Album {
+    id                   String             @id @default(cuid())
+    name                 String
+    type                 String
+    releaseDate          DateTime
+    releaseDatePrecision String
+    imgUrl               String?
+    thumbnailUrl         String?
+    artists              AlbumArtistEntry[]
+    tracks               Track[]
+    label                String
+}
+
+model AlbumArtistEntry {
+    artistId String
+    artist   Artist @relation(fields: [artistId], references: [id])
+    rank     Int
+    albumId  String
+    album    Album  @relation(fields: [albumId], references: [id])
+
+    @@id([artistId, albumId], name: "albumFeatureId")
 }
 
 model TrackArtistEntry {
@@ -35,34 +61,32 @@ model TrackArtistEntry {
 }
 
 model Track {
-    id                        String             @id @default(cuid())
-    name                      String
-    featuringArtists          TrackArtistEntry[]
-    regionChartEntries        RegionChartEntry[]
-    globalChartEntries        GlobalChartEntry[]
-    explicit                  Boolean
-    previewUrl                String?
-    albumType                 String
-    albumId                   String
-    albumReleaseDate          DateTime
-    albumReleaseDatePrecision String
-    isrc                      String
-    isrcYear                  Int
-    isrcAgency                String
-    isrcTerritory             String
-    danceability              Float
-    energy                    Float
-    key                       Float
-    loudness                  Float
-    mode                      Int
-    speechiness               Float
-    acousticness              Float
-    instrumentalness          Float
-    liveness                  Float
-    valence                   Float
-    tempo                     Float
-    durationMs                Float
-    timeSignature             Int
+    id                 String             @id @default(cuid())
+    name               String
+    featuringArtists   TrackArtistEntry[]
+    regionChartEntries RegionChartEntry[]
+    globalChartEntries GlobalChartEntry[]
+    explicit           Boolean
+    previewUrl         String?
+    albumId            String
+    Album              Album              @relation(fields: [albumId], references: [id])
+    isrc               String
+    isrcYear           Int
+    isrcAgency         String
+    isrcTerritory      String
+    danceability       Float
+    energy             Float
+    key                Float
+    loudness           Float
+    mode               Int
+    speechiness        Float
+    acousticness       Float
+    instrumentalness   Float
+    liveness           Float
+    valence            Float
+    tempo              Float
+    durationMs         Float
+    timeSignature      Int
 }
 
 model Region {

@@ -1,11 +1,12 @@
-import {
-  PrismaClient,
+import type {
   Artist,
   Track,
+  Album,
+  AlbumArtistEntry,
   Region,
   RegionChartEntry,
-  GlobalChartEntry,
 } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { promises as fs } from "fs";
 import path from "path";
 
@@ -35,19 +36,34 @@ async function main() {
       prisma.artist.upsert({
         where: { id: artist.id },
         update: {},
-        create: artist,
+        create: {
+          ...artist,
+          genres: JSON.stringify(artist.genres), // genres is actually a string array in the JSON file, but we can't store string arrays in SQLite :/
+        },
       })
     )
   );
   console.log("inserted", artists.length, "artists");
 
-  const tracks = await getSeedData<Track>("tracks.json");
-  const tracksWithParsedDates = tracks.map((track) => {
-    track.albumReleaseDate = new Date(track.albumReleaseDate); // albumReleaseDate is a string in the JSON file, but we want it to be a Date in the database
-    return track;
+  const albums = await getSeedData<Album>("albums.json");
+  const albumsWithParsedDates = albums.map((album) => {
+    album.releaseDate = new Date(album.releaseDate); // releDate is actually still a string at this point
+    return album;
   });
   await prisma.$transaction(
-    tracksWithParsedDates.map((track) => {
+    albumsWithParsedDates.map((album) => {
+      return prisma.album.upsert({
+        where: { id: album.id },
+        update: {},
+        create: album,
+      });
+    })
+  );
+  console.log("inserted", albums.length, "albums");
+
+  const tracks = await getSeedData<Track>("tracks.json");
+  await prisma.$transaction(
+    tracks.map((track) => {
       return prisma.track.upsert({
         where: { id: track.id },
         update: {},
@@ -77,6 +93,26 @@ async function main() {
     })
   );
   console.log("inserted", tracksAndArtists.length, "track-artist entries");
+
+  const albumArtists = await getSeedData<AlbumArtistEntry>(
+    "album_artists.json"
+  );
+
+  await prisma.$transaction(
+    albumArtists.map((feature) => {
+      return prisma.albumArtistEntry.upsert({
+        where: {
+          albumFeatureId: {
+            artistId: feature.artistId,
+            albumId: feature.albumId,
+          },
+        },
+        update: {},
+        create: feature,
+      });
+    })
+  );
+  console.log("inserted", albumArtists.length, "album-artist entries");
 
   const regions = await getSeedData<Region>("regions.json");
   for (const region of regions) {
