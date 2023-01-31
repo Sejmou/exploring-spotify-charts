@@ -79,7 +79,7 @@ const TrackInfo = (props: Props) => {
             : undefined,
         }}
       >
-        <div className="relative" onClick={playPauseAudio}>
+        <div className="relative h-[64] w-[64]" onClick={playPauseAudio}>
           <>
             {albumCoverUrl ? (
               <img
@@ -89,7 +89,7 @@ const TrackInfo = (props: Props) => {
                 height={64}
               />
             ) : (
-              <div className="h-64 w-64 fill-slate-400"></div>
+              <div className="h-[64] w-[64] fill-slate-400"></div>
             )}
             {audio && (
               <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100">
@@ -100,11 +100,17 @@ const TrackInfo = (props: Props) => {
             )}
           </>
         </div>
-        <div className="px-2 pt-1">
-          <h2 className="text-ellipsis whitespace-nowrap text-xl">
+        <div className="overflow-hidden px-2 pt-1">
+          <h2
+            className="overflow-hidden text-ellipsis whitespace-nowrap text-xl"
+            title={trackTitle}
+          >
             {trackTitle}
           </h2>
-          <p className="text-ellipsis whitespace-nowrap text-base text-gray-300">
+          <p
+            className="overflow-hidden text-ellipsis whitespace-nowrap text-base text-gray-300"
+            title={artists.join(", ")}
+          >
             {artists.join(", ")}
           </p>
         </div>

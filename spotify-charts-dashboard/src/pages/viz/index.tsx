@@ -46,11 +46,11 @@ const Dashboard: NextPage = () => {
   if (charts.isError) {
     vizArea = <div>Error loading data, please try refreshing the page.</div>;
   }
-  if (
+  const readyForViz =
     filterParams.region &&
     filterParams.trackIds &&
-    filterParams.trackIds.length > 0
-  ) {
+    filterParams.trackIds.length > 0;
+  if (readyForViz) {
     if (charts.isLoading) {
       vizArea = <div>Loading data...</div>;
     } else {
@@ -86,12 +86,12 @@ const Dashboard: NextPage = () => {
         />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className="flex min-h-screen flex-col items-center gap-4 bg-[#121212] text-white">
-        <div className="flex flex-col items-center justify-center gap-12 px-4 py-16 ">
-          <h1 className="text-5xl font-extrabold tracking-tight text-white">
-            Explore <span className="text-[#1ED760]">Spotify</span> Charts
-          </h1>
+      <main className="flex min-h-screen w-full flex-col items-center gap-4 bg-[#121212] text-white">
+        <div className="flex w-full flex-col items-center justify-start justify-center gap-4 self-start p-4">
           <div className="flex flex-wrap gap-4">
+            <h1 className="text-5xl font-extrabold tracking-tight text-white">
+              <span className="text-[#1ED760]">Spotify</span> Charts
+            </h1>
             <DateRangeFilter
               filterParams={filterParams}
               onChange={(newParams) => setFilterParams(newParams)}
@@ -129,18 +129,20 @@ const Dashboard: NextPage = () => {
               }}
             />
           </div>
-          <TracksFilter
-            trackIds={filterParams.trackIds ?? []}
-            onHide={(tId) => {
-              console.log(tId, "should be hidden");
-            }}
-            onRemove={(tId) => {
-              setFilterParams({
-                ...filterParams,
-                trackIds: filterParams.trackIds?.filter((t) => t !== tId),
-              });
-            }}
-          />
+          {readyForViz && (
+            <TracksFilter
+              trackIds={filterParams.trackIds ?? []}
+              onHide={(tId) => {
+                console.log(tId, "should be hidden");
+              }}
+              onRemove={(tId) => {
+                setFilterParams({
+                  ...filterParams,
+                  trackIds: filterParams.trackIds?.filter((t) => t !== tId),
+                });
+              }}
+            />
+          )}
           {vizArea}
         </div>
       </main>

@@ -1,6 +1,11 @@
 import { api } from "../../utils/api";
 import TrackInfo from "./TrackInfo";
 import { divergingColors } from "../../pages/viz";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import { useState } from "react";
+import { IconButton } from "@mui/material";
+import BasicTrackInfo from "./BasicTrackInfo";
 
 type Props = {
   trackIds: string[];
@@ -9,9 +14,11 @@ type Props = {
 };
 
 const TracksFilter = ({ trackIds, onRemove }: Props) => {
+  const [expanded, setExpanded] = useState(true);
+
   const tracks = api.tracks.getTrackData.useQuery(
     { trackIds },
-    { keepPreviousData: true }
+    { enabled: trackIds.length > 0, keepPreviousData: true }
   ); // TODO: cleaner solution (useMutation etc.)
 
   if (tracks.status === "loading") {
@@ -24,8 +31,8 @@ const TracksFilter = ({ trackIds, onRemove }: Props) => {
 
   const trackData = tracks.data;
 
-  return (
-    <div className="grid w-full grid-cols-2 gap-4 lg:grid-cols-4">
+  const items = expanded ? (
+    <div className="grid flex-1 grid-cols-2 gap-4 lg:grid-cols-4">
       {trackData.map((t, i) => (
         <TrackInfo
           key={t.id}
@@ -43,6 +50,32 @@ const TracksFilter = ({ trackIds, onRemove }: Props) => {
           onRemove={(trackId) => onRemove(trackId)}
         />
       ))}
+    </div>
+  ) : (
+    <div className="flex">
+      {trackData.map((t, i) => {
+        return (
+          <BasicTrackInfo
+            key={t.id}
+            onRemove={onRemove}
+            trackId={t.id}
+            color={divergingColors[i] || "white"}
+            artists={t.featuringArtists.map((a) => a.name)}
+            trackTitle={t.name}
+          />
+        );
+      })}
+    </div>
+  );
+
+  return (
+    <div className="flex w-full">
+      <div>
+        <IconButton onClick={() => setExpanded((prev) => !prev)}>
+          {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+        </IconButton>
+      </div>
+      {items}
     </div>
   );
 };

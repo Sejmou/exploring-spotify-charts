@@ -59,7 +59,7 @@ export default function TrackSelect({ filterParams, onAdd }: Props) {
       <Autocomplete
         key={key}
         disabled={!filterParams.region}
-        sx={{ width: 600 }}
+        sx={{ width: 400 }}
         options={
           filterParams.region && tracks.data
             ? tracks.data.filter((t) => !filterParams.trackIds?.includes(t.id))
