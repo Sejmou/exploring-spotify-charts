@@ -6,10 +6,10 @@ import dayjs from "dayjs";
 import DateRangeFilter from "../../components/DateRangeFilter";
 import BarChart from "../../components/visualizations/BarChart";
 import RegionSelect from "../../components/RegionSelect";
-import ChartsViz from "../../components/visualizations/ChartsViz";
 import RadarChart from "../../components/visualizations/RadarChart";
 import { api } from "../../utils/api";
 import TracksFilter from "../../components/TracksFilter";
+import dynamic from "next/dynamic";
 
 export type VizFilterParams = {
   startInclusive?: Date;
@@ -28,6 +28,11 @@ export const divergingColors = [
   "#bf5b17",
   "#666666",
 ] as const;
+
+const ChartsViz = dynamic(
+  () => import("../../components/visualizations/ChartsViz"),
+  { ssr: false }
+);
 
 const Dashboard: NextPage = () => {
   const [filterParams, setFilterParams] = useState<VizFilterParams>({

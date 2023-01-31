@@ -14,6 +14,7 @@ import {
 import { Line } from "react-chartjs-2";
 import { color } from "d3";
 import "chartjs-adapter-moment";
+import ZoomPlugin from "chartjs-plugin-zoom";
 import moment from "moment";
 
 ChartJS.register(
@@ -24,7 +25,8 @@ ChartJS.register(
   LineElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  ZoomPlugin
 );
 
 type Props = {
@@ -102,6 +104,32 @@ const ChartsViz = ({ data }: Props) => {
             },
             legend: {
               display: false,
+            },
+            zoom: {
+              zoom: {
+                wheel: {
+                  enabled: true,
+                },
+                pinch: {
+                  enabled: true,
+                },
+                mode: "x",
+              },
+              pan: {
+                enabled: true,
+              },
+              limits: {
+                y: {
+                  min: 1,
+                  max: 50,
+                },
+                x: {
+                  min: moment(data.dateRange[0]).valueOf(),
+                  max: moment(
+                    data.dateRange[data.dateRange.length - 1]
+                  ).valueOf(),
+                },
+              },
             },
           },
         }}

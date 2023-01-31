@@ -34,7 +34,7 @@ export default function TrackSelect({ filterParams, onAdd }: Props) {
 
   let inputText = "";
   if (!filterParams.region) {
-    inputText = "... then you can select a track here";
+    inputText = "... then find charting tracks here";
   } else if (tracks.isLoading) {
     inputText = "Loading tracks...";
   }
