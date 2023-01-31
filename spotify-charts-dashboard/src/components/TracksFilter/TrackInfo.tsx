@@ -6,7 +6,7 @@ import IconButton from "@mui/material/IconButton";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import PauseIcon from "@mui/icons-material/Pause";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type Props = {
   trackId: string;
@@ -44,6 +44,16 @@ const TrackInfo = (props: Props) => {
       return audio;
     }
   }, [previewUrl]);
+
+  useEffect(() => {
+    // audio should not be playing when component is unmounted
+    if (audio) {
+      return () => {
+        audio.pause();
+        audio.currentTime = 0;
+      };
+    }
+  }, [audio]);
 
   const playPauseAudio = useCallback(() => {
     if (audio) {
