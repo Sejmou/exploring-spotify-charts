@@ -41,5 +41,37 @@ export default function BarChart({ data, propName }: Props) {
         .toString(),
     })),
   };
-  return <Bar options={{ responsive: true }} data={chartData} />;
+  return (
+    <Bar
+      className="relative"
+      options={{
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: {
+            grid: {
+              color: "white",
+              tickColor: "white",
+            },
+            ticks: {
+              color: "white",
+              backdropColor: "#222",
+            },
+          },
+          y: {
+            grid: {
+              color: "grey",
+              tickColor: "white",
+            },
+            ticks: {
+              color: "white",
+              backdropColor: "#222",
+            },
+          },
+        },
+      }}
+      data={chartData}
+    />
+  );
 }

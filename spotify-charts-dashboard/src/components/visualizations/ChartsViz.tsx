@@ -50,20 +50,41 @@ const ChartsViz = ({ data }: Props) => {
 
     return (
       <Line
+        className="relative"
         data={chartData}
         datasetIdKey="id"
         options={{
           responsive: true,
+          maintainAspectRatio: false,
           spanGaps: false,
           scales: {
             x: {
               type: "time",
+              grid: {
+                tickColor: "white",
+                color: "#222",
+              },
+              ticks: {
+                color: "#fff",
+              },
             },
             y: {
               type: "linear",
               reverse: true,
               min: 1,
               max: 50,
+              grid: {
+                tickColor: "white",
+                color: "#333",
+              },
+              ticks: {
+                color: "white",
+              },
+              title: {
+                text: "Chart Position",
+                display: true,
+                color: "white",
+              },
             },
           },
           plugins: {
@@ -78,6 +99,9 @@ const ChartsViz = ({ data }: Props) => {
                   );
                 },
               },
+            },
+            legend: {
+              display: false,
             },
           },
         }}

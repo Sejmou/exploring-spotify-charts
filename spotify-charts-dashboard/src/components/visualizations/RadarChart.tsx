@@ -60,9 +60,16 @@ export default function RadarChart({ data }: Props) {
 
   return (
     <Radar
+      className="relative"
       data={chartData}
       options={{
         responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false,
+          },
+        },
         scales: {
           r: {
             grid: {
