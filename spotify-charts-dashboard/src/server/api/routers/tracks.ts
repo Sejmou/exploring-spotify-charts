@@ -124,6 +124,7 @@ export const tracksRouter = createTRPCRouter({
         select: {
           id: true,
           name: true,
+          previewUrl: true,
           featuringArtists: {
             select: {
               artist: {
@@ -174,6 +175,7 @@ export const tracksRouter = createTRPCRouter({
               ...track.album,
               thumbnailUrl: track.album.thumbnailUrl ?? undefined,
             },
+            previewUrl: track.previewUrl ?? undefined,
           };
         })
         .sort(

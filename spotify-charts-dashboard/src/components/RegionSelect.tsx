@@ -17,7 +17,9 @@ export default function RegionSelect({ onChange, value }: Props) {
     limit: 100,
   });
 
-  const regions = api.regions.getAll.useQuery();
+  const regions = api.regions.getAll.useQuery(undefined, {
+    staleTime: Infinity,
+  });
 
   return (
     <Autocomplete

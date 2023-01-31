@@ -35,8 +35,10 @@ export default function BarChart({ data, propName }: Props) {
     datasets: data.map((d, i) => ({
       label: d.x,
       data: [d.y],
-      backgroundColor: divergingColors[i],
-      borderColor: color(divergingColors[i]!)?.darker(0.5).toString(),
+      backgroundColor: divergingColors[i] || "white",
+      borderColor: color(divergingColors[i] || "white")
+        ?.darker(0.5)
+        .toString(),
     })),
   };
   return <Bar options={{ responsive: true }} data={chartData} />;

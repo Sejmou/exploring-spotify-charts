@@ -36,11 +36,11 @@ const ChartsViz = ({ data }: Props) => {
     const chartDatasets = data.trackData.map((data, i) => ({
       id: data.id,
       label: data.name,
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       data: data.charts?.map((c) => c?.rank || null) ?? [],
-      backgroundColor: divergingColors[i],
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      borderColor: color(divergingColors[i]!)?.darker(0.5).toString(),
+      backgroundColor: divergingColors[i] || "white",
+      borderColor: color(divergingColors[i] || "white")
+        ?.darker(0.5)
+        .toString(),
     }));
 
     const chartData = {

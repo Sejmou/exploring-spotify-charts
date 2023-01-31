@@ -39,7 +39,7 @@ export default function RadarChart({ data }: Props) {
     console.log(trackData);
     const data = SpotifySongMetrics.map((metric) => trackData[metric]);
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const colorObj = color(divergingColors[i]!)!;
+    const colorObj = color(divergingColors[i] || "white")!;
     const bgColorObj = colorObj.copy();
     bgColorObj.opacity = 0.1;
 

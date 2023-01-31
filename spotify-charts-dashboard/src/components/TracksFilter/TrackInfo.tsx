@@ -1,10 +1,12 @@
 // import Image from "next/image"; // TODO: figure out how to use this instead of <img> tags for better performance
-
-import { Card, Chip } from "@mui/material";
+import { Avatar, Chip } from "@mui/material";
 import { color as d3color } from "d3";
 import moment from "moment";
 import IconButton from "@mui/material/IconButton";
 import DeleteIcon from "@mui/icons-material/Delete";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import PauseIcon from "@mui/icons-material/Pause";
+import { useCallback, useMemo, useState } from "react";
 
 type Props = {
   trackId: string;
@@ -17,6 +19,7 @@ type Props = {
   label: string;
   albumCoverUrl?: string;
   color?: string;
+  previewUrl?: string;
   onRemove: (trackId: string) => void;
 };
 
@@ -31,8 +34,30 @@ const TrackInfo = (props: Props) => {
     albumCoverUrl,
     label,
     color,
+    previewUrl,
     onRemove,
   } = props;
+
+  const audio = useMemo(() => {
+    if (previewUrl) {
+      const audio = new Audio(previewUrl);
+      return audio;
+    }
+  }, [previewUrl]);
+
+  const playPauseAudio = useCallback(() => {
+    if (audio) {
+      if (audio.paused) {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        audio.play().then(() => setIsPlaying(true));
+      } else {
+        audio.pause();
+        setIsPlaying(false);
+        audio.currentTime = 0;
+      }
+    }
+  }, [audio]);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   return (
     <div className="relative flex  flex-col bg-[#1d1d1d] p-4 hover:bg-[#222]">
@@ -44,16 +69,32 @@ const TrackInfo = (props: Props) => {
             : undefined,
         }}
       >
-        <div>
-          {albumCoverUrl ? (
-            <img src={albumCoverUrl} alt="Album Cover" width={64} height={64} />
-          ) : (
-            <div className="h-64 w-64 fill-slate-400"></div>
-          )}
+        <div className="relative" onClick={playPauseAudio}>
+          <>
+            {albumCoverUrl ? (
+              <img
+                src={albumCoverUrl}
+                alt="Album Cover"
+                width={64}
+                height={64}
+              />
+            ) : (
+              <div className="h-64 w-64 fill-slate-400"></div>
+            )}
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100">
+              <Avatar sx={{ bgcolor: "#1ED760" }}>
+                {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
+              </Avatar>
+            </div>
+          </>
         </div>
         <div className="px-2 pt-1">
-          <h2 className="text-xl">{trackTitle}</h2>
-          <p className="text-base text-gray-300">{artists.join(", ")}</p>
+          <h2 className="text-ellipsis whitespace-nowrap text-xl">
+            {trackTitle}
+          </h2>
+          <p className="text-ellipsis whitespace-nowrap text-base text-gray-300">
+            {artists.join(", ")}
+          </p>
         </div>
       </div>
       <p className="text-md py-2 text-gray-200">

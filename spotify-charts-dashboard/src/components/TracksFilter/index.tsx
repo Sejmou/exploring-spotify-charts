@@ -39,6 +39,7 @@ const TracksFilter = ({ trackIds, onRemove }: Props) => {
           label={t.album.label}
           albumCoverUrl={t.album.thumbnailUrl}
           color={divergingColors[i]}
+          previewUrl={t.previewUrl}
           onRemove={(trackId) => onRemove(trackId)}
         />
       ))}
