@@ -81,11 +81,13 @@ const TrackInfo = (props: Props) => {
             ) : (
               <div className="h-64 w-64 fill-slate-400"></div>
             )}
-            <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100">
-              <Avatar sx={{ bgcolor: "#1ED760" }}>
-                {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
-              </Avatar>
-            </div>
+            {audio && (
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100">
+                <Avatar sx={{ bgcolor: "#1ED760" }}>
+                  {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
+                </Avatar>
+              </div>
+            )}
           </>
         </div>
         <div className="px-2 pt-1">
