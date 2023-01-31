@@ -9,8 +9,8 @@ import {
 } from "chart.js";
 import { color } from "d3";
 import { Radar } from "react-chartjs-2";
-import { divergingColors } from "../pages/viz";
-import type { RouterOutputs } from "../utils/api";
+import { divergingColors } from "../../pages/viz";
+import type { RouterOutputs } from "../../utils/api";
 
 type Props = {
   data?: RouterOutputs["charts"]["getTrackCharts"];

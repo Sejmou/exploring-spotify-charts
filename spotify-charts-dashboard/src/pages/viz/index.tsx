@@ -4,10 +4,10 @@ import TrackSelect from "../../components/TrackSelect";
 import { useState } from "react";
 import dayjs from "dayjs";
 import DateRangeFilter from "../../components/DateRangeFilter";
-import BarChart from "../../components/BarChart";
+import BarChart from "../../components/visualizations/BarChart";
 import RegionSelect from "../../components/RegionSelect";
-import ChartsViz from "../../components/ChartsViz";
-import RadarChart from "../../components/RadarChart";
+import ChartsViz from "../../components/visualizations/ChartsViz";
+import RadarChart from "../../components/visualizations/RadarChart";
 import { api } from "../../utils/api";
 import TracksFilter from "../../components/TracksFilter";
 

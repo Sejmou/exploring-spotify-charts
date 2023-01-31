@@ -10,7 +10,7 @@ import {
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
 import { color } from "d3";
-import { divergingColors } from "../pages/viz";
+import { divergingColors } from "../../pages/viz";
 
 type Props = {
   propName: string;

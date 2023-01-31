@@ -1,5 +1,5 @@
-import { divergingColors } from "../pages/viz";
-import type { RouterOutputs } from "../utils/api";
+import { divergingColors } from "../../pages/viz";
+import type { RouterOutputs } from "../../utils/api";
 import {
   Chart as ChartJS,
   CategoryScale,
