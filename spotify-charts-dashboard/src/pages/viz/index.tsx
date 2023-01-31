@@ -9,6 +9,7 @@ import RegionSelect from "../../components/RegionSelect";
 import ChartsViz from "../../components/ChartsViz";
 import RadarChart from "../../components/RadarChart";
 import { api } from "../../utils/api";
+import TracksFilter from "../../components/TracksFilter";
 
 export type VizFilterParams = {
   startInclusive?: Date;
@@ -86,11 +87,11 @@ const Dashboard: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className="flex min-h-screen flex-col items-center gap-4 bg-[#121212] text-white">
-        <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
+        <div className="flex flex-col items-center justify-center gap-12 px-4 py-16 ">
           <h1 className="text-5xl font-extrabold tracking-tight text-white">
             Explore <span className="text-[#1ED760]">Spotify</span> Charts
           </h1>
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-4">
             <DateRangeFilter
               filterParams={filterParams}
               onChange={(newParams) => setFilterParams(newParams)}
@@ -128,6 +129,18 @@ const Dashboard: NextPage = () => {
               }}
             />
           </div>
+          <TracksFilter
+            trackIds={filterParams.trackIds ?? []}
+            onHide={(tId) => {
+              console.log(tId, "should be hidden");
+            }}
+            onRemove={(tId) => {
+              setFilterParams({
+                ...filterParams,
+                trackIds: filterParams.trackIds?.filter((t) => t !== tId),
+              });
+            }}
+          />
           {vizArea}
         </div>
       </main>

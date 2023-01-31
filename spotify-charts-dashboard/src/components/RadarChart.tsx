@@ -62,7 +62,7 @@ export default function RadarChart({ data }: Props) {
     <Radar
       data={chartData}
       options={{
-        radar: {},
+        responsive: true,
         scales: {
           r: {
             grid: {

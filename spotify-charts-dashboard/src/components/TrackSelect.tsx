@@ -105,6 +105,15 @@ export default function TrackSelect({ filterParams, onAdd }: Props) {
           </div>
         )}
         onChange={(_, newValue) => setCurrentTrack(newValue)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            if (currentTrack) {
+              onAdd(currentTrack.id);
+              setCurrentTrack(null);
+              setKey((key) => key + 1); // need this hack to clear autocomplete
+            }
+          }
+        }}
         isOptionEqualToValue={(option, value) => option.id === value.id}
       />
       <Button

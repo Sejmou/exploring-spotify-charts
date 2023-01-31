@@ -29,15 +29,6 @@ ChartJS.register(
   Legend
 );
 
-export const options = {
-  responsive: true,
-  plugins: {
-    // legend: {
-    //   display: false,
-    // },
-  },
-};
-
 export default function BarChart({ data, propName }: Props) {
   const chartData = {
     labels: [propName],
@@ -48,5 +39,5 @@ export default function BarChart({ data, propName }: Props) {
       borderColor: color(divergingColors[i]!)?.darker(0.5).toString(),
     })),
   };
-  return <Bar options={options} data={chartData} />;
+  return <Bar options={{ responsive: true }} data={chartData} />;
 }

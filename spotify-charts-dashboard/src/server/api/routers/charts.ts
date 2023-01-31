@@ -20,7 +20,9 @@ export const chartsRouter = createTRPCRouter({
         };
       }
       const trackIds = input.trackIds;
-      const trackCharts = input.region
+      const region =
+        input.region && input.region !== "Global" ? input.region : undefined;
+      const trackCharts = region
         ? await ctx.prisma.regionChartEntry.findMany({
             where: {
               trackId: {
@@ -31,7 +33,7 @@ export const chartsRouter = createTRPCRouter({
                 lte: input.endInclusive,
               },
               region: {
-                name: input.region,
+                name: region,
               },
             },
             orderBy: {
@@ -53,6 +55,7 @@ export const chartsRouter = createTRPCRouter({
             },
           });
 
+      console.log("track charts", trackCharts);
       const chartsGroupedByTrackId = groupByTrackId(trackCharts);
       const tracks = await ctx.prisma.track.findMany({
         where: {
@@ -69,47 +72,46 @@ export const chartsRouter = createTRPCRouter({
 
       console.log("TRACK IDS", trackIds);
 
-      const allDatesWithData =
-        !input.region || input.region === "Global"
-          ? await ctx.prisma.globalChartEntry.findMany({
-              where: {
-                trackId: {
-                  in: trackIds,
-                },
-                date: {
-                  gte: input.startInclusive,
-                  lte: input.endInclusive,
-                },
+      const allDatesWithData = !region
+        ? await ctx.prisma.globalChartEntry.findMany({
+            where: {
+              trackId: {
+                in: trackIds,
               },
-              select: {
-                date: true,
+              date: {
+                gte: input.startInclusive,
+                lte: input.endInclusive,
               },
-              orderBy: {
-                date: "asc",
+            },
+            select: {
+              date: true,
+            },
+            orderBy: {
+              date: "asc",
+            },
+            distinct: ["date"],
+          })
+        : await ctx.prisma.regionChartEntry.findMany({
+            where: {
+              trackId: {
+                in: trackIds,
               },
-              distinct: ["date"],
-            })
-          : await ctx.prisma.regionChartEntry.findMany({
-              where: {
-                trackId: {
-                  in: trackIds,
-                },
-                region: {
-                  name: input.region,
-                },
-                date: {
-                  gte: input.startInclusive,
-                  lte: input.endInclusive,
-                },
+              region: {
+                name: region,
               },
-              select: {
-                date: true,
+              date: {
+                gte: input.startInclusive,
+                lte: input.endInclusive,
               },
-              orderBy: {
-                date: "asc",
-              },
-              distinct: ["date"],
-            });
+            },
+            select: {
+              date: true,
+            },
+            orderBy: {
+              date: "asc",
+            },
+            distinct: ["date"],
+          });
 
       const minDate = allDatesWithData[0]?.date;
       const maxDate = allDatesWithData[allDatesWithData.length - 1]?.date;
@@ -167,6 +169,13 @@ export const chartsRouter = createTRPCRouter({
           }
         )
       );
+
+      console.log(
+        "chart data for tracks",
+        chartDataForStartToEndWithEmptyValues
+      );
+      console.log("tracks", tracksSorted);
+      console.log("charts grouped by track id", chartsGroupedByTrackId);
 
       return {
         trackData: tracksSorted.map((track) => ({

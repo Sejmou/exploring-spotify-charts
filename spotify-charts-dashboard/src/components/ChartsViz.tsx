@@ -27,31 +27,17 @@ ChartJS.register(
   Legend
 );
 
-export const options = {
-  responsive: true,
-  plugins: {
-    legend: {
-      position: "top" as const,
-    },
-    title: {
-      display: true,
-      text: "Chart.js Line Chart",
-    },
-  },
-};
-
 type Props = {
   data?: RouterOutputs["charts"]["getTrackCharts"];
 };
 
 const ChartsViz = ({ data }: Props) => {
   if (data) {
-    console.log(data);
     const chartDatasets = data.trackData.map((data, i) => ({
       id: data.id,
       label: data.name,
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      data: data.charts!.map((c) => c?.rank || null),
+      data: data.charts?.map((c) => c?.rank || null) ?? [],
       backgroundColor: divergingColors[i],
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       borderColor: color(divergingColors[i]!)?.darker(0.5).toString(),
@@ -67,6 +53,7 @@ const ChartsViz = ({ data }: Props) => {
         data={chartData}
         datasetIdKey="id"
         options={{
+          responsive: true,
           spanGaps: false,
           scales: {
             x: {
