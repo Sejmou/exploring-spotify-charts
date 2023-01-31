@@ -14,7 +14,7 @@ type Props = {
 };
 
 const TracksFilter = ({ trackIds, onRemove }: Props) => {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
 
   const tracks = api.tracks.getTrackData.useQuery(
     { trackIds },
