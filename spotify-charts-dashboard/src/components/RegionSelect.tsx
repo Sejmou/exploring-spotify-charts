@@ -58,6 +58,7 @@ export default function RegionSelect({ onChange, value }: Props) {
       onChange={(_, newValue) => {
         onChange(newValue?.name ?? null);
       }}
+      isOptionEqualToValue={(option, value) => option.name === value.name}
     />
   );
 }
