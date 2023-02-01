@@ -10,6 +10,7 @@ import { api } from "../../utils/api";
 import TracksFilter from "../../components/TracksFilter";
 import dynamic from "next/dynamic";
 import BarCharts from "../../components/visualizations/BarCharts";
+import ChoroplethWorld from "../../components/visualizations/ChoroplethWorld";
 
 export type VizFilterParams = {
   startInclusive?: Date;
@@ -48,10 +49,27 @@ const Dashboard: NextPage = () => {
   });
 
   let vizArea = (
-    <div className="mt-2 self-center">
-      Welcome! Please select a region and track(s) to visualize by picking from
-      above.
-    </div>
+    // <div className="mt-2 self-center">
+    //   Welcome! Please select a region and track(s) to visualize by picking from
+    //   above.
+    // </div>
+    <ChoroplethWorld
+      data={[
+        {
+          country: {
+            name: "Austria",
+            geoRegion: "Europe",
+            geoSubregion: "Western Europe",
+            isoAlpha2: "AT",
+            isoAlpha3: "AUT",
+          },
+          value: 1,
+        },
+      ]}
+      colorMap={() => "red"}
+      propName={"people working on this project"}
+      missingDataColor={"#ccc"}
+    />
   );
 
   if (charts.isError) {
