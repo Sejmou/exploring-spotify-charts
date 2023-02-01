@@ -4,7 +4,7 @@ import { create } from "zustand";
 type FilterState = {
   startInclusive?: Date;
   endInclusive?: Date;
-  region?: string;
+  region: string;
   trackIds: string[];
   addTrackId: (id: string) => void;
   removeTrackId: (id: string) => void;
@@ -18,7 +18,7 @@ export const useFilterStore = create<FilterState>()((set) => ({
   trackIds: [],
   startInclusive: dayjs("2021-01-01").toDate(),
   endInclusive: dayjs("2021-12-31").toDate(),
-  region: undefined,
+  region: "Global",
   addTrackId(id) {
     set((state) => {
       const trackIds = [...state.trackIds, id];

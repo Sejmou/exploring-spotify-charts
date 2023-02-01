@@ -9,11 +9,12 @@ export const chartsRouter = createTRPCRouter({
         startInclusive: z.date().optional(),
         endInclusive: z.date().optional(),
         region: z.string().optional(),
-        trackIds: z.array(z.string()).optional(), // I don't want to make this optional, but I can't figure out how to make it required and still usable in a convenient way from the client
+        trackIds: z.array(z.string()),
       })
     )
     .query(async ({ ctx, input }) => {
       if (!input.trackIds) {
+        console.warn("No track ids provided");
         return {
           trackData: [],
           dateRange: [],
@@ -169,13 +170,6 @@ export const chartsRouter = createTRPCRouter({
           }
         )
       );
-
-      console.log(
-        "chart data for tracks",
-        chartDataForStartToEndWithEmptyValues
-      );
-      console.log("tracks", tracksSorted);
-      console.log("charts grouped by track id", chartsGroupedByTrackId);
 
       return {
         trackData: tracksSorted.map((track) => ({

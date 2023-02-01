@@ -1,6 +1,7 @@
 import dynamic from "next/dynamic";
 import { useFilterStore } from "../../store/filter";
 import { api } from "../../utils/api";
+import SelectedTracksInfoAndLegend from "../SelectedTracksInfoAndLegend";
 import BarCharts from "../visualizations/BarCharts";
 import RadarChart from "../visualizations/RadarChart";
 
@@ -15,9 +16,9 @@ export default function TrackComparison() {
   const trackIds = useFilterStore((state) => state.trackIds);
 
   const charts = api.charts.getTrackCharts.useQuery(
-    { region, startInclusive, endInclusive },
+    { region, startInclusive, endInclusive, trackIds },
     {
-      enabled: !!region,
+      enabled: !!region && !!trackIds,
       keepPreviousData: true,
     }
   );
@@ -40,6 +41,7 @@ export default function TrackComparison() {
   if (charts.data) {
     return (
       <>
+        <SelectedTracksInfoAndLegend />
         <div className="grid h-full w-full flex-1 grid-cols-9 grid-rows-3">
           <div className="col-span-6 row-span-2">
             <ChartsViz data={charts.data} />
