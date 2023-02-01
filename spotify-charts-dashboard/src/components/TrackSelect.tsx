@@ -20,6 +20,7 @@ export default function TrackSelect() {
   const region = useFilterStore((state) => state.region);
   const startInclusive = useFilterStore((state) => state.startInclusive);
   const endInclusive = useFilterStore((state) => state.endInclusive);
+  const trackIds = useFilterStore((state) => state.trackIds);
   const addTrackId = useFilterStore((state) => state.addTrackId);
 
   const tracks = api.tracks.getNamesAndArtists.useQuery(
@@ -63,7 +64,7 @@ export default function TrackSelect() {
         key={key}
         disabled={!region}
         sx={{ width: 400 }}
-        options={tracks.data ?? []}
+        options={tracks.data?.filter((t) => !trackIds.includes(t.id)) ?? []}
         filterOptions={autocompleteFilterOptions}
         autoHighlight
         getOptionLabel={(option) =>

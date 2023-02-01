@@ -43,7 +43,7 @@ export default function RegionSelect() {
       renderInput={(params) => (
         <TextField
           {...params}
-          label={!countries.data ? "Loading regions..." : "Select a region..."}
+          label={!countries.data ? "Loading regions..." : "Select a region"}
           inputProps={{
             ...params.inputProps,
             autoComplete: "new-password", // disable autocomplete and autofill
