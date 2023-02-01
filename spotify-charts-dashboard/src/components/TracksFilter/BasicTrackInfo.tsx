@@ -16,9 +16,13 @@ const BasicTrackInfo = (props: Props) => {
         className="h-8 w-8 rounded-full"
         style={{ backgroundColor: props.color }}
       ></div>
-      <div className="flex-1">
-        <div className="text-sm font-medium">{props.trackTitle}</div>
-        <div className="text-xs text-gray-500">{props.artists.join(", ")}</div>
+      <div className="max-w-xs flex-1 overflow-hidden">
+        <div className="overflow-hidden text-ellipsis whitespace-nowrap text-sm font-medium">
+          {props.trackTitle}
+        </div>
+        <div className="overflow-hidden text-ellipsis whitespace-nowrap text-xs text-gray-500">
+          {props.artists.join(", ")}
+        </div>
       </div>
       <div>
         <IconButton onClick={() => props.onRemove(props.trackId)}>
