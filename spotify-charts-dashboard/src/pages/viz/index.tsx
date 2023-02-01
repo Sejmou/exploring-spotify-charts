@@ -48,13 +48,6 @@ const Dashboard: NextPage = () => {
   });
 
   let vizArea = <div>Please select a region and at least one track.</div>;
-  // let vizArea = (
-  //   <div className="grid h-full w-full flex-1 grid-cols-9 grid-rows-3">
-  //     <div className="col-span-6 row-span-2 bg-slate-300"></div>
-  //     <div className="col-span-3 row-span-2 bg-slate-400"></div>
-  //     <div className="col-span-9 row-span-1 bg-slate-500"></div>
-  //   </div>
-  // );
 
   if (charts.isError) {
     vizArea = <div>Error loading data, please try refreshing the page.</div>;
@@ -106,7 +99,7 @@ const Dashboard: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className="flex h-screen w-full flex-col items-center gap-4 bg-[#121212] p-4 text-white">
-        <div className="flex h-full w-full flex-col">
+        <div className="flex h-full w-full flex-col gap-2">
           <div className="flex flex-wrap gap-4">
             <h1 className="text-5xl font-extrabold tracking-tight text-white">
               <span className="text-[#1ED760]">Spotify</span> Charts

@@ -20,7 +20,6 @@ type Props = {
   albumCoverUrl?: string;
   color?: string;
   previewUrl?: string;
-  onRemove: (trackId: string) => void;
 };
 
 const TrackInfo = (props: Props) => {
@@ -35,7 +34,6 @@ const TrackInfo = (props: Props) => {
     label,
     color,
     previewUrl,
-    onRemove,
   } = props;
 
   const audio = useMemo(() => {
@@ -92,7 +90,11 @@ const TrackInfo = (props: Props) => {
               <div className="h-[64] w-[64] fill-slate-400"></div>
             )}
             {audio && (
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100">
+              <div
+                className={`absolute inset-0 flex items-center justify-center opacity-${
+                  isPlaying ? "100" : "0"
+                } hover:opacity-100`}
+              >
                 <Avatar sx={{ bgcolor: "#1ED760" }}>
                   {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
                 </Avatar>
@@ -126,11 +128,6 @@ const TrackInfo = (props: Props) => {
       <p className="text-sm text-gray-400">
         {moment(releaseDate).format("ll")} · {label}
       </p>
-      <div className="absolute bottom-2 right-2">
-        <IconButton size="small" onClick={() => onRemove(props.trackId)}>
-          <DeleteIcon />
-        </IconButton>
-      </div>
     </div>
   );
 };
