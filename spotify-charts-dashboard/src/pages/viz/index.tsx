@@ -10,6 +10,7 @@ import RadarChart from "../../components/visualizations/RadarChart";
 import { api } from "../../utils/api";
 import TracksFilter from "../../components/TracksFilter";
 import dynamic from "next/dynamic";
+import BarCharts from "../../components/visualizations/BarCharts";
 
 export type VizFilterParams = {
   startInclusive?: Date;
@@ -71,13 +72,7 @@ const Dashboard: NextPage = () => {
               <RadarChart data={data} />
             </div>
             <div className="col-span-9 row-span-1">
-              <BarChart
-                data={data.trackData.map((d) => ({
-                  x: d.name,
-                  y: d.tempo,
-                }))}
-                propName="tempo"
-              />
+              <BarCharts trackData={data.trackData} />
             </div>
           </div>
         );
