@@ -11,6 +11,7 @@ import { color } from "d3";
 import { Radar } from "react-chartjs-2";
 import { divergingColors } from "../../pages/viz";
 import type { RouterOutputs } from "../../utils/api";
+import { capitalizeFirstLetter } from "../../utils/misc";
 
 type Props = {
   data?: RouterOutputs["charts"]["getTrackCharts"];
@@ -20,6 +21,8 @@ const SpotifySongMetrics = [
   "acousticness",
   "danceability",
   "energy",
+  "valence",
+  "speechiness",
   "instrumentalness",
   "liveness",
 ] as const;
@@ -36,7 +39,6 @@ ChartJS.register(
 export default function RadarChart({ data }: Props) {
   if (!data) return <div>RadarChart would show here</div>;
   const chartDatasets = data.trackData.map((trackData, i) => {
-    console.log(trackData);
     const data = SpotifySongMetrics.map((metric) => trackData[metric]);
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const colorObj = color(divergingColors[i] || "white")!;
@@ -54,7 +56,7 @@ export default function RadarChart({ data }: Props) {
   });
 
   const chartData = {
-    labels: [...SpotifySongMetrics],
+    labels: SpotifySongMetrics.map((metric) => capitalizeFirstLetter(metric)),
     datasets: chartDatasets,
   };
 

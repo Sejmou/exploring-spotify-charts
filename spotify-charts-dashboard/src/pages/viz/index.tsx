@@ -4,7 +4,6 @@ import TrackSelect from "../../components/TrackSelect";
 import { useState } from "react";
 import dayjs from "dayjs";
 import DateRangeFilter from "../../components/DateRangeFilter";
-import BarChart from "../../components/visualizations/BarChart";
 import RegionSelect from "../../components/RegionSelect";
 import RadarChart from "../../components/visualizations/RadarChart";
 import { api } from "../../utils/api";
@@ -48,7 +47,12 @@ const Dashboard: NextPage = () => {
     keepPreviousData: true,
   });
 
-  let vizArea = <div>Please select a region and at least one track.</div>;
+  let vizArea = (
+    <div className="mt-2 self-center">
+      Welcome! Please select a region and track(s) to visualize by picking from
+      above.
+    </div>
+  );
 
   if (charts.isError) {
     vizArea = <div>Error loading data, please try refreshing the page.</div>;

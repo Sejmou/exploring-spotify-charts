@@ -1,4 +1,5 @@
 import type { RouterOutputs } from "../../utils/api";
+import { capitalizeFirstLetter } from "../../utils/misc";
 import BarChart from "./BarChart";
 
 type Props = {
@@ -10,13 +11,7 @@ type Extends<T, U extends T> = U;
 // numerical props that are suitable for bar charts (i.e. not categorical, and not between 0 and 1 (those were used in radar charts))
 type NumericalProps = Extends<
   TrackDataProps,
-  | "tempo"
-  | "key"
-  | "mode"
-  | "durationMs"
-  | "loudness"
-  | "timeSignature"
-  | "valence"
+  "tempo" | "key" | "mode" | "durationMs" | "loudness" | "timeSignature"
 >;
 
 const numericalProps: NumericalProps[] = [
@@ -26,7 +21,6 @@ const numericalProps: NumericalProps[] = [
   "tempo",
   "durationMs",
   "loudness",
-  "valence",
 ];
 
 const BarCharts = ({ trackData }: Props) => {
@@ -34,7 +28,7 @@ const BarCharts = ({ trackData }: Props) => {
     propName: prop,
     data: trackData.map((d) => ({
       x: d.name,
-      y: d[prop],
+      y: prop != "durationMs" ? d[prop] : d[prop] / 60000,
     })),
   }));
 
@@ -48,7 +42,14 @@ const BarCharts = ({ trackData }: Props) => {
     >
       {dataForCharts.map(({ propName, data }, i) => (
         <div key={i}>
-          <BarChart data={data} propName={propName} />
+          <BarChart
+            data={data}
+            propName={
+              propName != "durationMs"
+                ? capitalizeFirstLetter(propName)
+                : "Duration (mins)"
+            }
+          />
         </div>
       ))}
     </div>
