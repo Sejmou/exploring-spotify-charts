@@ -152,6 +152,12 @@ const Dashboard: NextPage = () => {
                   trackIds: filterParams.trackIds?.filter((t) => t !== tId),
                 });
               }}
+              onRemoveAll={() => {
+                setFilterParams({
+                  ...filterParams,
+                  trackIds: undefined,
+                });
+              }}
             />
           )}
           {vizArea}

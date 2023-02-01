@@ -1,20 +1,18 @@
 import { api } from "../../utils/api";
 import TrackInfo from "./TrackInfo";
 import { divergingColors } from "../../pages/viz";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import { useState } from "react";
-import { Button, Dialog, IconButton } from "@mui/material";
+import { Button, Dialog } from "@mui/material";
 import BasicTrackInfo from "./BasicTrackInfo";
 
 type Props = {
   trackIds: string[];
   onRemove: (trackId: string) => void;
+  onRemoveAll: () => void;
   onHide: (trackId: string) => void;
-  className?: string;
 };
 
-const TracksFilter = ({ trackIds, onRemove, className }: Props) => {
+const TracksFilter = ({ trackIds, onRemove, onRemoveAll }: Props) => {
   const [expanded, setExpanded] = useState(false);
 
   const tracks = api.tracks.getTrackData.useQuery(
@@ -82,6 +80,7 @@ const TracksFilter = ({ trackIds, onRemove, className }: Props) => {
         </>
       </div>
       <Button onClick={() => setExpanded((prev) => !prev)}>Details</Button>
+      <Button onClick={() => onRemoveAll()}>Clear All</Button>
     </div>
   );
 };
