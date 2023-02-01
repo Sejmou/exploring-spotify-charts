@@ -32,7 +32,7 @@ const SelectedTracksInfoAndLegend = () => {
   }
 
   return (
-    <div className="flex w-full gap-2">
+    <div className="flex w-full flex-wrap gap-2">
       <div className="self-center">Tracks:</div>
       <div className="flex">
         <>

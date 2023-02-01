@@ -21,6 +21,9 @@ export const useFilterStore = create<FilterState>()((set) => ({
   region: "Global",
   addTrackId(id) {
     set((state) => {
+      if (state.trackIds.includes(id)) {
+        return state;
+      }
       const trackIds = [...state.trackIds, id];
       return { trackIds };
     });

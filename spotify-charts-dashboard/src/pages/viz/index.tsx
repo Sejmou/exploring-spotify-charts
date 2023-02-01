@@ -1,11 +1,9 @@
 import { type NextPage } from "next";
 import Head from "next/head";
-import TrackSelect from "../../components/TrackSelect";
-import DateRangeFilter from "../../components/DateRangeFilter";
-import RegionSelect from "../../components/RegionSelect";
-import type { ReactElement } from "react";
+import { ReactElement, useCallback } from "react";
 import { useState } from "react";
 import CountryTrackCountOverview from "../../components/dashboard-views/CountryChartsOverview";
+import TrackDataExploration from "../../components/dashboard-views/TrackDataExploration";
 import TrackComparison from "../../components/dashboard-views/TrackComparison";
 
 export type VizFilterParams = {
@@ -28,11 +26,26 @@ export const divergingColors = [
 
 const Dashboard: NextPage = () => {
   const handleStart = () => {
-    setCurrentView(<TrackComparison />);
+    setCurrentView(
+      <TrackComparison onSwitchView={switchToTrackDataExploration} />
+    );
   };
+
   const [currentView, setCurrentView] = useState<ReactElement>(
     <CountryTrackCountOverview onStart={handleStart} />
   );
+
+  const switchToTrackDataExploration = () => {
+    setCurrentView(
+      <TrackDataExploration onSwitchView={switchToTrackComparison} />
+    );
+  };
+
+  const switchToTrackComparison = () => {
+    setCurrentView(
+      <TrackComparison onSwitchView={switchToTrackDataExploration} />
+    );
+  };
 
   return (
     <>
@@ -45,19 +58,7 @@ const Dashboard: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className="flex h-screen w-full flex-col items-center gap-4 bg-[#121212] p-4 text-white">
-        <div className="flex h-full w-full flex-col gap-2">
-          {currentView.type == TrackComparison && (
-            <div className="flex flex-wrap gap-4">
-              <h1 className="text-5xl font-extrabold tracking-tight text-white">
-                <span className="text-[#1ED760]">Spotify</span> Charts
-              </h1>
-              <DateRangeFilter />
-              <RegionSelect />
-              <TrackSelect />
-            </div>
-          )}
-          {currentView}
-        </div>
+        <div className="flex h-full w-full flex-col gap-2">{currentView}</div>
       </main>
     </>
   );
