@@ -2,8 +2,6 @@
 import { Avatar, Chip } from "@mui/material";
 import { color as d3color } from "d3";
 import moment from "moment";
-import IconButton from "@mui/material/IconButton";
-import DeleteIcon from "@mui/icons-material/Delete";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import PauseIcon from "@mui/icons-material/Pause";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -90,11 +88,7 @@ const TrackInfo = (props: Props) => {
               <div className="h-[64] w-[64] fill-slate-400"></div>
             )}
             {audio && (
-              <div
-                className={`absolute inset-0 flex items-center justify-center opacity-${
-                  isPlaying ? "100" : "0"
-                } hover:opacity-100`}
-              >
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100">
                 <Avatar sx={{ bgcolor: "#1ED760" }}>
                   {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
                 </Avatar>

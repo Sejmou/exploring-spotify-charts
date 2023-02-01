@@ -1,5 +1,5 @@
 import { api } from "../../utils/api";
-import TrackInfo from "./TrackInfo";
+import TrackInfo from "./TrackDetails";
 import { divergingColors } from "../../pages/viz";
 import { useState } from "react";
 import { Button, Dialog } from "@mui/material";
@@ -54,9 +54,14 @@ const TracksFilter = ({ trackIds, onRemove, onRemoveAll }: Props) => {
             maxWidth="lg"
           >
             <div className="bg-[#121212] p-4 ">
-              <h1 className="mb-4 text-4xl font-extrabold tracking-tight text-white">
-                Track Details
-              </h1>
+              <div className="mb-4 flex gap-2">
+                <h1 className="text-4xl font-extrabold tracking-tight text-white">
+                  Track Details
+                </h1>
+                <div className="self-center">
+                  <Button onClick={() => setExpanded(false)}>Close</Button>
+                </div>
+              </div>
               <div className="grid grid-cols-2 gap-4 lg:grid-cols-2">
                 {trackData.map((t, i) => (
                   <TrackInfo

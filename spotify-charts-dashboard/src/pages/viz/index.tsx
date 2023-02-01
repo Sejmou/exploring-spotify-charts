@@ -7,7 +7,7 @@ import DateRangeFilter from "../../components/DateRangeFilter";
 import RegionSelect from "../../components/RegionSelect";
 import RadarChart from "../../components/visualizations/RadarChart";
 import { api } from "../../utils/api";
-import TracksFilter from "../../components/TracksFilter";
+import TracksFilter from "../../components/TracksLegend";
 import dynamic from "next/dynamic";
 import BarCharts from "../../components/visualizations/BarCharts";
 import ChoroplethWorld from "../../components/visualizations/ChoroplethWorld";
