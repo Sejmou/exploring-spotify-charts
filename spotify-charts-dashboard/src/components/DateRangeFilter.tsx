@@ -1,31 +1,23 @@
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
 import { useState } from "react";
+import { useFilterStore } from "../store/filter";
 import BasicDatePicker from "./BasicDatePicker";
 
-type FilterParams = {
-  startInclusive?: Date;
-  endInclusive?: Date;
-};
+const minDate = dayjs("2017-01-01");
+const maxDate = dayjs("2021-12-31");
 
-type Props = {
-  filterParams: FilterParams;
-  onChange: (newValue: FilterParams) => void;
-  minDate?: Dayjs;
-  maxDate?: Dayjs;
-};
+const DateRangeFilter = () => {
+  const startInclusive = useFilterStore((state) => state.startInclusive);
+  const endInclusive = useFilterStore((state) => state.endInclusive);
+  const setStartInclusive = useFilterStore((state) => state.setStartInclusive);
+  const setEndInclusive = useFilterStore((state) => state.setEndInclusive);
 
-const DateRangeFilter = ({
-  filterParams,
-  onChange,
-  minDate,
-  maxDate,
-}: Props) => {
   const [startDate, setStartDate] = useState<Dayjs | null>(
-    filterParams.startInclusive ? dayjs(filterParams.startInclusive) : null
+    startInclusive ? dayjs(startInclusive) : null
   );
   const [endDate, setEndDate] = useState<Dayjs | null>(
-    filterParams.endInclusive ? dayjs(filterParams.endInclusive) : null
+    endInclusive ? dayjs(endInclusive) : null
   );
 
   return (
@@ -37,10 +29,7 @@ const DateRangeFilter = ({
         maxDate={endDate?.subtract(1, "day") || maxDate}
         onChange={(newValue) => {
           setStartDate(newValue);
-          onChange({
-            ...filterParams,
-            startInclusive: newValue ? newValue.toDate() : undefined,
-          });
+          setStartInclusive(newValue ? newValue.toDate() : undefined);
         }}
       />
       <BasicDatePicker
@@ -50,10 +39,7 @@ const DateRangeFilter = ({
         maxDate={maxDate}
         onChange={(newValue) => {
           setEndDate(newValue);
-          onChange({
-            ...filterParams,
-            endInclusive: newValue ? newValue.toDate() : undefined,
-          });
+          setEndInclusive(newValue ? newValue.toDate() : undefined);
         }}
       />
     </div>

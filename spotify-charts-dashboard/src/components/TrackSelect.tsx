@@ -9,22 +9,25 @@ import {
   ListItemAvatar,
   ListItemText,
 } from "@mui/material";
-import type { VizFilterParams } from "../pages/viz";
 import { useEffect, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import MusicNoteIcon from "@mui/icons-material/MusicNote";
+import { useFilterStore } from "../store/filter";
 
 type TrackDataAPIResponse = RouterOutputs["tracks"]["getNamesAndArtists"];
 
-type Props = {
-  filterParams: VizFilterParams;
-  onAdd: (trackId: string) => void;
-};
+export default function TrackSelect() {
+  const region = useFilterStore((state) => state.region);
+  const startInclusive = useFilterStore((state) => state.startInclusive);
+  const endInclusive = useFilterStore((state) => state.endInclusive);
+  const addTrackId = useFilterStore((state) => state.addTrackId);
 
-export default function TrackSelect({ filterParams, onAdd }: Props) {
-  const tracks = api.tracks.getNamesAndArtists.useQuery(filterParams, {
-    enabled: !!filterParams.region,
-  });
+  const tracks = api.tracks.getNamesAndArtists.useQuery(
+    { startInclusive, endInclusive, region },
+    {
+      enabled: !!region,
+    }
+  );
   const autocompleteFilterOptions = createFilterOptions<
     TrackDataAPIResponse[0]
   >({
@@ -33,7 +36,7 @@ export default function TrackSelect({ filterParams, onAdd }: Props) {
   });
 
   let inputText = "";
-  if (!filterParams.region) {
+  if (!region) {
     inputText = "... then find charting tracks here";
   } else if (tracks.isLoading) {
     inputText = "Loading tracks...";
@@ -52,19 +55,15 @@ export default function TrackSelect({ filterParams, onAdd }: Props) {
   const [key, setKey] = useState(0); // need this hack to force re-render when filterParams.region changes: https://stackoverflow.com/a/59845474/13727176
   useEffect(() => {
     setKey((key) => key + 1);
-  }, [filterParams.region]);
+  }, [region]);
 
   return (
     <div className="flex items-center gap-2">
       <Autocomplete
         key={key}
-        disabled={!filterParams.region}
+        disabled={!region}
         sx={{ width: 400 }}
-        options={
-          filterParams.region && tracks.data
-            ? tracks.data.filter((t) => !filterParams.trackIds?.includes(t.id))
-            : []
-        }
+        options={tracks.data ?? []}
         filterOptions={autocompleteFilterOptions}
         autoHighlight
         getOptionLabel={(option) =>
@@ -108,7 +107,7 @@ export default function TrackSelect({ filterParams, onAdd }: Props) {
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             if (currentTrack) {
-              onAdd(currentTrack.id);
+              addTrackId(currentTrack.id);
               setCurrentTrack(null);
               setKey((key) => key + 1); // need this hack to clear autocomplete
             }
@@ -122,7 +121,7 @@ export default function TrackSelect({ filterParams, onAdd }: Props) {
         endIcon={<AddIcon />}
         onClick={() => {
           if (currentTrack) {
-            onAdd(currentTrack.id);
+            addTrackId(currentTrack.id);
             setCurrentTrack(null);
             setKey((key) => key + 1); // need this hack to clear autocomplete
           }

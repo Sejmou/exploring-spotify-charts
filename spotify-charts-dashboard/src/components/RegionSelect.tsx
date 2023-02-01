@@ -3,31 +3,31 @@ import TextField from "@mui/material/TextField";
 import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
 import type { RouterOutputs } from "../utils/api";
 import { api } from "../utils/api";
+import { useFilterStore } from "../store/filter";
 
-type RegionsAPIResponse = RouterOutputs["regions"]["getAll"];
+type CountriesAPIResponse = RouterOutputs["countries"]["getAll"];
 
-type Props = {
-  value: string | null;
-  onChange: (newRegionName: string | null) => void;
-};
+export default function RegionSelect() {
+  const countries = api.countries.getAll.useQuery(undefined, {
+    staleTime: Infinity,
+  });
 
-export default function RegionSelect({ onChange, value }: Props) {
-  const filterOptions = createFilterOptions<RegionsAPIResponse[0]>({
+  const region = useFilterStore((state) => state.region);
+  const setRegion = useFilterStore((state) => state.setRegion);
+
+  const filterOptions = createFilterOptions<CountriesAPIResponse[0]>({
     matchFrom: "any",
     limit: 100,
   });
 
-  const regions = api.regions.getAll.useQuery(undefined, {
-    staleTime: Infinity,
-  });
-
   return (
     <Autocomplete
-      disabled={!regions.data}
+      disabled={!countries.data}
+      disableClearable={true}
       sx={{ width: 300 }}
       options={
-        regions.data
-          ? [{ name: "Global", geoSubregion: "Worldwide" }, ...regions.data]
+        countries.data
+          ? [{ name: "Global", geoSubregion: "Worldwide" }, ...countries.data]
           : []
       }
       filterOptions={filterOptions}
@@ -43,7 +43,7 @@ export default function RegionSelect({ onChange, value }: Props) {
       renderInput={(params) => (
         <TextField
           {...params}
-          label={!regions.data ? "Loading regions..." : "Select a region..."}
+          label={!countries.data ? "Loading regions..." : "Select a region..."}
           inputProps={{
             ...params.inputProps,
             autoComplete: "new-password", // disable autocomplete and autofill
@@ -51,12 +51,12 @@ export default function RegionSelect({ onChange, value }: Props) {
         />
       )}
       value={
-        value == "Global"
+        region == "Global"
           ? { name: "Global", geoSubregion: "Worldwide" }
-          : regions.data?.find((region) => region.name === value) ?? null
+          : countries.data?.find((r) => r.name === region)
       }
       onChange={(_, newValue) => {
-        onChange(newValue?.name ?? null);
+        setRegion(newValue?.name ?? "Global");
       }}
       isOptionEqualToValue={(option, value) => option.name === value.name}
     />

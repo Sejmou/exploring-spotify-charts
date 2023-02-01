@@ -23,14 +23,14 @@ export const tracksRouter = createTRPCRouter({
               },
               _sum: { streams: true },
             })
-          : await ctx.prisma.regionChartEntry.groupBy({
+          : await ctx.prisma.countryChartEntry.groupBy({
               by: ["trackId"],
               where: {
                 date: {
                   gte: input.startInclusive,
                   lte: input.endInclusive,
                 },
-                region: {
+                country: {
                   name: input.region,
                 },
               },
@@ -74,13 +74,13 @@ export const tracksRouter = createTRPCRouter({
                   },
                 }
               : {
-                  regionChartEntries: {
+                  countryChartEntries: {
                     some: {
                       date: {
                         gte: input.startInclusive,
                         lte: input.endInclusive,
                       },
-                      region: {
+                      country: {
                         name: input.region,
                       },
                     },

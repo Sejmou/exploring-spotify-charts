@@ -1,12 +1,16 @@
-import type { Region } from "@prisma/client";
+import type { Country } from "@prisma/client";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { ComposableMap, Geographies, Geography } from "react-simple-maps";
-import ReactTooltip from "react-tooltip";
+import dynamic from "next/dynamic";
+
+const ReactTooltip = dynamic(() => import("react-tooltip"), {
+  ssr: false,
+});
 
 type Props = {
   data: {
-    country: Region;
+    country: Country;
     value: number;
   }[];
   propName: string;

@@ -1,7 +1,7 @@
 import { createTRPCRouter } from "./trpc";
 import { exampleRouter } from "./routers/example";
 import { tracksRouter } from "./routers/tracks";
-import { regionsRouter } from "./routers/regions";
+import { countriesRouter } from "./routers/countries";
 import { chartsRouter } from "./routers/charts";
 
 /**
@@ -12,7 +12,7 @@ import { chartsRouter } from "./routers/charts";
 export const appRouter = createTRPCRouter({
   example: exampleRouter,
   tracks: tracksRouter,
-  regions: regionsRouter,
+  countries: countriesRouter,
   charts: chartsRouter,
 });
 

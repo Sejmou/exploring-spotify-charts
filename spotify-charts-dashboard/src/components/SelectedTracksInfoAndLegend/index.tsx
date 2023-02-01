@@ -4,20 +4,17 @@ import { divergingColors } from "../../pages/viz";
 import { useState } from "react";
 import { Button, Dialog } from "@mui/material";
 import BasicTrackInfo from "./BasicTrackInfo";
+import { useFilterStore } from "../../store/filter";
 
-type Props = {
-  trackIds: string[];
-  onRemove: (trackId: string) => void;
-  onRemoveAll: () => void;
-  onHide: (trackId: string) => void;
-};
-
-const TracksFilter = ({ trackIds, onRemove, onRemoveAll }: Props) => {
+const SelectedTracksInfoAndLegend = () => {
   const [expanded, setExpanded] = useState(false);
+  const trackIds = useFilterStore((state) => state.trackIds);
+  const removeTrackId = useFilterStore((state) => state.removeTrackId);
+  const clearTrackIds = useFilterStore((state) => state.clearTrackIds);
 
   const tracks = api.tracks.getTrackData.useQuery(
     { trackIds },
-    { enabled: trackIds.length > 0, keepPreviousData: true }
+    { keepPreviousData: true }
   ); // TODO: cleaner solution (useMutation etc.)
 
   if (tracks.status === "loading") {
@@ -30,6 +27,10 @@ const TracksFilter = ({ trackIds, onRemove, onRemoveAll }: Props) => {
 
   const trackData = tracks.data;
 
+  if (trackData.length === 0) {
+    return <div></div>;
+  }
+
   return (
     <div className="flex w-full gap-2">
       <div className="self-center">Tracks:</div>
@@ -39,7 +40,7 @@ const TracksFilter = ({ trackIds, onRemove, onRemoveAll }: Props) => {
             return (
               <BasicTrackInfo
                 key={t.id}
-                onRemove={onRemove}
+                onRemove={removeTrackId}
                 trackId={t.id}
                 color={divergingColors[i] || "white"}
                 artists={t.featuringArtists.map((a) => a.name)}
@@ -85,9 +86,9 @@ const TracksFilter = ({ trackIds, onRemove, onRemoveAll }: Props) => {
         </>
       </div>
       <Button onClick={() => setExpanded((prev) => !prev)}>Details</Button>
-      <Button onClick={() => onRemoveAll()}>Clear All</Button>
+      <Button onClick={clearTrackIds}>Clear All</Button>
     </div>
   );
 };
 
-export default TracksFilter;
+export default SelectedTracksInfoAndLegend;

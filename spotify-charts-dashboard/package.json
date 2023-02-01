@@ -39,7 +39,8 @@
     "react-tooltip": "4.2.21",
     "superjson": "1.9.1",
     "yarn": "^1.22.19",
-    "zod": "^3.20.2"
+    "zod": "^3.20.2",
+    "zustand": "^4.3.2"
   },
   "prisma": {
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"

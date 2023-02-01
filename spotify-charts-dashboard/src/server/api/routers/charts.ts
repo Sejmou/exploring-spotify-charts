@@ -20,10 +20,10 @@ export const chartsRouter = createTRPCRouter({
         };
       }
       const trackIds = input.trackIds;
-      const region =
+      const country =
         input.region && input.region !== "Global" ? input.region : undefined;
-      const trackCharts = region
-        ? await ctx.prisma.regionChartEntry.findMany({
+      const trackCharts = country
+        ? await ctx.prisma.countryChartEntry.findMany({
             where: {
               trackId: {
                 in: trackIds,
@@ -32,8 +32,8 @@ export const chartsRouter = createTRPCRouter({
                 gte: input.startInclusive,
                 lte: input.endInclusive,
               },
-              region: {
-                name: region,
+              country: {
+                name: country,
               },
             },
             orderBy: {
@@ -72,7 +72,7 @@ export const chartsRouter = createTRPCRouter({
 
       console.log("TRACK IDS", trackIds);
 
-      const allDatesWithData = !region
+      const allDatesWithData = !country
         ? await ctx.prisma.globalChartEntry.findMany({
             where: {
               trackId: {
@@ -91,13 +91,13 @@ export const chartsRouter = createTRPCRouter({
             },
             distinct: ["date"],
           })
-        : await ctx.prisma.regionChartEntry.findMany({
+        : await ctx.prisma.countryChartEntry.findMany({
             where: {
               trackId: {
                 in: trackIds,
               },
-              region: {
-                name: region,
+              country: {
+                name: country,
               },
               date: {
                 gte: input.startInclusive,
@@ -186,6 +186,19 @@ export const chartsRouter = createTRPCRouter({
         dateRange: datesFromMinToMax,
       };
     }),
+  getTrackCountsByCountry: publicProcedure.query(async ({ ctx }) => {
+    const trackCountsByCountry = await ctx.prisma.countryChartEntry.groupBy({
+      by: ["countryName"],
+      _count: {
+        trackId: true,
+      },
+    });
+    const countries = await ctx.prisma.country.findMany({});
+    return trackCountsByCountry.map((entry) => ({
+      country: countries.find((c) => c.name === entry.countryName)!,
+      count: entry._count.trackId,
+    }));
+  }),
 });
 
 function groupByTrackId<T extends { trackId: string }>(

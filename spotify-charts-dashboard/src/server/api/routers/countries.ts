@@ -1,8 +1,9 @@
 import { createTRPCRouter, publicProcedure } from "../trpc";
 
-export const regionsRouter = createTRPCRouter({
+export const countriesRouter = createTRPCRouter({
   getAll: publicProcedure.query(async ({ ctx }) => {
-    const regions = await ctx.prisma.region.findMany({
+    console.log("here");
+    const countries = await ctx.prisma.country.findMany({
       select: {
         name: true,
         geoSubregion: true,
@@ -17,6 +18,6 @@ export const regionsRouter = createTRPCRouter({
         { name: "asc" },
       ],
     });
-    return regions;
+    return countries;
   }),
 });

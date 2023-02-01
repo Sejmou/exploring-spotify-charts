@@ -1,5 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
+// NOTE: I am not sure whether this schema works on a fresh database created via the seed script! I think the @@map annotations might have to be deleted as I later renamed the tables in the Prisma schema using this approach without changing the DB
 
 generator client {
     provider        = "prisma-client-js"
@@ -61,54 +62,57 @@ model TrackArtistEntry {
 }
 
 model Track {
-    id                 String             @id @default(cuid())
-    name               String
-    featuringArtists   TrackArtistEntry[]
-    regionChartEntries RegionChartEntry[]
-    globalChartEntries GlobalChartEntry[]
-    explicit           Boolean
-    previewUrl         String?
-    albumId            String
-    album              Album              @relation(fields: [albumId], references: [id])
-    isrc               String
-    isrcYear           Int
-    isrcAgency         String
-    isrcTerritory      String
-    danceability       Float
-    energy             Float
-    key                Float
-    loudness           Float
-    mode               Int
-    speechiness        Float
-    acousticness       Float
-    instrumentalness   Float
-    liveness           Float
-    valence            Float
-    tempo              Float
-    durationMs         Float
-    timeSignature      Int
+    id                  String              @id @default(cuid())
+    name                String
+    featuringArtists    TrackArtistEntry[]
+    countryChartEntries CountryChartEntry[]
+    globalChartEntries  GlobalChartEntry[]
+    explicit            Boolean
+    previewUrl          String?
+    albumId             String
+    album               Album               @relation(fields: [albumId], references: [id])
+    isrc                String
+    isrcYear            Int
+    isrcAgency          String
+    isrcTerritory       String
+    danceability        Float
+    energy              Float
+    key                 Float
+    loudness            Float
+    mode                Int
+    speechiness         Float
+    acousticness        Float
+    instrumentalness    Float
+    liveness            Float
+    valence             Float
+    tempo               Float
+    durationMs          Float
+    timeSignature       Int
 }
 
-model Region {
-    name         String             @id @default(cuid())
+model Country {
+    name         String              @id @default(cuid())
     isoAlpha3    String
     isoAlpha2    String
     geoRegion    String
     geoSubregion String
-    chartEntries RegionChartEntry[]
+    chartEntries CountryChartEntry[]
+
+    @@map("Region") // every Spotify Region that is not the Global region is actually a Country, so this should be called Country, but I realized later and don't want to break my existing DB for now lol
 }
 
-model RegionChartEntry {
-    id         String   @id @default(cuid())
-    region     Region   @relation(fields: [regionName], references: [name])
-    regionName String
-    track      Track    @relation(fields: [trackId], references: [id])
-    trackId    String
-    date       DateTime
-    rank       Int
-    streams    Float
+model CountryChartEntry {
+    id          String   @id @default(cuid())
+    country     Country  @relation(fields: [countryName], references: [name])
+    countryName String   @map("regionName")
+    track       Track    @relation(fields: [trackId], references: [id])
+    trackId     String
+    date        DateTime
+    rank        Int
+    streams     Float
 
-    @@unique([regionName, trackId, date], name: "chartEntryId")
+    @@unique([countryName, trackId, date], name: "chartEntryId")
+    @@map("RegionChartEntry") // should have been named CountryChartEntry from the start, but I realized later and don't want to break my existing DB for now - note also that this has nothing to do with the Country genre lol
 }
 
 model GlobalChartEntry {
