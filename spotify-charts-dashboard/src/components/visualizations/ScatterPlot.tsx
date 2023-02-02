@@ -18,11 +18,13 @@ type Props = {
   }[];
   xAttr: string;
   yAttr: string;
+  className?: string;
 };
 
 export default function ScatterPlot(props: Props) {
   return (
     <Scatter
+      className={props.className}
       options={{
         responsive: true,
         maintainAspectRatio: false,

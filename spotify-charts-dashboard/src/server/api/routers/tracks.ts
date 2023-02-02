@@ -156,10 +156,18 @@ export const tracksRouter = createTRPCRouter({
           );
           const artists = artistsSorted.map((entry) => entry.artist);
           const genres = artists.flatMap((artist) => {
-            // necessary workaround as artist genres are stored as a stringified JSON array in the database
-            return z
-              .array(z.string())
-              .parse(JSON.parse(artist.genres.replace(/'/g, '"'))); // need to convert single to double quotes as I f*cked up when I created the database (should have stored strings in JSON array with double quotes -> otherwise invalid JSON)
+            // necessary workaround as artist genres are stored as a stringified JSON array in the database (SQL does not support string arrays)
+            const { genres, error } = parseGenreJSONStringArray(artist.genres);
+            if (error) {
+              console.log(
+                "could not parse all artist genres for track",
+                track.id
+              );
+              console.log("error parsing genres for artist: ", {
+                artist,
+              });
+            }
+            return genres;
           });
           const genresNoDuplicates = genres.reduce((acc, curr) => {
             if (!acc.includes(curr)) {
@@ -182,7 +190,73 @@ export const tracksRouter = createTRPCRouter({
           (a, b) => input.trackIds.indexOf(a.id) - input.trackIds.indexOf(b.id)
         );
     }),
-  getTrackData: publicProcedure
+  getTrackData: publicProcedure.query(async ({ ctx, input }) => {
+    const tracks = await ctx.prisma.track.findMany({
+      select: {
+        id: true,
+        name: true,
+        speechiness: true,
+        acousticness: true,
+        danceability: true,
+        energy: true,
+        instrumentalness: true,
+        liveness: true,
+        loudness: true,
+        tempo: true,
+        valence: true,
+        timeSignature: true,
+        key: true,
+        featuringArtists: {
+          select: {
+            artist: {
+              select: {
+                id: true,
+                name: true,
+                genres: true,
+              },
+            },
+            rank: true,
+          },
+        },
+        album: {
+          select: {
+            releaseDate: true,
+          },
+        },
+      },
+    });
+    console.log("tracks", tracks);
+    return tracks.map((track) => {
+      const artistsSorted = track.featuringArtists.sort(
+        (a, b) => a.rank - b.rank
+      );
+      const artists = artistsSorted.map((entry) => entry.artist);
+      const genres = artists.flatMap((artist) => {
+        // necessary workaround as artist genres are stored as a stringified JSON array in the database (SQL does not support string arrays)
+        const { genres, error } = parseGenreJSONStringArray(artist.genres);
+        if (error) {
+          console.log("could not parse all artist genres for track", track.id);
+          console.log("error parsing genres for artist: ", {
+            artist,
+          });
+        }
+        return genres;
+      });
+      const genresNoDuplicates = genres.reduce((acc, curr) => {
+        if (!acc.includes(curr)) {
+          acc.push(curr);
+        }
+        return acc;
+      }, [] as string[]);
+      const { album, ...stuffToKeep } = track;
+      return {
+        ...stuffToKeep,
+        genres: genresNoDuplicates,
+        releaseDate: album.releaseDate,
+      };
+    });
+  }),
+  getTrackIdsMatchingFilter: publicProcedure
     .input(
       z.object({
         startInclusive: z.date().optional(),
@@ -193,10 +267,8 @@ export const tracksRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const trackIds = input.countryNames
         ? (
-            await ctx.prisma.countryChartEntry.findMany({
-              select: {
-                trackId: true,
-              },
+            await ctx.prisma.countryChartEntry.groupBy({
+              by: ["trackId"],
               where: {
                 date: {
                   gte: input.startInclusive,
@@ -215,81 +287,23 @@ export const tracksRouter = createTRPCRouter({
               },
             })
           ).map((t) => t.id);
-
-      const tracks = await ctx.prisma.track.findMany({
-        select: {
-          id: true,
-          name: true,
-          speechiness: true,
-          acousticness: true,
-          danceability: true,
-          energy: true,
-          instrumentalness: true,
-          liveness: true,
-          loudness: true,
-          tempo: true,
-          valence: true,
-          timeSignature: true,
-          key: true,
-          // featuringArtists: {
-          //   select: {
-          //     artist: {
-          //       select: {
-          //         name: true,
-          //         //  genres: true // BROKEN :/
-          //       },
-          //     },
-          //     rank: true,
-          //   },
-          // },
-          album: {
-            select: {
-              //   name: true,
-              //   type: true,
-              //   thumbnailUrl: true,
-              releaseDate: true,
-              // label: true,
-            },
-          },
-        },
-        where: {
-          id: {
-            in: trackIds,
-          },
-        },
-      });
-      return tracks
-        .map((track) => {
-          // genres are BROKEN :/
-          // const artistsSorted = track.featuringArtists.sort(
-          //   (a, b) => a.rank - b.rank
-          // );
-          // const artists = artistsSorted.map((entry) => entry.artist);
-          // const genres = artists.flatMap((artist) => {
-          //   console.log(artist.genres);
-          //   // necessary workaround as artist genres are stored as a stringified JSON array in the database
-          //   return z
-          //     .array(z.string())
-          //     .parse(
-          //       JSON.parse(
-          //         artist.genres
-          //           .replace(`"children's music"`, "'childrens music'")
-          //           .replace(/'/g, '"')
-          //       )
-          //     ); // need to convert single to double quotes as I f*cked up when I created the database (should have stored strings in JSON array with double quotes -> otherwise invalid JSON)
-          // });
-          // const genresNoDuplicates = genres.reduce((acc, curr) => {
-          //   if (!acc.includes(curr)) {
-          //     acc.push(curr);
-          //   }
-          //   return acc;
-          // }, [] as string[]);
-          const { album, ...stuffToKeep } = track;
-          return {
-            ...stuffToKeep,
-            // genres: genresNoDuplicates,
-          };
-        })
-        .sort((a, b) => trackIds.indexOf(a.id) - trackIds.indexOf(b.id));
+      return trackIds;
     }),
 });
+
+function parseGenreJSONStringArray(genreString: string) {
+  const genres = [];
+  let error = false;
+  try {
+    const parsedGenres = z
+      .array(z.string())
+      .parse(JSON.parse(genreString.replace(/'/g, '"')));
+    // need to convert single to double quotes as I f*cked up when I created the database (should have stored strings in JSON array with double quotes -> otherwise invalid JSON)
+    // sometimes the genres are still invalid JSON (e.g. `["children's music", 'kindermusik']` instead of `["children's music", "kindermusik"]` - haven't found way around this yet
+    // TODO: fix this
+    genres.push(...parsedGenres);
+  } catch {
+    error = true;
+  }
+  return { genres, error };
+}
