@@ -113,7 +113,7 @@ export const tracksRouter = createTRPCRouter({
 
       return trackArtistsAndNamesWithStreams;
     }),
-  getTrackData: publicProcedure
+  getTrackDataForIds: publicProcedure
     .input(
       z.object({
         trackIds: z.array(z.string()),
@@ -181,5 +181,115 @@ export const tracksRouter = createTRPCRouter({
         .sort(
           (a, b) => input.trackIds.indexOf(a.id) - input.trackIds.indexOf(b.id)
         );
+    }),
+  getTrackData: publicProcedure
+    .input(
+      z.object({
+        startInclusive: z.date().optional(),
+        endInclusive: z.date().optional(),
+        countryNames: z.array(z.string()).optional(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const trackIds = input.countryNames
+        ? (
+            await ctx.prisma.countryChartEntry.findMany({
+              select: {
+                trackId: true,
+              },
+              where: {
+                date: {
+                  gte: input.startInclusive,
+                  lte: input.endInclusive,
+                },
+                countryName: {
+                  in: input.countryNames,
+                },
+              },
+            })
+          ).map((t) => t.trackId)
+        : (
+            await ctx.prisma.track.findMany({
+              select: {
+                id: true,
+              },
+            })
+          ).map((t) => t.id);
+
+      const tracks = await ctx.prisma.track.findMany({
+        select: {
+          id: true,
+          name: true,
+          speechiness: true,
+          acousticness: true,
+          danceability: true,
+          energy: true,
+          instrumentalness: true,
+          liveness: true,
+          loudness: true,
+          tempo: true,
+          valence: true,
+          timeSignature: true,
+          key: true,
+          // featuringArtists: {
+          //   select: {
+          //     artist: {
+          //       select: {
+          //         name: true,
+          //         //  genres: true // BROKEN :/
+          //       },
+          //     },
+          //     rank: true,
+          //   },
+          // },
+          album: {
+            select: {
+              //   name: true,
+              //   type: true,
+              //   thumbnailUrl: true,
+              releaseDate: true,
+              // label: true,
+            },
+          },
+        },
+        where: {
+          id: {
+            in: trackIds,
+          },
+        },
+      });
+      return tracks
+        .map((track) => {
+          // genres are BROKEN :/
+          // const artistsSorted = track.featuringArtists.sort(
+          //   (a, b) => a.rank - b.rank
+          // );
+          // const artists = artistsSorted.map((entry) => entry.artist);
+          // const genres = artists.flatMap((artist) => {
+          //   console.log(artist.genres);
+          //   // necessary workaround as artist genres are stored as a stringified JSON array in the database
+          //   return z
+          //     .array(z.string())
+          //     .parse(
+          //       JSON.parse(
+          //         artist.genres
+          //           .replace(`"children's music"`, "'childrens music'")
+          //           .replace(/'/g, '"')
+          //       )
+          //     ); // need to convert single to double quotes as I f*cked up when I created the database (should have stored strings in JSON array with double quotes -> otherwise invalid JSON)
+          // });
+          // const genresNoDuplicates = genres.reduce((acc, curr) => {
+          //   if (!acc.includes(curr)) {
+          //     acc.push(curr);
+          //   }
+          //   return acc;
+          // }, [] as string[]);
+          const { album, ...stuffToKeep } = track;
+          return {
+            ...stuffToKeep,
+            // genres: genresNoDuplicates,
+          };
+        })
+        .sort((a, b) => trackIds.indexOf(a.id) - trackIds.indexOf(b.id));
     }),
 });

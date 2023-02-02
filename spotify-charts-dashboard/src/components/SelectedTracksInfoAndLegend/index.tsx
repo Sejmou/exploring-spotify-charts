@@ -12,7 +12,7 @@ const SelectedTracksInfoAndLegend = () => {
   const removeTrackId = useFilterStore((state) => state.removeTrackId);
   const clearTrackIds = useFilterStore((state) => state.clearTrackIds);
 
-  const tracks = api.tracks.getTrackData.useQuery(
+  const tracks = api.tracks.getTrackDataForIds.useQuery(
     { trackIds },
     { keepPreviousData: true }
   ); // TODO: cleaner solution (useMutation etc.)

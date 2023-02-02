@@ -51,7 +51,7 @@ export default function TrackComparison({ onSwitchView }: Props) {
           <DateRangeFilter />
           <RegionSelect />
           <TrackSelect />
-          <div className="self-center">
+          <div className="ml-auto self-center">
             <Button onClick={onSwitchView}>Switch View</Button>
           </div>
         </div>

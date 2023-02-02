@@ -3,8 +3,8 @@ import type {
   Track,
   Album,
   AlbumArtistEntry,
-  Region,
-  RegionChartEntry,
+  Country,
+  CountryChartEntry,
 } from "@prisma/client";
 import { PrismaClient } from "@prisma/client";
 import { promises as fs } from "fs";
@@ -114,17 +114,17 @@ async function main() {
   );
   console.log("inserted", albumArtists.length, "album-artist entries");
 
-  const regions = await getSeedData<Region>("regions.json");
-  for (const region of regions) {
-    await prisma.region.upsert({
-      where: { name: region.name },
+  const countries = await getSeedData<Country>("regions.json"); // regions.json is actually a list of countries lol sorry
+  for (const country of countries) {
+    await prisma.country.upsert({
+      where: { name: country.name },
       update: {},
-      create: region,
+      create: country,
     });
   }
-  console.log("inserted metadata for", regions.length, "Spotify regions");
+  console.log("inserted metadata for", countries.length, "Spotify regions");
 
-  const top50 = await getSeedData<RegionChartEntry>("top50.json");
+  const top50 = await getSeedData<CountryChartEntry>("top50.json");
   const chunks = createChunks(top50, 10000);
   let i = 0;
   for (const chunk of chunks) {
@@ -132,8 +132,8 @@ async function main() {
     await prisma.$transaction(
       chunk.map((chartEntry) => {
         chartEntry.date = new Date(chartEntry.date);
-        if (chartEntry.regionName === "Global") {
-          const { regionName, ...globalChartEntry } = chartEntry;
+        if (chartEntry.countryName === "Global") {
+          const { countryName, ...globalChartEntry } = chartEntry;
           return prisma.globalChartEntry.upsert({
             where: {
               chartEntryId: {
@@ -145,11 +145,11 @@ async function main() {
             create: globalChartEntry,
           });
         }
-        return prisma.regionChartEntry.upsert({
+        return prisma.countryChartEntry.upsert({
           where: {
             chartEntryId: {
               trackId: chartEntry.trackId,
-              regionName: chartEntry.regionName,
+              countryName: chartEntry.countryName,
               date: chartEntry.date,
             },
           },
