@@ -3,12 +3,37 @@ import { color } from "d3";
 import { useFilterStore } from "../../store/filter";
 import { api } from "../../utils/api";
 import ScatterPlot from "./ScatterPlot";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import type { RouterOutputs } from "../../utils/api";
+import BasicSelect from "../BasicSelect";
+import { capitalizeFirstLetter } from "../../utils/misc";
 
 function randomSubset<T>(array: T[], size: number) {
   const shuffled = array.sort(() => 0.5 - Math.random());
   return shuffled.slice(0, size);
 }
+
+type PickByType<T, Value> = {
+  [P in keyof T as T[P] extends Value | undefined ? P : never]: T[P];
+};
+
+type TrackAttribute = keyof PickByType<
+  RouterOutputs["tracks"]["getTrackData"][0],
+  number
+>;
+
+const attributeOptions: TrackAttribute[] = [
+  "acousticness",
+  "danceability",
+  "energy",
+  "instrumentalness",
+  "liveness",
+  "loudness",
+  "acousticness",
+  "speechiness",
+  "tempo",
+  "valence",
+];
 
 const pointColorObj = color("#1ED760")!;
 pointColorObj.opacity = 0.2;
@@ -24,6 +49,9 @@ const SpotifyTrackDataScatterPlot = () => {
     { countryNames },
     { staleTime: Infinity, keepPreviousData: true }
   );
+
+  const [xAttr, setXAttr] = useState<TrackAttribute>("danceability");
+  const [yAttr, setYAttr] = useState<TrackAttribute>("energy");
 
   console.log({
     trackData: tracks.data,
@@ -43,27 +71,67 @@ const SpotifyTrackDataScatterPlot = () => {
     return <div>Error loading data, please try refreshing the page.</div>;
   }
 
-  return tracks.isStale || tracks.isLoading ? (
-    <div className="flex h-full w-full flex-col items-center justify-center gap-2">
-      <span>{tracks.isLoading && "Loading data..."}</span>
-      <CircularProgress />
-    </div>
-  ) : (
-    <ScatterPlot
-      datasets={[
-        {
-          data: plotTracks.map((track) => {
-            return {
-              x: track.energy,
-              y: track.danceability,
-            };
-          }),
-          backgroundColor: pointColor,
-        },
-      ]}
-      xAttr="Energy"
-      yAttr="Danceability"
-    />
+  const plotArea =
+    tracks.isStale || tracks.isLoading ? (
+      <div className="flex h-full w-full flex-col items-center justify-center gap-2">
+        <span>{tracks.isLoading && "Loading data..."}</span>
+        <CircularProgress />
+      </div>
+    ) : (
+      <ScatterPlot
+        datasets={[
+          {
+            data: plotTracks.map((track) => {
+              return {
+                x: track[xAttr],
+                y: track[yAttr],
+              };
+            }),
+            backgroundColor: pointColor,
+          },
+        ]}
+        xAttr={capitalizeFirstLetter(xAttr)}
+        yAttr={capitalizeFirstLetter(yAttr)}
+      />
+    );
+
+  return (
+    <>
+      <div>
+        <h2 className="mb-2 text-3xl font-bold">Explore relationships</h2>
+        <p className="my-2">
+          This scatterplot contains all the tracks in the dataset matching the
+          filter criteria (for now, only country filtering is supported).
+        </p>
+        <div className="flex w-full gap-2">
+          <BasicSelect
+            className="w-full"
+            label="x-axis attribute"
+            value={xAttr}
+            onChange={(newValue: string) =>
+              setXAttr(newValue as TrackAttribute)
+            }
+            options={attributeOptions.map((o) => ({
+              value: o,
+              label: capitalizeFirstLetter(o),
+            }))}
+          />
+          <BasicSelect
+            className="w-full"
+            label="y-axis attribute"
+            value={yAttr}
+            onChange={(newValue: string) =>
+              setYAttr(newValue as TrackAttribute)
+            }
+            options={attributeOptions.map((o) => ({
+              value: o,
+              label: capitalizeFirstLetter(o),
+            }))}
+          />
+        </div>
+      </div>
+      <div className="row-span-5">{plotArea}</div>
+    </>
   );
 };
 

@@ -11,6 +11,7 @@ type Props = {
   value?: string;
   onChange: (newValue: string) => void;
   options: { value: string; label: string }[];
+  className?: string;
 };
 
 export default function BasicSelect(props: Props) {
@@ -19,7 +20,7 @@ export default function BasicSelect(props: Props) {
   };
 
   return (
-    <Box sx={{ minWidth: 120 }}>
+    <div className={props.className || ""} style={{ minWidth: 120 }}>
       <FormControl fullWidth>
         <InputLabel>{props.label}</InputLabel>
         <Select value={props.value} label={props.label} onChange={handleChange}>
@@ -30,6 +31,6 @@ export default function BasicSelect(props: Props) {
           ))}
         </Select>
       </FormControl>
-    </Box>
+    </div>
   );
 }

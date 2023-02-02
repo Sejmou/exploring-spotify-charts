@@ -42,9 +42,9 @@ const SpotifyCountrySelectWorldMap = (props: Props) => {
         viewBox={calculateSVGZoomedViewBox({
           // viewBox is 0 0 800 600 per default, which should kinda correspond with width of 800 and height of 600?
           width: 800,
-          height: 600,
+          height: 430,
           xOrigin: 0,
-          yOrigin: -100, // -100 to center the map
+          yOrigin: -2000, // -100 to center the map
           zoom: 1.3 * (props.mapZoom ?? 1), // if zooming 30% further into original map it fills the SVG pretty well
         })}
       >

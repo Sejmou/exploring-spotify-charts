@@ -29,6 +29,23 @@ const CountrySelection = () => {
       />
     );
   }
-  return countryMap;
+  return (
+    <>
+      <div className="max-h-96 py-2 px-4">
+        <h3 className="text-xl font-bold">Filter by region</h3>
+        <p>
+          Click on any number of countries. The scatter plot will be filtered to
+          only include tracks that charted in that country. Otherwise, tracks
+          charting in any chart (including global) will be included.
+        </p>
+        <p className="mt-2 text-sm">
+          {countryNames
+            ? "Filtering for tracks charting in: " + countryNames.join(", ")
+            : "(no countries selected)"}
+        </p>
+      </div>
+      {countryMap}
+    </>
+  );
 };
 export default CountrySelection;
