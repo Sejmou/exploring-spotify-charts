@@ -1,5 +1,5 @@
 import { Button } from "@mui/material";
-import CountrySelection from "../CountrySelection";
+import CountriesFilter from "../CountriesFilter";
 import SpotifyTrackDataScatterPlot from "../visualizations/SpotifyTrackDataScatterPlot";
 
 type Props = {
@@ -26,7 +26,7 @@ const TrackDataExploration = ({ onSwitchView }: Props) => {
         <div>
           <div></div>
           <div>
-            <CountrySelection />
+            <CountriesFilter />
           </div>
           {/* <div>Filter by genres</div> */}
         </div>

@@ -3,7 +3,7 @@ import { api } from "../../utils/api";
 import ChoroplethWorld from "../visualizations/ChoroplethWorld";
 import SpotifyCountrySelectWorldMap from "./SpotifyCountrySelectWorldMap";
 
-const CountrySelection = () => {
+const CountriesFilter = () => {
   const countryNames = useFilterStore((state) => state.countryNames);
   const addCountryName = useFilterStore((state) => state.addCountryName);
   const removeCountryName = useFilterStore((state) => state.removeCountryName);
@@ -32,7 +32,7 @@ const CountrySelection = () => {
   return (
     <>
       <div className="max-h-96 py-2 px-4">
-        <h3 className="text-xl font-bold">Filter by region</h3>
+        <h3 className="text-xl font-bold">Filter by country/countries</h3>
         <p>
           Click on any number of countries. The scatter plot will be filtered to
           only include tracks that charted in that country. Otherwise, tracks
@@ -48,4 +48,4 @@ const CountrySelection = () => {
     </>
   );
 };
-export default CountrySelection;
+export default CountriesFilter;
