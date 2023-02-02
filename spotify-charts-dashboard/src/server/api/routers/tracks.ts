@@ -206,6 +206,7 @@ export const tracksRouter = createTRPCRouter({
         valence: true,
         timeSignature: true,
         key: true,
+        durationMs: true,
         featuringArtists: {
           select: {
             artist: {
