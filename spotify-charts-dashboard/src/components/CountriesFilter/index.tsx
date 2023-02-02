@@ -34,9 +34,9 @@ const CountriesFilter = () => {
       <div className="max-h-96 py-2 px-4">
         <h3 className="text-xl font-bold">Filter by country/countries</h3>
         <p>
-          Click on any number of countries. The scatter plot will be filtered to
-          only include tracks that charted in that country. Otherwise, tracks
-          charting in any chart (including global) will be included.
+          Click on any country. The scatter plot will be filtered to only
+          include tracks that charted in the countries you selected. Otherwise,
+          tracks charting in any chart (including global) will be included.
         </p>
         <p className="mt-2 text-sm">
           {countryNames

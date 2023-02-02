@@ -3,10 +3,11 @@ import { color } from "d3";
 import { useFilterStore } from "../../store/filter";
 import { api } from "../../utils/api";
 import ScatterPlot from "./ScatterPlot";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { RouterOutputs } from "../../utils/api";
 import BasicSelect from "../BasicSelect";
 import { capitalizeFirstLetter, truncate } from "../../utils/misc";
+import { useTrackDataExplorationStore } from "../../store/trackDataExploration";
 
 function randomSubset<T>(array: T[], size: number) {
   const shuffled = array.sort(() => 0.5 - Math.random());
@@ -50,22 +51,29 @@ const SpotifyTrackDataScatterPlot = () => {
     { staleTime: Infinity, keepPreviousData: true }
   );
 
+  const trackData = useTrackDataExplorationStore((state) => state.trackData);
+  const setTrackData = useTrackDataExplorationStore(
+    (state) => state.setTrackData
+  );
+
   const [xAttr, setXAttr] = useState<TrackAttribute>("danceability");
   const [yAttr, setYAttr] = useState<TrackAttribute>("energy");
 
   console.log({
-    trackData: tracks.data,
+    allTrackData: tracks.data,
     filteredTrackIds: filteredTrackIds.data,
   });
 
-  const plotTracks = useMemo(() => {
-    return tracks.data && filteredTrackIds.data
-      ? randomSubset(
-          tracks.data.filter((t) => filteredTrackIds.data.includes(t.id)),
-          3000
-        )
-      : []; // cannot plot all tracks as it will be too slow
-  }, [tracks.data, filteredTrackIds.data]);
+  useEffect(() => {
+    setTrackData(
+      tracks.data && filteredTrackIds.data
+        ? randomSubset(
+            tracks.data.filter((t) => filteredTrackIds.data.includes(t.id)),
+            3000
+          )
+        : []
+    ); // cannot plot all tracks as it will be too slow
+  }, [tracks.data, filteredTrackIds.data, setTrackData]);
 
   if (tracks.isError) {
     return <div>Error loading data, please try refreshing the page.</div>;
@@ -81,7 +89,7 @@ const SpotifyTrackDataScatterPlot = () => {
       <ScatterPlot
         datasets={[
           {
-            data: plotTracks.map((track) => {
+            data: trackData.map((track) => {
               return {
                 x: track[xAttr],
                 y: track[yAttr],
@@ -93,16 +101,17 @@ const SpotifyTrackDataScatterPlot = () => {
         xAttr={capitalizeFirstLetter(xAttr)}
         yAttr={capitalizeFirstLetter(yAttr)}
         getLabel={(_, dataIdx) => {
-          const trackData = plotTracks[dataIdx];
-          if (!trackData) {
+          const dataForTrack = trackData[dataIdx];
+          if (!dataForTrack) {
             return "";
           }
           return [
-            `"${truncate(trackData.name, 30)}"`,
+            `"${truncate(dataForTrack.name, 30)}"`,
             `by ${truncate(
-              trackData.featuringArtists[0]?.artist.name ?? "Unknown Artist",
+              dataForTrack.featuringArtists[0]?.artist.name ?? "Unknown Artist",
               30
             )}`,
+            `${dataForTrack.genres[0] ?? "Unknown Genre"}`,
           ];
         }}
       />
