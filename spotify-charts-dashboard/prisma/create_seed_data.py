@@ -86,15 +86,20 @@ store_and_print_info(track_artists, "track_artists")
 top50 = (
     pd.read_csv(get_data_path("top50.csv"))
     .sort_values(["date", "region"])
-    .rename(columns={"id": "trackId", "region": "regionName"})
+    .rename(columns={"id": "trackId", "region": "countryName"})
 )
 top50_filtered = top50[top50.trackId.isin(tracks_filtered.id)]
-store_and_print_info(top50_filtered, "top50")
+top50_global = top50_filtered[top50_filtered.countryName == "global"].drop(
+    columns=["countryName"]
+)
+store_and_print_info(top50_global, "top50_global")
+top50_countries = top50_filtered[top50_filtered.countryName != "global"]
+store_and_print_info(top50_countries, "top50_countries")
 
-regions = pd.read_csv(get_data_path("spotify_region_metadata.csv")).rename(
+countries = pd.read_csv(get_data_path("spotify_region_metadata.csv")).rename(
     columns={"spotify_region": "name"}
 )
-store_and_print_info(regions, "regions")
+store_and_print_info(countries, "countries")
 
 # %%
 # get album data

@@ -1,14 +1,12 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
-// NOTE: I am not sure whether this schema works on a fresh database created via the seed script! I think the @@map annotations might have to be deleted as I later renamed the tables in the Prisma schema using this approach without changing the DB
 
 generator client {
-    provider        = "prisma-client-js"
-    previewFeatures = ["filteredRelationCount"]
+    provider = "prisma-client-js"
 }
 
 datasource db {
-    provider = "sqlite"
+    provider = "postgresql"
     url      = env("DATABASE_URL")
 }
 
@@ -21,7 +19,7 @@ model Example {
 model Artist {
     id           String             @id @default(cuid())
     name         String
-    genres       String
+    genres       String[]
     imgUrl       String?
     thumbnailUrl String?
     tracks       TrackArtistEntry[]
@@ -97,14 +95,12 @@ model Country {
     geoRegion    String
     geoSubregion String
     chartEntries CountryChartEntry[]
-
-    @@map("Region") // every Spotify Region that is not the Global region is actually a Country, so this should be called Country, but I realized later and don't want to break my existing DB for now lol
 }
 
 model CountryChartEntry {
     id          String   @id @default(cuid())
     country     Country  @relation(fields: [countryName], references: [name])
-    countryName String   @map("regionName")
+    countryName String
     track       Track    @relation(fields: [trackId], references: [id])
     trackId     String
     date        DateTime
@@ -112,7 +108,6 @@ model CountryChartEntry {
     streams     Float
 
     @@unique([countryName, trackId, date], name: "chartEntryId")
-    @@map("RegionChartEntry") // should have been named CountryChartEntry from the start, but I realized later and don't want to break my existing DB for now - note also that this has nothing to do with the Country genre lol
 }
 
 model GlobalChartEntry {

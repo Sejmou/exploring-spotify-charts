@@ -5,6 +5,7 @@ import type {
   AlbumArtistEntry,
   Country,
   CountryChartEntry,
+  GlobalChartEntry,
 } from "@prisma/client";
 import { PrismaClient } from "@prisma/client";
 import { promises as fs } from "fs";
@@ -17,7 +18,10 @@ const seedDataDir = path.join(__dirname, "seed-data");
 
 async function getSeedData<T>(filename: string) {
   const file = await fs.readFile(path.join(seedDataDir, filename), "utf-8");
-  return JSON.parse(file) as T[];
+  const elements = JSON.parse(file) as T[];
+  console.log("read", elements.length, "elements from", filename);
+  console.log("first element:", elements[0]);
+  return elements;
 }
 
 function createChunks<T>(array: T[], chunkSize: number) {
@@ -38,7 +42,7 @@ async function main() {
         update: {},
         create: {
           ...artist,
-          genres: JSON.stringify(artist.genres), // genres is actually a string array in the JSON file, but we can't store string arrays in SQLite :/
+          genres: artist.genres,
         },
       })
     )
@@ -60,6 +64,26 @@ async function main() {
     })
   );
   console.log("inserted", albums.length, "albums");
+
+  const albumArtists = await getSeedData<AlbumArtistEntry>(
+    "album_artists.json"
+  );
+
+  await prisma.$transaction(
+    albumArtists.map((feature) => {
+      return prisma.albumArtistEntry.upsert({
+        where: {
+          albumFeatureId: {
+            artistId: feature.artistId,
+            albumId: feature.albumId,
+          },
+        },
+        update: {},
+        create: feature,
+      });
+    })
+  );
+  console.log("inserted", albumArtists.length, "album-artist entries");
 
   const tracks = await getSeedData<Track>("tracks.json");
   await prisma.$transaction(
@@ -94,27 +118,7 @@ async function main() {
   );
   console.log("inserted", tracksAndArtists.length, "track-artist entries");
 
-  const albumArtists = await getSeedData<AlbumArtistEntry>(
-    "album_artists.json"
-  );
-
-  await prisma.$transaction(
-    albumArtists.map((feature) => {
-      return prisma.albumArtistEntry.upsert({
-        where: {
-          albumFeatureId: {
-            artistId: feature.artistId,
-            albumId: feature.albumId,
-          },
-        },
-        update: {},
-        create: feature,
-      });
-    })
-  );
-  console.log("inserted", albumArtists.length, "album-artist entries");
-
-  const countries = await getSeedData<Country>("regions.json"); // regions.json is actually a list of countries lol sorry
+  const countries = await getSeedData<Country>("countries.json"); // regions.json is actually a list of countries lol sorry
   for (const country of countries) {
     await prisma.country.upsert({
       where: { name: country.name },
@@ -124,27 +128,16 @@ async function main() {
   }
   console.log("inserted metadata for", countries.length, "Spotify regions");
 
-  const top50 = await getSeedData<CountryChartEntry>("top50.json");
-  const chunks = createChunks(top50, 10000);
+  const top50Countries = await getSeedData<CountryChartEntry>(
+    "top50_countries.json"
+  );
+  const chunks = createChunks(top50Countries, 10000);
   let i = 0;
   for (const chunk of chunks) {
     console.log("processing chart data chunk", ++i, "of", chunks.length);
     await prisma.$transaction(
       chunk.map((chartEntry) => {
         chartEntry.date = new Date(chartEntry.date);
-        if (chartEntry.countryName === "Global") {
-          const { countryName, ...globalChartEntry } = chartEntry;
-          return prisma.globalChartEntry.upsert({
-            where: {
-              chartEntryId: {
-                trackId: globalChartEntry.trackId,
-                date: globalChartEntry.date,
-              },
-            },
-            update: {},
-            create: globalChartEntry,
-          });
-        }
         return prisma.countryChartEntry.upsert({
           where: {
             chartEntryId: {
@@ -159,7 +152,30 @@ async function main() {
       })
     );
   }
-  console.log("inserted", top50.length, "chart entries");
+  console.log("inserted", top50Countries.length, "country chart entries");
+
+  const top50Global = await getSeedData<GlobalChartEntry>("top50_global.json");
+  const globalChunks = createChunks(top50Global, 10000);
+  i = 0;
+  for (const chunk of globalChunks) {
+    console.log("processing chart data chunk", ++i, "of", globalChunks.length);
+    await prisma.$transaction(
+      chunk.map((chartEntry) => {
+        chartEntry.date = new Date(chartEntry.date);
+        return prisma.globalChartEntry.upsert({
+          where: {
+            chartEntryId: {
+              trackId: chartEntry.trackId,
+              date: chartEntry.date,
+            },
+          },
+          update: {},
+          create: chartEntry,
+        });
+      })
+    );
+  }
+  console.log("inserted", top50Global.length, "global chart entries");
 }
 
 main()
