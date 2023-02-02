@@ -71,6 +71,17 @@ export default function RadarChart({ data }: Props) {
           legend: {
             display: false,
           },
+          tooltip: {
+            callbacks: {
+              labelColor: function (context) {
+                const color = context.dataset.borderColor as string;
+                return {
+                  borderColor: color,
+                  backgroundColor: color,
+                };
+              },
+            },
+          },
         },
         scales: {
           r: {

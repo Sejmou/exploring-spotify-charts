@@ -6,7 +6,7 @@ import ScatterPlot from "./ScatterPlot";
 import { useMemo, useState } from "react";
 import type { RouterOutputs } from "../../utils/api";
 import BasicSelect from "../BasicSelect";
-import { capitalizeFirstLetter } from "../../utils/misc";
+import { capitalizeFirstLetter, truncate } from "../../utils/misc";
 
 function randomSubset<T>(array: T[], size: number) {
   const shuffled = array.sort(() => 0.5 - Math.random());
@@ -92,6 +92,19 @@ const SpotifyTrackDataScatterPlot = () => {
         ]}
         xAttr={capitalizeFirstLetter(xAttr)}
         yAttr={capitalizeFirstLetter(yAttr)}
+        getLabel={(_, dataIdx) => {
+          const trackData = plotTracks[dataIdx];
+          if (!trackData) {
+            return "";
+          }
+          return [
+            `"${truncate(trackData.name, 30)}"`,
+            `by ${truncate(
+              trackData.featuringArtists[0]?.artist.name ?? "Unknown Artist",
+              30
+            )}`,
+          ];
+        }}
       />
     );
 
