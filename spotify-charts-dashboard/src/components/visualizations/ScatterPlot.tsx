@@ -9,16 +9,14 @@ import {
 import { color, extent } from "d3";
 import { useRef } from "react";
 import { Scatter } from "react-chartjs-2";
-import ZoomPlugin from "chartjs-plugin-zoom";
 
-ChartJS.register(
-  LinearScale,
-  PointElement,
-  LineElement,
-  Tooltip,
-  Legend,
-  ZoomPlugin
-);
+ChartJS.register(LinearScale, PointElement, LineElement, Tooltip, Legend);
+// need to register zoom plugin as well, however import would fail with NextJS SSR as window is not defined
+if (typeof window !== "undefined") {
+  void import("chartjs-plugin-zoom").then((module) => {
+    ChartJS.register(module.default);
+  });
+}
 
 type Props = {
   datasets: {

@@ -1,7 +1,12 @@
 import type { Country } from "@prisma/client";
 import type { ReactNode } from "react";
 import { useState } from "react";
-import { ComposableMap, Geographies, Geography } from "react-simple-maps";
+import {
+  ComposableMap,
+  Geographies,
+  Geography,
+  ZoomableGroup,
+} from "react-simple-maps";
 import dynamic from "next/dynamic";
 
 const ReactTooltip = dynamic(() => import("react-tooltip"), {
@@ -28,82 +33,74 @@ function formatNumber(num: number, precision = 0) {
   });
 }
 
-// Don't understand it really, GitHub Copilot generated the function lol - but it works
-const calculateSVGZoomedViewBox = (input: {
-  width: number;
-  height: number;
-  xOrigin: number;
-  yOrigin: number;
-  zoom: number;
-}) => {
-  const { width, height, xOrigin, yOrigin, zoom } = input;
-  const x = width / 2 + xOrigin;
-  const y = height / 2 + yOrigin;
-  return `${x - x / zoom} ${y - y / zoom} ${width / zoom} ${height / zoom}`;
-};
-
 const ChoroplethWorld = (props: Props) => {
   const [mapTooltipContent, setMapTooltipContent] = useState<ReactNode>("");
+  const mapWidth = 800;
+  const mapHeight = 400;
 
   return (
     <>
-      {/*  */}
       <ComposableMap
-        viewBox={calculateSVGZoomedViewBox({
-          // viewBox is 0 0 800 600 per default, which should kinda correspond with width of 800 and height of 600?
-          width: 800,
-          height: 600,
-          xOrigin: 0,
-          yOrigin: -100, // -100 to center the map
-          zoom: 1.3 * (props.mapZoom ?? 1), // if zooming 30% further into original map it fills the SVG pretty well
-        })}
+        projectionConfig={{
+          scale: 155,
+        }}
+        width={mapWidth}
+        height={mapHeight}
+        style={{ width: "100%", height: "auto" }}
       >
         {/* for tooltip to work, we need to set an data-tip attribute - note: I tried using v5 of library with different approach but didn't figure it out lol */}
-        <Geographies data-tip="" geography="/features.json">
-          {({ geographies }) =>
-            geographies.map((geo) => {
-              const countryData = props.data.find(
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                (c) => c.country.isoAlpha3 === geo.id
-              );
-              const tooltipContent = countryData ? (
-                <>
-                  <h5 className="font-bold">{props.propName}</h5>
-                  <span>{`${countryData.country.name}: ${formatNumber(
-                    countryData.value,
-                    props.valueFormatPrecision
-                  )}`}</span>
-                </>
-              ) : (
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                `${geo.properties.name as string} (no data)`
-              );
+        <ZoomableGroup
+          // this is to prevent panning out of map
+          translateExtent={[
+            [0, 0],
+            [mapWidth, mapHeight],
+          ]}
+        >
+          <Geographies data-tip="" geography="/features.json">
+            {({ geographies }) =>
+              geographies.map((geo) => {
+                const countryData = props.data.find(
+                  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                  (c) => c.country.isoAlpha3 === geo.id
+                );
+                const tooltipContent = countryData ? (
+                  <>
+                    <h5 className="font-bold">{props.propName}</h5>
+                    <span>{`${countryData.country.name}: ${formatNumber(
+                      countryData.value,
+                      props.valueFormatPrecision
+                    )}`}</span>
+                  </>
+                ) : (
+                  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                  `${geo.properties.name as string} (no data)`
+                );
 
-              return (
-                <Geography
-                  className="outline-none" // disables ugly squared outline
-                  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                  key={geo.rsmKey}
-                  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                  geography={geo}
-                  fill={
-                    countryData
-                      ? props.colorMap(countryData.value)
-                      : props.missingDataColor ?? "#DDD"
-                  }
-                  stroke="#FFF"
-                  onMouseEnter={() => {
-                    console.log("geo", geo);
-                    setMapTooltipContent(tooltipContent);
-                  }}
-                  onMouseLeave={() => {
-                    setMapTooltipContent("");
-                  }}
-                />
-              );
-            })
-          }
-        </Geographies>
+                return (
+                  <Geography
+                    className="outline-none" // disables ugly squared outline
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                    key={geo.rsmKey}
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                    geography={geo}
+                    fill={
+                      countryData
+                        ? props.colorMap(countryData.value)
+                        : props.missingDataColor ?? "#DDD"
+                    }
+                    stroke="#FFF"
+                    onMouseEnter={() => {
+                      setMapTooltipContent(tooltipContent);
+                    }}
+                    onMouseLeave={() => {
+                      setMapTooltipContent("");
+                    }}
+                  />
+                );
+              })
+            }
+          </Geographies>
+        </ZoomableGroup>
       </ComposableMap>
       <ReactTooltip className="flex flex-col bg-black">
         {mapTooltipContent}
