@@ -46,6 +46,7 @@ const SpotifyCountrySelectWorldMap = (props: Props) => {
             console.log(coordinates);
             // setMapPosition([coordinates[0], coordinates[1], zoom]);
           }}
+          maxZoom={10}
         >
           <Geographies data-tip="" geography="/features.json">
             {({ geographies }) =>

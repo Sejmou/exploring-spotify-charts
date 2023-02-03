@@ -55,6 +55,7 @@ const ChoroplethWorld = (props: Props) => {
             [0, 0],
             [mapWidth, mapHeight],
           ]}
+          maxZoom={10}
         >
           <Geographies data-tip="" geography="/features.json">
             {({ geographies }) =>
