@@ -1,12 +1,8 @@
-import { Button } from "@mui/material";
 import { api } from "../../utils/api";
+import PageLinkButton from "../PageLinkButton";
 import ChoroplethWorld from "../visualizations/ChoroplethWorld";
 
-type Props = {
-  onStart: () => void;
-};
-
-export default function CountryTrackCountOverview({ onStart }: Props) {
+export default function CountryTrackCountOverview() {
   const trackCounts = api.charts.getTrackCountsByCountry.useQuery();
 
   let content = <div></div>;
@@ -34,7 +30,7 @@ export default function CountryTrackCountOverview({ onStart }: Props) {
   }
 
   return (
-    <>
+    <div className="flex h-full w-full flex-col gap-2">
       <div className="mx-auto">
         <h2 className="mt-2 mb-4 text-center text-6xl font-extrabold tracking-tight">
           <span className="text-[#1ED760]">Spotify</span> Charts
@@ -51,10 +47,11 @@ export default function CountryTrackCountOverview({ onStart }: Props) {
           rest of the dataviz :)
         </p>
       </div>
-      <Button className="self-center" onClick={onStart}>
-        Start exploring
-      </Button>
+      <PageLinkButton
+        path="/viz/explore-relationships"
+        text="Start Exploring"
+      />
       {content}
-    </>
+    </div>
   );
 }

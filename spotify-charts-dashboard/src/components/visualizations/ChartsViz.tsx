@@ -1,4 +1,4 @@
-import { divergingColors } from "../../pages/viz";
+import { divergingColors } from "../../utils/misc";
 import type { RouterOutputs } from "../../utils/api";
 import {
   Chart as ChartJS,

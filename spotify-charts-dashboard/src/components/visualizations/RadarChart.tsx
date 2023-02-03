@@ -9,7 +9,7 @@ import {
 } from "chart.js";
 import { color } from "d3";
 import { Radar } from "react-chartjs-2";
-import { divergingColors } from "../../pages/viz";
+import { divergingColors } from "../../utils/misc";
 import type { RouterOutputs } from "../../utils/api";
 import { capitalizeFirstLetter } from "../../utils/misc";
 

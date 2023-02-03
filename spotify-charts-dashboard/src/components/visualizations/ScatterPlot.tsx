@@ -91,6 +91,16 @@ export default function ScatterPlot(props: Props) {
               },
             },
           },
+          zoom: {
+            zoom: {
+              wheel: {
+                enabled: true,
+              },
+              pinch: {
+                enabled: true,
+              },
+            },
+          },
         },
       }}
       data={{

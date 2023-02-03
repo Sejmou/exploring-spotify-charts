@@ -1,11 +1,19 @@
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
-import type { RouterOutputs } from "../utils/api";
-import { api } from "../utils/api";
-import { useFilterStore } from "../store/filter";
+import type { RouterOutputs } from "../../utils/api";
+import { api } from "../../utils/api";
+import { useFilterStore } from "../../store/filter";
 
 type CountriesAPIResponse = RouterOutputs["countries"]["getAll"];
+
+const globalRegionSelectOption = {
+  name: "Global",
+  geoSubregion: "Worldwide",
+  geoRegion: "Worldwide",
+  isoAlpha2: "WW",
+  isoAlpha3: "WWW",
+};
 
 export default function RegionSelect() {
   const countries = api.countries.getAll.useQuery(undefined, {
@@ -26,9 +34,7 @@ export default function RegionSelect() {
       disableClearable={true}
       sx={{ width: 300 }}
       options={
-        countries.data
-          ? [{ name: "Global", geoSubregion: "Worldwide" }, ...countries.data]
-          : []
+        countries.data ? [globalRegionSelectOption, ...countries.data] : []
       }
       filterOptions={filterOptions}
       groupBy={(option) => option.geoSubregion}
@@ -52,7 +58,7 @@ export default function RegionSelect() {
       )}
       value={
         region == "Global"
-          ? { name: "Global", geoSubregion: "Worldwide" }
+          ? globalRegionSelectOption
           : countries.data?.find((r) => r.name === region)
       }
       onChange={(_, newValue) => {

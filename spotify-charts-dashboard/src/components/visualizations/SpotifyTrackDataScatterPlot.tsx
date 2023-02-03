@@ -5,7 +5,7 @@ import { api } from "../../utils/api";
 import ScatterPlot from "./ScatterPlot";
 import { useEffect, useState } from "react";
 import type { RouterOutputs } from "../../utils/api";
-import BasicSelect from "../BasicSelect";
+import BasicSelect from "../filtering-and-selecting/BasicSelect";
 import { capitalizeFirstLetter, truncate } from "../../utils/misc";
 import { useTrackDataExplorationStore } from "../../store/trackDataExploration";
 

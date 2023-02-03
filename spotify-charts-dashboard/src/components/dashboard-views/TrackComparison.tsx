@@ -2,22 +2,20 @@ import { Button } from "@mui/material";
 import dynamic from "next/dynamic";
 import { useFilterStore } from "../../store/filter";
 import { api } from "../../utils/api";
-import DateRangeFilter from "../DateRangeFilter";
-import RegionSelect from "../RegionSelect";
+import DateRangeFilter from "../filtering-and-selecting/DateRangeFilter";
+import RegionSelect from "../filtering-and-selecting/RegionSelect";
 import SelectedTracksInfoAndLegend from "../SelectedTracksInfoAndLegend";
-import TrackSelect from "../TrackSelect";
+import TrackSelect from "../filtering-and-selecting/TrackSelect";
 import BarCharts from "../visualizations/BarCharts";
 import RadarChart from "../visualizations/RadarChart";
+import Link from "next/link";
+import PageLinkButton from "../PageLinkButton";
 
 const ChartsViz = dynamic(() => import("../visualizations/ChartsViz"), {
   ssr: false,
 });
 
-type Props = {
-  onSwitchView: () => void;
-};
-
-export default function TrackComparison({ onSwitchView }: Props) {
+export default function CompareTracks() {
   const region = useFilterStore((state) => state.region);
   const startInclusive = useFilterStore((state) => state.startInclusive);
   const endInclusive = useFilterStore((state) => state.endInclusive);
@@ -43,7 +41,7 @@ export default function TrackComparison({ onSwitchView }: Props) {
 
   if (charts.data) {
     return (
-      <>
+      <div className="flex h-full w-full flex-col gap-2">
         <div className="flex flex-wrap gap-4">
           <h1 className="text-5xl font-extrabold tracking-tight text-white">
             <span className="text-[#1ED760]">Spotify</span> Charts
@@ -52,7 +50,10 @@ export default function TrackComparison({ onSwitchView }: Props) {
           <RegionSelect />
           <TrackSelect />
           <div className="ml-auto self-center">
-            <Button onClick={onSwitchView}>Switch View</Button>
+            <PageLinkButton
+              path="/viz/explore-relationships"
+              text="Switch View"
+            />
           </div>
         </div>
         {canViewTrackComparison ? (
@@ -75,7 +76,7 @@ export default function TrackComparison({ onSwitchView }: Props) {
             Please add at least one track whose data you wish to explore.
           </div>
         )}
-      </>
+      </div>
     );
   } else {
     return <div>No data to display.</div>;

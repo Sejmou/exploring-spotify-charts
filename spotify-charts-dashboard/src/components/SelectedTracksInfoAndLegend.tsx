@@ -1,10 +1,10 @@
-import { api } from "../../utils/api";
+import { api } from "../utils/api";
 import TrackInfo from "./TrackDetails";
-import { divergingColors } from "../../pages/viz";
+import { divergingColors } from "../utils/misc";
 import { useState } from "react";
 import { Button, Dialog } from "@mui/material";
 import BasicTrackInfo from "./BasicTrackInfo";
-import { useFilterStore } from "../../store/filter";
+import { useFilterStore } from "../store/filter";
 
 const SelectedTracksInfoAndLegend = () => {
   const [expanded, setExpanded] = useState(false);

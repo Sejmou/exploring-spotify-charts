@@ -1,14 +1,10 @@
-import { Button } from "@mui/material";
-import CountriesFilter from "../CountriesFilter";
+import CountriesFilter from "../filtering-and-selecting/CountriesFilter";
+import PageLinkButton from "../PageLinkButton";
 import SpotifyTrackDataScatterPlot from "../visualizations/SpotifyTrackDataScatterPlot";
 
-type Props = {
-  onSwitchView: () => void;
-};
-
-const TrackDataExploration = ({ onSwitchView }: Props) => {
+const TrackDataExploration = () => {
   return (
-    <>
+    <div className="flex h-full w-full flex-col gap-2">
       <div className="flex flex-wrap gap-4">
         <h1 className="text-5xl font-extrabold tracking-tight text-white">
           <span className="text-[#1ED760]">Spotify</span> Charts
@@ -16,7 +12,7 @@ const TrackDataExploration = ({ onSwitchView }: Props) => {
         {/* <DateRangeFilter /> */}
         {/* <SelectedTracksInfoAndLegend /> */}
         <div className="ml-auto self-center">
-          <Button onClick={onSwitchView}>Switch View</Button>
+          <PageLinkButton path="/viz/compare-tracks" text="Switch View" />
         </div>
       </div>
       <div className="grid h-full w-full flex-1 grid-cols-2">
@@ -31,7 +27,7 @@ const TrackDataExploration = ({ onSwitchView }: Props) => {
           {/* <div>Filter by genres</div> */}
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

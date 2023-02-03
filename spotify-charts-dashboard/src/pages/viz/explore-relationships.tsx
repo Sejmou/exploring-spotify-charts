@@ -1,12 +1,12 @@
 import { type NextPage } from "next";
 import Head from "next/head";
-import CountryTrackCountOverview from "../../components/dashboard-views/CountryChartsOverview";
+import TrackDataExploration from "../../components/dashboard-views/TrackDataExploration";
 
-const DataOverview: NextPage = () => {
+const ExploreTrackRelationships: NextPage = () => {
   return (
     <>
       <Head>
-        <title>Dataset Overview</title>
+        <title>Explore Relationships</title>
         <meta
           name="description"
           content="Visualizing Spotify Charts (global and 49 regions) from 2017 to 2021"
@@ -14,10 +14,10 @@ const DataOverview: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className="flex h-screen w-full flex-col items-center gap-4 bg-[#121212] p-4 text-white">
-        <CountryTrackCountOverview />
+        <TrackDataExploration />
       </main>
     </>
   );
 };
 
-export default DataOverview;
+export default ExploreTrackRelationships;

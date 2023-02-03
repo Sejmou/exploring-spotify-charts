@@ -1,7 +1,7 @@
 import TextField from "@mui/material/TextField";
 import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
-import type { RouterOutputs } from "../utils/api";
-import { api } from "../utils/api";
+import type { RouterOutputs } from "../../utils/api";
+import { api } from "../../utils/api";
 import {
   Avatar,
   Button,
@@ -12,7 +12,7 @@ import {
 import { useEffect, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import MusicNoteIcon from "@mui/icons-material/MusicNote";
-import { useFilterStore } from "../store/filter";
+import { useFilterStore } from "../../store/filter";
 
 type TrackDataAPIResponse = RouterOutputs["tracks"]["getNamesAndArtists"];
 

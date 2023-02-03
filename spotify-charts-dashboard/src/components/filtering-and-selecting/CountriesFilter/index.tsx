@@ -1,6 +1,6 @@
-import { useFilterStore } from "../../store/filter";
-import { api } from "../../utils/api";
-import ChoroplethWorld from "../visualizations/ChoroplethWorld";
+import { useFilterStore } from "../../../store/filter";
+import { api } from "../../../utils/api";
+import ChoroplethWorld from "../../visualizations/ChoroplethWorld";
 import SpotifyCountrySelectWorldMap from "./SpotifyCountrySelectWorldMap";
 
 const CountriesFilter = () => {
