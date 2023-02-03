@@ -6,11 +6,19 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import { color } from "d3";
+import { color, extent } from "d3";
 import { useRef } from "react";
 import { Scatter } from "react-chartjs-2";
+import ZoomPlugin from "chartjs-plugin-zoom";
 
-ChartJS.register(LinearScale, PointElement, LineElement, Tooltip, Legend);
+ChartJS.register(
+  LinearScale,
+  PointElement,
+  LineElement,
+  Tooltip,
+  Legend,
+  ZoomPlugin
+);
 
 type Props = {
   datasets: {
@@ -20,12 +28,18 @@ type Props = {
   }[];
   xAttr: string;
   yAttr: string;
+  beginAtZero?: boolean;
   className?: string;
   getLabel?: (datasetIndex: number, dataIndex: number) => string | string[];
 };
 
 export default function ScatterPlot(props: Props) {
   const chartRef = useRef<ChartJS>();
+  const xValues = props.datasets.flatMap((d) => d.data).map((d) => d.x);
+  const yValues = props.datasets.flatMap((d) => d.data).map((d) => d.y);
+  const [xMin, xMax] = extent(xValues)! as [number, number];
+  const [yMin, yMax] = extent(yValues)! as [number, number];
+
   return (
     <Scatter
       className={props.className}
@@ -35,7 +49,7 @@ export default function ScatterPlot(props: Props) {
         maintainAspectRatio: false,
         scales: {
           x: {
-            beginAtZero: true,
+            beginAtZero: props.beginAtZero,
             title: {
               display: true,
               text: props.xAttr,
@@ -50,7 +64,7 @@ export default function ScatterPlot(props: Props) {
             },
           },
           y: {
-            beginAtZero: true,
+            beginAtZero: props.beginAtZero,
             title: {
               display: true,
               text: props.yAttr,
@@ -92,6 +106,16 @@ export default function ScatterPlot(props: Props) {
             },
           },
           zoom: {
+            limits: {
+              x: {
+                min: xMin > 0 && props.beginAtZero ? 0 : xMin,
+                max: xMax,
+              },
+              y: {
+                min: yMin > 0 && props.beginAtZero ? 0 : yMin,
+                max: yMax,
+              },
+            },
             zoom: {
               wheel: {
                 enabled: true,
@@ -99,6 +123,10 @@ export default function ScatterPlot(props: Props) {
               pinch: {
                 enabled: true,
               },
+            },
+            pan: {
+              enabled: true,
+              mode: "xy",
             },
           },
         },

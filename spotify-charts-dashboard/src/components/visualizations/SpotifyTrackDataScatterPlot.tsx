@@ -100,6 +100,7 @@ const SpotifyTrackDataScatterPlot = () => {
         ]}
         xAttr={capitalizeFirstLetter(xAttr)}
         yAttr={capitalizeFirstLetter(yAttr)}
+        beginAtZero={true}
         getLabel={(_, dataIdx) => {
           const dataForTrack = trackData[dataIdx];
           if (!dataForTrack) {
