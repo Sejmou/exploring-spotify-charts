@@ -3,16 +3,11 @@ import { color } from "d3";
 import { useFilterStore } from "../../store/filter";
 import { api } from "../../utils/api";
 import ScatterPlot from "./ScatterPlot";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { RouterOutputs } from "../../utils/api";
 import BasicSelect from "../filtering-and-selecting/BasicSelect";
 import { capitalizeFirstLetter, truncate } from "../../utils/misc";
 import { useTrackDataExplorationStore } from "../../store/trackDataExploration";
-
-function randomSubset<T>(array: T[], size: number) {
-  const shuffled = array.sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, size);
-}
 
 type PickByType<T, Value> = {
   [P in keyof T as T[P] extends Value | undefined ? P : never]: T[P];
@@ -22,6 +17,15 @@ type TrackAttribute = keyof PickByType<
   RouterOutputs["tracks"]["getTrackData"][0],
   number
 >;
+
+export type ScatterPlotWorkerMessage = {
+  trackData: RouterOutputs["tracks"]["getTrackData"];
+  filters: {
+    trackIds?: string[];
+  };
+};
+
+export type ScatterPlotWorkerResponse = RouterOutputs["tracks"]["getTrackData"];
 
 const attributeOptions: TrackAttribute[] = [
   "acousticness",
@@ -64,15 +68,37 @@ const SpotifyTrackDataScatterPlot = () => {
     filteredTrackIds: filteredTrackIds.data,
   });
 
+  const workerRef = useRef<Worker>();
+
   useEffect(() => {
-    setTrackData(
-      tracks.data && filteredTrackIds.data
-        ? randomSubset(
-            tracks.data.filter((t) => filteredTrackIds.data.includes(t.id)),
-            3000
-          )
-        : []
-    ); // cannot plot all tracks as it will be too slow
+    workerRef.current = new Worker(
+      new URL("./trackChartDataWorker.ts", import.meta.url)
+    );
+    workerRef.current.onmessage = (
+      event: MessageEvent<ScatterPlotWorkerResponse>
+    ) => {
+      console.log("got message from worker", event.data);
+      setTrackData(event.data);
+    };
+    return () => {
+      workerRef.current?.terminate();
+    };
+  }, [setTrackData]);
+
+  useEffect(() => {
+    if (!tracks.data || !filteredTrackIds.data) {
+      return;
+    }
+    if (tracks.data.length < 3000) {
+      setTrackData(tracks.data);
+      return;
+    }
+    workerRef.current?.postMessage({
+      trackData: tracks.data,
+      filters: {
+        trackIds: filteredTrackIds.data,
+      },
+    }); // tell the worker to process the data as we don't want to block the UI thread
   }, [tracks.data, filteredTrackIds.data, setTrackData]);
 
   if (tracks.isError) {
