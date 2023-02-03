@@ -48,6 +48,7 @@ export default function CountryTrackCountOverview() {
         </p>
       </div>
       <PageLinkButton
+        className="self-center"
         path="/viz/explore-relationships"
         text="Start Exploring"
       />

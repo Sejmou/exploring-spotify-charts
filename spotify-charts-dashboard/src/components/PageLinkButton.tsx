@@ -4,11 +4,12 @@ import Link from "next/link";
 type Props = {
   path: string;
   text: string;
+  className?: string;
 };
 
-export default function PageLinkButton({ path, text }: Props) {
+export default function PageLinkButton({ path, text, className }: Props) {
   return (
-    <Link className="self-center" href={path}>
+    <Link className={className} href={path}>
       <Button>{text}</Button>
     </Link>
   );

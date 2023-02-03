@@ -1,4 +1,3 @@
-import { Button } from "@mui/material";
 import dynamic from "next/dynamic";
 import { useFilterStore } from "../../store/filter";
 import { api } from "../../utils/api";
@@ -8,8 +7,8 @@ import SelectedTracksInfoAndLegend from "../SelectedTracksInfoAndLegend";
 import TrackSelect from "../filtering-and-selecting/TrackSelect";
 import BarCharts from "../visualizations/BarCharts";
 import RadarChart from "../visualizations/RadarChart";
-import Link from "next/link";
 import PageLinkButton from "../PageLinkButton";
+import SpotifyChartsHeading from "../SpotifyChartsHeading";
 
 const ChartsViz = dynamic(() => import("../visualizations/ChartsViz"), {
   ssr: false,
@@ -43,18 +42,15 @@ export default function CompareTracks() {
     return (
       <div className="flex h-full w-full flex-col gap-2">
         <div className="flex flex-wrap gap-4">
-          <h1 className="text-5xl font-extrabold tracking-tight text-white">
-            <span className="text-[#1ED760]">Spotify</span> Charts
-          </h1>
+          <SpotifyChartsHeading />
+          <PageLinkButton
+            className="self-center"
+            path="/viz/explore-relationships"
+            text="Switch View"
+          />
           <DateRangeFilter />
           <RegionSelect />
           <TrackSelect />
-          <div className="ml-auto self-center">
-            <PageLinkButton
-              path="/viz/explore-relationships"
-              text="Switch View"
-            />
-          </div>
         </div>
         {canViewTrackComparison ? (
           <>
