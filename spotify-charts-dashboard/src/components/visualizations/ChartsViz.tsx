@@ -112,6 +112,10 @@ const ChartsViz = ({ data }: Props) => {
             },
             zoom: {
               zoom: {
+                drag: {
+                  enabled: true,
+                  modifierKey: "alt",
+                },
                 wheel: {
                   enabled: true,
                 },

@@ -152,6 +152,10 @@ export default function ScatterPlot(props: Props) {
                 enabled: true,
               },
               mode: ctrlKeyPressed ? "x" : shiftKeyPressed ? "y" : "xy",
+              drag: {
+                enabled: true,
+                modifierKey: "alt",
+              },
             },
             pan: {
               enabled: true,
