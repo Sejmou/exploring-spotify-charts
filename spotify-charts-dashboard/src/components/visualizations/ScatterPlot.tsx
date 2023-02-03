@@ -5,10 +5,12 @@ import {
   LineElement,
   Tooltip,
   Legend,
+  DatasetChartOptions,
 } from "chart.js";
 import { color, extent } from "d3";
-import { useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Scatter } from "react-chartjs-2";
+import { useKeyPress } from "../../hooks/useKeyPress";
 
 ChartJS.register(LinearScale, PointElement, LineElement, Tooltip, Legend);
 // need to register zoom plugin as well, however import would fail with NextJS SSR as window is not defined
@@ -37,6 +39,34 @@ export default function ScatterPlot(props: Props) {
   const yValues = props.datasets.flatMap((d) => d.data).map((d) => d.y);
   const [xMin, xMax] = extent(xValues)! as [number, number];
   const [yMin, yMax] = extent(yValues)! as [number, number];
+  const ctrlKeyPressed = useKeyPress("Control");
+  const shiftKeyPressed = useKeyPress("Shift");
+
+  // const [zoomMode, setZoomMode] = useState<"x" | "y" | "xy">("xy");
+  // useEffect(() => {
+  //   if (ctrlKeyPressed) {
+  //     setZoomMode("x");
+  //   } else if (shiftKeyPressed) {
+  //     setZoomMode("y");
+  //   }
+  // }, [ctrlKeyPressed, shiftKeyPressed]);
+  // useEffect(() => {
+  //   const scrollListener = () => {
+  //     if (ctrlKeyPressed || shiftKeyPressed) {
+  //       return;
+  //     }
+  //     setZoomMode("xy");
+  //   };
+  //   window.addEventListener("scroll", scrollListener);
+  //   return () => {
+  //     window.removeEventListener("scroll", scrollListener);
+  //   };
+  // }, [ctrlKeyPressed, shiftKeyPressed]);
+
+  // const zoomPluginOptions = useMemo(
+  //   () => (),
+  //   [ctrlKeyPressed, shiftKeyPressed]
+  // );
 
   return (
     <Scatter
@@ -121,10 +151,11 @@ export default function ScatterPlot(props: Props) {
               pinch: {
                 enabled: true,
               },
+              mode: ctrlKeyPressed ? "x" : shiftKeyPressed ? "y" : "xy",
             },
             pan: {
               enabled: true,
-              mode: "xy",
+              mode: ctrlKeyPressed ? "x" : shiftKeyPressed ? "y" : "xy",
             },
           },
         },

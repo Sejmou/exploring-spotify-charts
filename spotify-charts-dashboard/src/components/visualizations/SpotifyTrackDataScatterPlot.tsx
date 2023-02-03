@@ -34,7 +34,6 @@ const attributeOptions: TrackAttribute[] = [
   "instrumentalness",
   "liveness",
   "loudness",
-  "acousticness",
   "speechiness",
   "tempo",
   "valence",
