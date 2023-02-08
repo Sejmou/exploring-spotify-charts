@@ -9,6 +9,7 @@ import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from multiprocessing import Pool
 import tqdm
+import json
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -72,7 +73,7 @@ tracks_filtered = tracks_filtered[
 tracks_filtered = tracks_filtered.loc[
     :,
     ~tracks_filtered.columns.str.startswith("album")
-    | tracks_filtered.columns.str.contains("albumId"),
+    | tracks_filtered.columns.str.contains("album_id"),
 ]  # remove album columns that are not albumId -> stored in albums table
 store_and_print_info(tracks_filtered, "tracks")
 
@@ -89,11 +90,11 @@ top50 = (
     .rename(columns={"id": "trackId", "region": "countryName"})
 )
 top50_filtered = top50[top50.trackId.isin(tracks_filtered.id)]
-top50_global = top50_filtered[top50_filtered.countryName == "global"].drop(
+top50_global = top50_filtered[top50_filtered.countryName == "Global"].drop(
     columns=["countryName"]
 )
 store_and_print_info(top50_global, "top50_global")
-top50_countries = top50_filtered[top50_filtered.countryName != "global"]
+top50_countries = top50_filtered[top50_filtered.countryName != "Global"]
 store_and_print_info(top50_countries, "top50_countries")
 
 countries = pd.read_csv(get_data_path("spotify_region_metadata.csv")).rename(
@@ -137,7 +138,7 @@ def fetch_album_info(album_ids):
     return chunk_data
 
 
-pool = Pool(processes=8)
+pool = Pool(processes=4)  # might have to lower that number depending on your machine
 results = list(
     tqdm.tqdm(
         pool.imap_unordered(
@@ -155,7 +156,7 @@ results = list(
 # results = [task.get() for task in tasks]
 album_data = pd.concat(results).reset_index(drop=True)
 album_data.rename(columns={"album_type": "type"}, inplace=True)
-album_data["artistIds"] = album_data.artists.apply(get_artist_ids)
+album_data["artist_ids"] = album_data.artists.apply(get_artist_ids)
 album_data[["thumbnail_url", "img_url"]] = album_data.images.apply(
     extract_image_urls
 ).apply(pd.Series)
@@ -163,20 +164,20 @@ album_data.drop(columns=["artists", "images"], inplace=True)
 
 album_artist_mapping = pd.DataFrame(
     album_data.set_index("id").artistIds.explode()
-).rename(columns={"artistIds": "artistId"})
+).rename(columns={"artist_ids": "artist_id"})
 album_artist_mapping["rank"] = album_artist_mapping.groupby("id").cumcount() + 1
 album_artist_mapping = album_artist_mapping.reset_index().rename(
-    columns={"id": "albumId"}
+    columns={"id": "album_id"}
 )
 store_and_print_info(album_artist_mapping, "album_artists")
 
-album_data.drop(columns=["artistIds"], inplace=True)
+album_data.drop(columns=["artist_ids"], inplace=True)
 store_and_print_info(album_data, "albums")
 
 
 # %%
-album_artist_ids = (
-    album_data.artistIds.explode().drop_duplicates().reset_index(drop=True)
+album_artist_ids = album_artist_mapping.artist_id.drop_duplicates().reset_index(
+    drop=True
 )
 # we don't have the artist data for all albums, so we need to fetch the missing data from the Spotify API as well
 missing_album_artist_ids = album_artist_ids[~album_artist_ids.isin(artists.id)].rename(
@@ -217,6 +218,10 @@ artist_final_data.drop(
     ],
     inplace=True,
 )
+# %%
+artist_final_data["genres"] = artist_final_data.genres.apply(
+    json.dumps
+)  # important, otherwise this is NOT a valid JSON array in the output and parsing will fail (took me a few hours to figure that out lol)
 store_and_print_info(artist_final_data, "artists")
 
 # %%
