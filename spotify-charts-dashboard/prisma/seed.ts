@@ -3,8 +3,8 @@ import { promises as fs } from "fs";
 import path from "path";
 import { z } from "zod";
 
-// Note: you do NOT need to execute this script if you already downloaded the db.sqlite file from Google Drive and put it into the prisma folder.
-// This script is only needed if you want to seed the database from scratch using JSON files created from .csv files in the data subfolder of the root folder of this GitHub repo (downloaded via the download.py script).
+// This script fills the database with data from the JSON files created via create_seed_data.py (check this script for details on how this data was obtained - side note: it's a bit messy lol)
+// If this script is re-executed it will reset all the matching data in the database with the values from the JSON files as well (should not be a problem since the data is not modified in the application - at least as of today (8 Feb 2023))
 
 const seedDataDir = path.join(__dirname, "seed-data");
 
@@ -113,21 +113,16 @@ function createChunks<T>(array: T[], chunkSize: number) {
 const prisma = new PrismaClient();
 async function main() {
   const artists = artistsValidator.parse(await processFile("artists.json"));
-  const artistsFixed = artists.map((a) => ({
-    ...a,
-    thumbnailUrl: a.thumbnailUrl ?? undefined,
-    imgUrl: a.imgUrl ?? undefined,
-  }));
   await prisma.$transaction(
-    artistsFixed.map((artist) =>
+    artists.map((artist) =>
       prisma.artist.upsert({
         where: { id: artist.id },
-        update: {},
+        update: artist,
         create: artist,
       })
     )
   );
-  console.log("inserted", artists.length, "artists");
+  console.log("inserted or updated", artists.length, "artists");
 
   const albums = albumsValidator.parse(await processFile("albums.json"));
   const albumsWithParsedDates = albums.map((album) => ({
@@ -138,7 +133,7 @@ async function main() {
     albumsWithParsedDates.map((album) => {
       return prisma.album.upsert({
         where: { id: album.id },
-        update: {},
+        update: album,
         create: album,
       });
     })
@@ -158,7 +153,7 @@ async function main() {
             albumId: feature.albumId,
           },
         },
-        update: {},
+        update: feature,
         create: feature,
       });
     })
@@ -169,10 +164,11 @@ async function main() {
   await prisma.$transaction(
     tracks.map((input) => {
       const { albumId, ...track } = input;
+      const upsertInput = { ...track, album: { connect: { id: albumId } } };
       return prisma.track.upsert({
         where: { id: track.id },
-        update: {},
-        create: { ...track, album: { connect: { id: albumId } } },
+        update: upsertInput,
+        create: upsertInput,
       });
     })
   );
@@ -190,7 +186,7 @@ async function main() {
             artistId: feature.artistId,
           },
         },
-        update: {},
+        update: feature,
         create: feature,
       });
     })
@@ -218,7 +214,7 @@ async function main() {
               date: chartEntry.date,
             },
           },
-          update: {},
+          update: chartEntry,
           create: chartEntry,
         });
       })
@@ -246,7 +242,7 @@ async function main() {
               date: chartEntry.date,
             },
           },
-          update: {},
+          update: chartEntry,
           create: chartEntry,
         });
       })

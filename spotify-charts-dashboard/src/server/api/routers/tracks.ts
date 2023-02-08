@@ -151,24 +151,18 @@ export const tracksRouter = createTRPCRouter({
       });
       return tracks
         .map((track) => {
-          const artistsSorted = track.featuringArtists.sort(
-            (a, b) => a.rank - b.rank
-          );
-          const artists = artistsSorted.map((entry) => entry.artist);
+          const artists = track.featuringArtists.map((entry) => entry.artist);
           const genres = artists.flatMap((artist) => {
-            // necessary workaround as artist genres are stored as a stringified JSON array in the database (SQL does not support string arrays)
-            const { genres, error } = parseGenreJSONStringArray(artist.genres);
-            if (error) {
-              console.log(
-                "could not parse all artist genres for track",
-                track.id
-              );
-              console.log("error parsing genres for artist: ", {
-                artist,
-              });
-            }
-            return genres;
+            console.log(
+              "genres for artist",
+              artist.name,
+              artist.genres,
+              artist.genres[0],
+              artist.genres.length
+            );
+            return artist.genres;
           });
+          console.log("first genres", genres[0], typeof genres[0]);
           const genresNoDuplicates = genres.reduce((acc, curr) => {
             if (!acc.includes(curr)) {
               acc.push(curr);
@@ -190,7 +184,7 @@ export const tracksRouter = createTRPCRouter({
           (a, b) => input.trackIds.indexOf(a.id) - input.trackIds.indexOf(b.id)
         );
     }),
-  getTrackData: publicProcedure.query(async ({ ctx, input }) => {
+  getTrackData: publicProcedure.query(async ({ ctx }) => {
     const tracks = await ctx.prisma.track.findMany({
       select: {
         id: true,
@@ -218,6 +212,9 @@ export const tracksRouter = createTRPCRouter({
             },
             rank: true,
           },
+          orderBy: {
+            rank: "asc",
+          },
         },
         album: {
           select: {
@@ -226,23 +223,9 @@ export const tracksRouter = createTRPCRouter({
         },
       },
     });
-    console.log("tracks", tracks);
     return tracks.map((track) => {
-      const artistsSorted = track.featuringArtists.sort(
-        (a, b) => a.rank - b.rank
-      );
-      const artists = artistsSorted.map((entry) => entry.artist);
-      const genres = artists.flatMap((artist) => {
-        // necessary workaround as artist genres are stored as a stringified JSON array in the database (SQL does not support string arrays)
-        const { genres, error } = parseGenreJSONStringArray(artist.genres);
-        if (error) {
-          console.log("could not parse all artist genres for track", track.id);
-          console.log("error parsing genres for artist: ", {
-            artist,
-          });
-        }
-        return genres;
-      });
+      const artists = track.featuringArtists.map((entry) => entry.artist);
+      const genres = artists.flatMap((a) => a.genres);
       const genresNoDuplicates = genres.reduce((acc, curr) => {
         if (!acc.includes(curr)) {
           acc.push(curr);
@@ -292,19 +275,18 @@ export const tracksRouter = createTRPCRouter({
     }),
 });
 
-function parseGenreJSONStringArray(genreString: string) {
-  const genres = [];
-  let error = false;
-  try {
-    const parsedGenres = z
-      .array(z.string())
-      .parse(JSON.parse(genreString.replace(/'/g, '"')));
-    // need to convert single to double quotes as I f*cked up when I created the database (should have stored strings in JSON array with double quotes -> otherwise invalid JSON)
-    // sometimes the genres are still invalid JSON (e.g. `["children's music", 'kindermusik']` instead of `["children's music", "kindermusik"]` - haven't found way around this yet
-    // TODO: fix this
-    genres.push(...parsedGenres);
-  } catch {
-    error = true;
+function arraysEqual<T>(a: T[], b: T[]) {
+  if (a === b) return true;
+  if (a == null || b == null) return false;
+  if (a.length !== b.length) return false;
+
+  // If you don't care about the order of the elements inside
+  // the array, you should sort both arrays here.
+  // Please note that calling sort on an array will modify that array.
+  // you might want to clone your array first.
+
+  for (let i = 0; i < a.length; ++i) {
+    if (a[i] !== b[i]) return false;
   }
-  return { genres, error };
+  return true;
 }
