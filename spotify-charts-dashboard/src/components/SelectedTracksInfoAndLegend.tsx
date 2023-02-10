@@ -73,7 +73,7 @@ const SelectedTracksInfoAndLegend = () => {
                     albumTitle={t.album.name}
                     releaseDate={t.album.releaseDate}
                     releaseType={t.album.type}
-                    genres={t.genres}
+                    genres={t.genres.map((g) => g.label)}
                     label={t.album.label}
                     albumCoverUrl={t.album.thumbnailUrl}
                     color={divergingColors[i]}

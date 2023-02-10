@@ -1,5 +1,6 @@
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import { z } from "zod";
+import type { Genre } from "@prisma/client";
 
 export const tracksRouter = createTRPCRouter({
   getNamesAndArtists: publicProcedure
@@ -168,7 +169,7 @@ export const tracksRouter = createTRPCRouter({
               acc.push(curr);
             }
             return acc;
-          }, [] as string[]);
+          }, [] as Genre[]);
           return {
             ...track,
             featuringArtists: artists,
@@ -231,7 +232,7 @@ export const tracksRouter = createTRPCRouter({
           acc.push(curr);
         }
         return acc;
-      }, [] as string[]);
+      }, [] as Genre[]);
       const { album, ...stuffToKeep } = track;
       return {
         ...stuffToKeep,
