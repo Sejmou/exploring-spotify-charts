@@ -9,7 +9,7 @@ generator client {
 datasource db {
     provider     = "mysql"
     url          = env("DATABASE_URL")
-    relationMode = "prisma"
+    relationMode = "prisma" // default "native" mode not supported by PlanetScale (to be exact, foreign key constraints are not supported - more info: https://www.prisma.io/docs/guides/database/using-prisma-with-planetscale#differences-to-consider)
 }
 
 model Artist {
@@ -48,6 +48,8 @@ model AlbumArtistEntry {
     album    Album  @relation(fields: [albumId], references: [id])
 
     @@id([artistId, albumId], name: "albumFeatureId")
+    @@index([albumId])
+    @@index([artistId])
 }
 
 model TrackArtistEntry {
@@ -58,6 +60,8 @@ model TrackArtistEntry {
     track    Track  @relation(fields: [trackId], references: [id])
 
     @@id([artistId, trackId], name: "trackFeatureId")
+    @@index([trackId])
+    @@index([artistId])
 }
 
 model Track {
@@ -87,6 +91,8 @@ model Track {
     tempo               Float
     durationMs          Float
     timeSignature       Int
+
+    @@index([albumId])
 }
 
 model Country {
@@ -109,6 +115,8 @@ model CountryChartEntry {
     streams     Float
 
     @@unique([countryName, trackId, date], name: "chartEntryId")
+    @@index([countryName])
+    @@index([trackId])
 }
 
 model GlobalChartEntry {
