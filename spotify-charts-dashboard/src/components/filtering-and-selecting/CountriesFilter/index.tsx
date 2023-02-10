@@ -7,7 +7,7 @@ const CountriesFilter = () => {
   const countryNames = useFilterStore((state) => state.countryNames);
   const addCountryName = useFilterStore((state) => state.addCountryName);
   const removeCountryName = useFilterStore((state) => state.removeCountryName);
-  const countries = api.countries.getAll.useQuery();
+  const countries = api.countries.getAllWithCharts.useQuery();
 
   let countryMap = (
     <ChoroplethWorld data={[]} propName={""} colorMap={() => ""} />

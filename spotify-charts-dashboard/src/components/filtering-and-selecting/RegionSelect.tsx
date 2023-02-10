@@ -5,7 +5,7 @@ import type { RouterOutputs } from "../../utils/api";
 import { api } from "../../utils/api";
 import { useFilterStore } from "../../store/filter";
 
-type CountriesAPIResponse = RouterOutputs["countries"]["getAll"];
+type CountriesAPIResponse = RouterOutputs["countries"]["getAllWithCharts"];
 
 const globalRegionSelectOption = {
   name: "Global",
@@ -16,7 +16,7 @@ const globalRegionSelectOption = {
 };
 
 export default function RegionSelect() {
-  const countries = api.countries.getAll.useQuery(undefined, {
+  const countries = api.countries.getAllWithCharts.useQuery(undefined, {
     staleTime: Infinity,
   });
 

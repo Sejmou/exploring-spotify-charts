@@ -1,9 +1,21 @@
 import { createTRPCRouter, publicProcedure } from "../trpc";
 
 export const countriesRouter = createTRPCRouter({
-  getAll: publicProcedure.query(async ({ ctx }) => {
-    console.log("here");
+  getAllWithCharts: publicProcedure.query(async ({ ctx }) => {
+    const countryNames = (
+      await ctx.prisma.countryChartEntry.findMany({
+        select: {
+          countryName: true,
+        },
+        distinct: ["countryName"],
+      })
+    ).map((e) => e.countryName);
     const countries = await ctx.prisma.country.findMany({
+      where: {
+        name: {
+          in: countryNames,
+        },
+      },
       orderBy: [
         {
           geoRegion: "asc",
