@@ -28,7 +28,7 @@ You can check out the [create-t3-app GitHub repository](https://github.com/t3-os
 Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
 
 ## local Postgres setup (TODO: complete docs later)
-```
+```sql
 CREATE DATABASE spotify_db;
 CREATE USER spotify_admin WITH PASSWORD 'yourpass';
 GRANT ALL PRIVILEGES ON DATABASE spotify_db TO spotify_admin;
@@ -37,4 +37,14 @@ GRANT ALL PRIVILEGES ON DATABASE spotify_db TO spotify_admin;
 add in `.env`:
 ```
 postgresql://spotify_admin:yourpass@localhost/spotify_db
+```
+
+## differences with MySQL
+use `mysql` in connection string instead of `postgresql`
+
+for user creation and granting privileges, use
+```sql
+CREATE USER 'spotify_admin'@'localhost' IDENTIFIED BY 'yourpass';
+USE spotify_db;
+GRANT ALL PRIVILEGES ON * TO 'spotify_admin'@'localhost';
 ```
