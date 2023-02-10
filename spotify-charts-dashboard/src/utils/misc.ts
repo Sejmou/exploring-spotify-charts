@@ -2,9 +2,9 @@ export function capitalizeFirstLetter(string: string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
-export function truncate(input: string, maxLength = 20) {
-  if (input.length > maxLength) {
-    return input.substring(0, maxLength) + "...";
+export function truncate(input: string, maxTotalLength = 20) {
+  if (input.length > maxTotalLength - 3) {
+    return input.substring(0, maxTotalLength - 3) + "...";
   }
   return input;
 }

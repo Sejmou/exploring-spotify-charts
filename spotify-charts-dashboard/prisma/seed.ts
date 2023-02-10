@@ -2,9 +2,13 @@ import { PrismaClient } from "@prisma/client";
 import { promises as fs } from "fs";
 import path from "path";
 import { z } from "zod";
+import { truncate } from "../src/utils/misc";
 
 // This script fills the database with data from the JSON files created via create_seed_data.py (check this script for details on how this data was obtained - side note: it's a bit messy lol)
 // If this script is re-executed it will reset all the matching data in the database with the values from the JSON files as well (should not be a problem since the data is not modified in the application - at least as of today (8 Feb 2023))
+
+// CONFIG
+const skipIfRowCountsMatch = true; // if true, the script will skip the seeding process if the row counts of the tables match the row counts of the JSON files
 
 const seedDataDir = path.join(__dirname, "seed-data");
 
@@ -93,6 +97,16 @@ const top50GlobalValidator = z.array(
   })
 );
 
+const countriesValidator = z.array(
+  z.object({
+    name: z.string(),
+    isoAlpha2: z.string(),
+    isoAlpha3: z.string(),
+    geoRegion: z.string(),
+    geoSubregion: z.string(),
+  })
+);
+
 async function processFile(filename: string) {
   console.log("processing file", filename);
   const file = await fs.readFile(path.join(seedDataDir, filename), "utf-8");
@@ -110,145 +124,228 @@ function createChunks<T>(array: T[], chunkSize: number) {
   return chunks;
 }
 
+async function runAsyncFnInChunksSequential<T, O>(
+  data: T[],
+  fn: (chunkData: T[]) => Promise<O>,
+  chunkSize = 20
+) {
+  const chunks = createChunks(data, chunkSize);
+  const output = [];
+  let i = 1;
+  for (const chunk of chunks) {
+    console.log("processing chunk", i, "of", chunks.length);
+    output.push(await fn(chunk));
+    i++;
+  }
+
+  return output;
+}
+
+// wish I could use this to make things faster but it fails lol
+async function runAsyncFnInChunksParallel<T, O>(
+  data: T[],
+  fn: (chunkData: T[]) => Promise<O>,
+  chunkSize = 100,
+  maxConcurrent = 10
+) {
+  const chunks = createChunks(data, chunkSize);
+  console.log("processing", chunks.length, "chunks in parallel");
+  const taskCallers: ((chunkNr: number, batchNr: number) => Promise<O>)[] = [];
+  for (const chunk of chunks) {
+    const task = async (chunkNr: number, batchNr: number) => {
+      console.log("started processing batch", batchNr, "of chunk", chunkNr);
+      const res = await fn(chunk);
+      console.log("done with batch", batchNr, "of chunk", chunkNr);
+      return res;
+    };
+    taskCallers.push(task);
+  }
+  const taskCallerChunks = createChunks(taskCallers, maxConcurrent);
+  const output: O[] = [];
+  for (let i = 0; i < taskCallerChunks.length; i++) {
+    const taskCallerChunk = taskCallerChunks[i];
+    const chunkOutput = await Promise.all(
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      taskCallerChunk!.map((tc, j) => tc(i + 1, j + 1))
+    );
+    output.push(...chunkOutput);
+    console.log("done with chunk", i + 1);
+  }
+  return output;
+}
+
 const prisma = new PrismaClient();
 async function main() {
   const artists = artistsValidator.parse(await processFile("artists.json"));
-  await prisma.$transaction(
-    artists.map((artist) =>
-      prisma.artist.upsert({
-        where: { id: artist.id },
-        update: artist,
-        create: artist,
-      })
-    )
-  );
-  console.log("inserted or updated", artists.length, "artists");
+  const existingArtists = await prisma.artist.count();
 
-  const albums = albumsValidator.parse(await processFile("albums.json"));
-  const albumsWithParsedDates = albums.map((album) => ({
-    ...album,
-    releaseDate: new Date(album.releaseDate),
-  }));
-  await prisma.$transaction(
-    albumsWithParsedDates.map((album) => {
-      return prisma.album.upsert({
-        where: { id: album.id },
-        update: album,
-        create: album,
+  if (
+    existingArtists == 0 ||
+    !skipIfRowCountsMatch ||
+    existingArtists !== artists.length
+  ) {
+    const genresAndArtistIds = new MapWithDefault<string, string[]>(() => []);
+    artists.forEach((artist) => {
+      artist.genres.forEach((genre) => {
+        genresAndArtistIds.get(genre).push(artist.id);
       });
-    })
-  );
-  console.log("inserted", albums.length, "albums");
+    });
+    await prisma.genre.deleteMany({});
+    const { count: genreCount } = await prisma.genre.createMany({
+      data: [...genresAndArtistIds.keys()].map((genre) => ({ label: genre })),
+      skipDuplicates: true,
+    });
+    console.log("inserted", genreCount, "genres");
 
-  const albumArtists = albumArtistsValidator.parse(
-    await processFile("album_artists.json")
-  );
+    await prisma.artist.deleteMany({});
+    const artistsWithoutGenres = artists.map((artist) => {
+      const { genres, ...rest } = artist;
+      return rest;
+    });
+    const { count: artistCount } = await prisma.artist.createMany({
+      data: artistsWithoutGenres,
+    });
+    console.log("inserted", artistCount, "artists");
 
-  await prisma.$transaction(
-    albumArtists.map((feature) => {
-      return prisma.albumArtistEntry.upsert({
-        where: {
-          albumFeatureId: {
-            artistId: feature.artistId,
-            albumId: feature.albumId,
+    for (const [genre, artistIds] of genresAndArtistIds) {
+      console.log("updating", artistIds.length, "artists with genre", genre);
+      await prisma.genre.update({
+        where: { label: genre },
+        data: {
+          artists: {
+            connect: artistIds.map((id) => ({ id })),
           },
         },
-        update: feature,
-        create: feature,
       });
-    })
-  );
-  console.log("inserted", albumArtists.length, "album-artist entries");
+    }
+    console.log("done connecting artists with genres");
+  }
 
+  const existingAlbums = await prisma.album.count();
+  const albums = albumsValidator.parse(await processFile("albums.json"));
+
+  if (
+    existingAlbums == 0 ||
+    !skipIfRowCountsMatch ||
+    existingAlbums !== albums.length
+  ) {
+    const albumsTransformed = albums.map((album) => ({
+      ...album,
+      releaseDate: new Date(album.releaseDate),
+      name: truncate(album.name, 191), // truncate name (fails if column value length > 191 when using MySQL DB hosted on PlanetScale)
+    }));
+    await prisma.album.deleteMany({});
+    await prisma.album.createMany({
+      data: albumsTransformed,
+    });
+
+    const albumArtists = albumArtistsValidator.parse(
+      await processFile("album_artists.json")
+    );
+    await prisma.albumArtistEntry.deleteMany({});
+    await runAsyncFnInChunksSequential(
+      albumArtists,
+      (chunk) =>
+        prisma.albumArtistEntry.createMany({
+          // crashes if too many entries are inserted at once -> chunk processing
+          data: chunk,
+        }),
+      15000
+    );
+    console.log("inserted", albumArtists.length, "album-artist entries");
+  }
+
+  const existingTracks = await prisma.track.count();
   const tracks = tracksValidator.parse(await processFile("tracks.json"));
-  await prisma.$transaction(
-    tracks.map((input) => {
-      const { albumId, ...track } = input;
-      const upsertInput = { ...track, album: { connect: { id: albumId } } };
-      return prisma.track.upsert({
-        where: { id: track.id },
-        update: upsertInput,
-        create: upsertInput,
-      });
-    })
-  );
-  console.log("inserted", tracks.length, "tracks");
 
+  if (
+    existingTracks == 0 ||
+    !skipIfRowCountsMatch ||
+    existingTracks !== tracks.length
+  ) {
+    await prisma.track.deleteMany({});
+    await runAsyncFnInChunksSequential(
+      tracks.map((track) => ({
+        ...track,
+        name: truncate(track.name, 191), // truncate name (fails if column value length > 191 when using MySQL DB hosted on PlanetScale)
+      })),
+      (chunk) => prisma.track.createMany({ data: chunk }),
+      15000
+    );
+    console.log("inserted", tracks.length, "tracks");
+  }
+
+  const existingTrackArtistsEntries = await prisma.trackArtistEntry.count();
   const tracksAndArtists = trackArtistsValidator.parse(
     await processFile("track_artists.json")
   );
-  await prisma.$transaction(
-    tracksAndArtists.map((feature) => {
-      return prisma.trackArtistEntry.upsert({
-        where: {
-          trackFeatureId: {
-            trackId: feature.trackId,
-            artistId: feature.artistId,
-          },
-        },
-        update: feature,
-        create: feature,
-      });
-    })
-  );
-  console.log("inserted", tracksAndArtists.length, "track-artist entries");
+  if (
+    existingTrackArtistsEntries == 0 ||
+    !skipIfRowCountsMatch ||
+    existingTrackArtistsEntries !== tracksAndArtists.length
+  ) {
+    await prisma.trackArtistEntry.deleteMany({});
+    await runAsyncFnInChunksSequential(
+      tracksAndArtists,
+      (chunk) => prisma.trackArtistEntry.createMany({ data: chunk }),
+      15000
+    );
+    console.log("inserted", tracksAndArtists.length, "track-artist entries");
+  }
 
+  const countries = countriesValidator.parse(
+    await processFile("countries.json")
+  );
+  await prisma.country.deleteMany({});
+  const { count: countryCount } = await prisma.country.createMany({
+    data: countries,
+  });
+  console.log("inserted", countryCount, "countries");
+
+  const existingCountryChartEntries = await prisma.countryChartEntry.count();
   const top50Countries = top50CountriesValidator.parse(
     await processFile("top50_countries.json")
   );
-  const top50CountriesWithParsedDates = top50Countries.map((entry) => ({
-    ...entry,
-    date: new Date(entry.date),
-  }));
-  const chunks = createChunks(top50CountriesWithParsedDates, 10000);
-  let i = 0;
-  for (const chunk of chunks) {
-    console.log("processing chart data chunk", ++i, "of", chunks.length);
-    await prisma.$transaction(
-      chunk.map((chartEntry) => {
-        return prisma.countryChartEntry.upsert({
-          where: {
-            chartEntryId: {
-              trackId: chartEntry.trackId,
-              countryName: chartEntry.countryName,
-              date: chartEntry.date,
-            },
-          },
-          update: chartEntry,
-          create: chartEntry,
-        });
-      })
+  if (
+    existingCountryChartEntries == 0 ||
+    !skipIfRowCountsMatch ||
+    existingCountryChartEntries !== top50Countries.length
+  ) {
+    await prisma.countryChartEntry.deleteMany({});
+    const top50CountriesWithParsedDates = top50Countries.map((entry) => ({
+      ...entry,
+      date: new Date(entry.date),
+    }));
+    await runAsyncFnInChunksSequential(
+      top50CountriesWithParsedDates,
+      (chunk) => prisma.countryChartEntry.createMany({ data: chunk }),
+      8000 // for some reason it crashed with the 15000 chunk size from above
     );
+    console.log("inserted", top50Countries.length, "country chart entries");
   }
-  console.log("inserted", top50Countries.length, "country chart entries");
 
   const top50Global = top50GlobalValidator.parse(
     await processFile("top50_global.json")
   );
-  const top50GlobalWithParsedDates = top50Global.map((entry) => ({
-    ...entry,
-    date: new Date(entry.date),
-  }));
-  const globalChunks = createChunks(top50GlobalWithParsedDates, 10000);
-  i = 0;
-  for (const chunk of globalChunks) {
-    console.log("processing chart data chunk", ++i, "of", globalChunks.length);
-    await prisma.$transaction(
-      chunk.map((chartEntry) => {
-        return prisma.globalChartEntry.upsert({
-          where: {
-            chartEntryId: {
-              trackId: chartEntry.trackId,
-              date: chartEntry.date,
-            },
-          },
-          update: chartEntry,
-          create: chartEntry,
-        });
-      })
+  const existingGlobalChartEntries = await prisma.globalChartEntry.count();
+
+  if (
+    existingGlobalChartEntries == 0 ||
+    !skipIfRowCountsMatch ||
+    existingGlobalChartEntries !== top50Global.length
+  ) {
+    await prisma.globalChartEntry.deleteMany({});
+    const top50GlobalWithParsedDates = top50Global.map((entry) => ({
+      ...entry,
+      date: new Date(entry.date),
+    }));
+    await runAsyncFnInChunksSequential(
+      top50GlobalWithParsedDates,
+      (chunk) => prisma.globalChartEntry.createMany({ data: chunk }),
+      8000 // for some reason it crashed with the 15000 chunk size from above
     );
+    console.log("inserted", top50Global.length, "global chart entries");
   }
-  console.log("inserted", top50Global.length, "global chart entries");
 }
 
 main()
@@ -260,3 +357,17 @@ main()
     await prisma.$disconnect();
     process.exit(1);
   });
+
+class MapWithDefault<K, V> extends Map<K, V> {
+  constructor(defaultValue: () => V) {
+    super();
+    this.defaultValue = defaultValue;
+  }
+  private defaultValue: () => V;
+  get(key: K): V {
+    if (!this.has(key)) {
+      this.set(key, this.defaultValue());
+    }
+    return super.get(key) as V;
+  }
+}

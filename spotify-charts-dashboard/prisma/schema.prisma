@@ -2,22 +2,29 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-    provider = "prisma-client-js"
+    provider        = "prisma-client-js"
+    previewFeatures = ["filteredRelationCount"]
 }
 
 datasource db {
-    provider = "postgresql"
-    url      = env("DATABASE_URL")
+    provider     = "mysql"
+    url          = env("DATABASE_URL")
+    relationMode = "prisma"
 }
 
 model Artist {
     id           String             @id @default(cuid())
     name         String
-    genres       String[]
+    genres       Genre[]
     imgUrl       String?
     thumbnailUrl String?
     tracks       TrackArtistEntry[]
     albums       AlbumArtistEntry[]
+}
+
+model Genre {
+    label   String   @id @default(cuid())
+    artists Artist[]
 }
 
 model Album {

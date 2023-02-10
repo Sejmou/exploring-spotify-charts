@@ -225,3 +225,63 @@ artist_final_data["genres"] = artist_final_data.genres.apply(
 store_and_print_info(artist_final_data, "artists")
 
 # %%
+# add regions mentioned in ISRC territory column of tracks
+full_country_info = pd.read_csv(
+    "https://raw.githubusercontent.com/lukes/ISO-3166-Countries-with-Regional-Codes/master/all/all.csv"
+)
+tracks = pd.read_json(os.path.join(script_dir, "seed-data", "tracks.json"))
+territories = tracks.isrcTerritory.drop_duplicates()
+
+country_info_for_territories = pd.merge(
+    full_country_info,
+    territories,
+    left_on="name",
+    right_on="isrcTerritory",
+    how="right",
+)
+country_info_for_territories[country_info_for_territories.name.isna()]
+
+renames_country_info = {
+    "United States of America": "United States",
+    "United Kingdom of Great Britain and Northern Ireland": "United Kingdom",
+    "Czechia": "Czech Republic",
+    "Taiwan, Province of China": "Taiwan",
+    "Korea, Republic of": "South Korea",
+}
+full_country_info_fixed = full_country_info.replace({"name": renames_country_info})
+
+renames_isrc_territory = {
+    "Chinese Taipei": "Taiwan",
+    "Hong Kong SAR, China": "Hong Kong",
+}
+territories = territories.replace(renames_isrc_territory)
+
+country_info_for_territories_fixed = pd.merge(
+    full_country_info_fixed,
+    territories,
+    left_on="name",
+    right_on="isrcTerritory",
+    how="right",
+)
+country_info_for_territories_fixed.loc[
+    country_info_for_territories_fixed.name == "Kosovo",
+    ["name", "alpha-2", "alpha-3", "region", "sub-region"],
+] = ["Kosovo", "XK", "XKX", "Europe", "Eastern Europe"]
+country_info_for_territories_fixed.rename(
+    columns={
+        "alpha-2": "isoAlpha2",
+        "alpha-3": "isoAlpha3",
+        "region": "geoRegion",
+        "sub-region": "geoSubregion",
+    },
+    inplace=True,
+)
+countries = pd.read_json(os.path.join(script_dir, "seed-data", "countries.json"))
+
+countries_complete = pd.concat(
+    [countries, country_info_for_territories_fixed[countries.columns]]
+).drop_duplicates()
+countries_complete = countries_complete[~countries_complete.name.isna()]
+store_and_print_info(countries_complete, "countries")
+
+# %%
