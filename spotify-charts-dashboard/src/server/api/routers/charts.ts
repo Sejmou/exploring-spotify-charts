@@ -187,11 +187,24 @@ export const chartsRouter = createTRPCRouter({
         trackId: true,
       },
     });
-    const countries = await ctx.prisma.country.findMany({});
-    return trackCountsByCountry.map((entry) => ({
-      country: countries.find((c) => c.name === entry.countryName)!,
-      count: entry._count.trackId,
+    const trackCounts = trackCountsByCountry.map((e) => ({
+      countryName: e.countryName,
+      count: e._count.trackId,
     }));
+    const trackCountryData = (
+      await ctx.prisma.country.findMany({
+        where: {
+          name: {
+            in: trackCounts.map((tc) => tc.countryName),
+          },
+        },
+      })
+    ).map((e) => ({
+      country: e,
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      count: trackCounts.find((tc) => tc.countryName == e.name)!.count,
+    }));
+    return trackCountryData;
   }),
 });
 

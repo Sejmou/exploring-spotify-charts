@@ -22,7 +22,10 @@ export default function CountryTrackCountOverview() {
   } else {
     content = (
       <ChoroplethWorld
-        data={trackCounts.data.map((d) => ({ ...d, value: d.count }))}
+        data={trackCounts.data.map((d) => ({
+          country: d.country,
+          value: d.count,
+        }))}
         colorMap={() => "#1ED760"}
         propName={"number of Top 50 chart entries"}
       />
