@@ -39,6 +39,7 @@ const attributeOptions: TrackAttribute[] = [
   "valence",
 ];
 
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const pointColorObj = color("#1ED760")!;
 pointColorObj.opacity = 0.2;
 const pointColor = pointColorObj.toString();
@@ -137,7 +138,7 @@ const SpotifyTrackDataScatterPlot = () => {
               dataForTrack.featuringArtists[0]?.artist.name ?? "Unknown Artist",
               30
             )}`,
-            `${dataForTrack.genres[0] ?? "Unknown Genre"}`,
+            `${dataForTrack.genres[0]?.label ?? "Unknown Genre"}`,
           ];
         }}
       />
