@@ -70,19 +70,18 @@ model Track {
     featuringArtists    TrackArtistEntry[]
     countryChartEntries CountryChartEntry[]
     globalChartEntries  GlobalChartEntry[]
-    explicit            Boolean
     previewUrl          String?
     albumId             String
     album               Album               @relation(fields: [albumId], references: [id])
     isrc                String
     isrcYear            Int
-    isrcAgency          String
-    isrcTerritory       String
+    isrcAgency          ISRCAgency          @relation(fields: [isrcAgencyName, isrcAgencyTerritory], references: [name, territory])
+    isrcAgencyName      String
+    recordingCountry    Country             @relation(fields: [isrcAgencyTerritory], references: [name])
+    isrcAgencyTerritory String
     danceability        Float
     energy              Float
-    key                 Float
     loudness            Float
-    mode                Int
     speechiness         Float
     acousticness        Float
     instrumentalness    Float
@@ -90,18 +89,36 @@ model Track {
     valence             Float
     tempo               Float
     durationMs          Float
-    timeSignature       Int
+    // categorical features - stored as strings (labels) for convenience
+    mode                String
+    key                 String
+    explicit            String
+    timeSignature       String
 
     @@index([albumId])
+    @@index([isrcAgencyName, isrcAgencyTerritory])
+    @@index([isrcAgencyTerritory])
+}
+
+model ISRCAgency {
+    name      String
+    country   Country @relation(fields: [territory], references: [name])
+    territory String
+    tracks    Track[]
+
+    @@id([name, territory], name: "isrcAgencyId")
+    @@index([territory])
 }
 
 model Country {
-    name         String              @id @default(cuid())
-    isoAlpha3    String
-    isoAlpha2    String
-    geoRegion    String
-    geoSubregion String
-    chartEntries CountryChartEntry[]
+    name            String              @id @default(cuid())
+    isoAlpha3       String
+    isoAlpha2       String
+    geoRegion       String
+    geoSubregion    String
+    chartEntries    CountryChartEntry[]
+    isrcAgencies    ISRCAgency[]
+    trackRecordings Track[]
 }
 
 model CountryChartEntry {

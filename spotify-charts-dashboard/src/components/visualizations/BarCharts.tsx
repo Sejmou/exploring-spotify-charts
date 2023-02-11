@@ -11,7 +11,7 @@ type Extends<T, U extends T> = U;
 // numerical props that are suitable for bar charts (i.e. not categorical, and not between 0 and 1 (those were used in radar charts))
 type NumericalProps = Extends<
   TrackDataProps,
-  "tempo" | "key" | "mode" | "durationMs" | "loudness" | "timeSignature"
+  "tempo" | "durationMs" | "loudness"
 >;
 
 const numericalProps: NumericalProps[] = [

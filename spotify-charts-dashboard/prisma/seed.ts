@@ -8,8 +8,8 @@ import { truncate } from "../src/utils/misc";
 // If this script is re-executed it will reset all the matching data in the database with the values from the JSON files as well (should not be a problem since the data is not modified in the application - at least as of today (8 Feb 2023))
 
 // CONFIG
-const skipIfRowCountsMatch = true; // if true, the script will skip the seeding process if the row counts of the tables match the row counts of the JSON files
-const useSubsetOfCountries = false; // if true, only the three countries (Germany, United States, Brazil) will be used for the country charts
+const skipIfRowCountsMatch = false; // if true, the script will skip the seeding process if the row counts of the tables match the row counts of the JSON files
+const useSubsetOfCountries = true; // if true, only the three countries (Germany, United States, Brazil) will be used for the country charts
 
 const seedDataDir = path.join(__dirname, "seed-data");
 
@@ -61,21 +61,28 @@ const tracksValidator = z.array(
     danceability: z.number(),
     durationMs: z.number(),
     energy: z.number(),
-    explicit: z.boolean(),
     instrumentalness: z.number(),
     isrc: z.string(),
     isrcAgency: z.string(),
     isrcTerritory: z.string(),
     isrcYear: z.number(),
-    key: z.number(),
     liveness: z.number(),
     loudness: z.number(),
-    mode: z.number(),
     previewUrl: z.string().or(z.null()),
     speechiness: z.number(),
     tempo: z.number(),
-    timeSignature: z.number(),
     valence: z.number(),
+    mode: z.string(),
+    key: z.string(),
+    explicit: z.string(),
+    timeSignature: z.string(),
+  })
+);
+
+const isrcAgencyValidator = z.array(
+  z.object({
+    isrcAgency: z.string(),
+    isrcTerritory: z.string(),
   })
 );
 
@@ -256,6 +263,15 @@ async function main() {
     console.log("inserted", albumArtists.length, "album-artist entries");
   }
 
+  const countries = countriesValidator.parse(
+    await processFile("countries.json")
+  );
+  await prisma.country.deleteMany({});
+  const { count: countryCount } = await prisma.country.createMany({
+    data: countries,
+  });
+  console.log("inserted", countryCount, "countries");
+
   const existingTracks = await prisma.track.count();
   const tracks = tracksValidator.parse(await processFile("tracks.json"));
 
@@ -264,12 +280,29 @@ async function main() {
     !skipIfRowCountsMatch ||
     existingTracks !== tracks.length
   ) {
+    await prisma.iSRCAgency.deleteMany({});
+    const agencyData = isrcAgencyValidator.parse(
+      await processFile("isrc_agencies.json")
+    );
+    await prisma.iSRCAgency.createMany({
+      data: agencyData.map((d) => ({
+        name: d.isrcAgency,
+        territory: d.isrcTerritory,
+      })),
+    });
+    console.log("inserted", agencyData.length, "ISRC agencies");
+
     await prisma.track.deleteMany({});
     await runAsyncFnInChunksSequential(
-      tracks.map((track) => ({
-        ...track,
-        name: truncate(track.name, 191), // truncate name (fails if column value length > 191 when using MySQL DB hosted on PlanetScale)
-      })),
+      tracks.map((track) => {
+        const { isrcAgency, isrcTerritory, ...trackRest } = track;
+        return {
+          ...trackRest,
+          isrcAgencyName: isrcAgency,
+          isrcAgencyTerritory: isrcTerritory,
+          name: truncate(track.name, 191), // truncate name (fails if column value length > 191 when using MySQL DB hosted on PlanetScale)
+        };
+      }),
       (chunk) => prisma.track.createMany({ data: chunk }),
       15000
     );
@@ -293,15 +326,6 @@ async function main() {
     );
     console.log("inserted", tracksAndArtists.length, "track-artist entries");
   }
-
-  const countries = countriesValidator.parse(
-    await processFile("countries.json")
-  );
-  await prisma.country.deleteMany({});
-  const { count: countryCount } = await prisma.country.createMany({
-    data: countries,
-  });
-  console.log("inserted", countryCount, "countries");
 
   const existingCountryChartEntries = await prisma.countryChartEntry.count();
   const countrySubset = new Set(["Germany", "United States", "Brazil"]);

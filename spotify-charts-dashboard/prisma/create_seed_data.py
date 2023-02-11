@@ -285,3 +285,47 @@ countries_complete = countries_complete[~countries_complete.name.isna()]
 store_and_print_info(countries_complete, "countries")
 
 # %%
+# map categorical track features encoded with boolean/numbers to human-readable strings
+tracks = pd.read_json(os.path.join(script_dir, "seed-data", "tracks.json"))
+
+tracks["mode"] = tracks["mode"].astype("category")
+tracks["mode"] = tracks["mode"].cat.rename_categories({0: "Minor", 1: "Major"})
+
+
+def rename_least_frequent_to_other(series, share_of_total=0.01):
+    """Rename least frequent values to 'Other'."""
+    counts = series.value_counts()
+    least_frequent = counts[counts < share_of_total * counts.sum()]
+    return series.replace(least_frequent.index, "Other")
+
+
+tracks["timeSignature"] = rename_least_frequent_to_other(tracks.timeSignature)
+tracks["timeSignature"] = tracks["timeSignature"].astype("category")
+tracks["timeSignature"] = tracks["timeSignature"].cat.rename_categories(
+    {3: "3/4", 4: "4/4", 5: "5/4"}
+)
+tracks["explicit"] = tracks["explicit"].astype("category")
+tracks["explicit"] = tracks["explicit"].cat.rename_categories({0: "No", 1: "Yes"})
+tracks["key"] = tracks["key"].astype("category")
+tracks["key"] = tracks["key"].cat.rename_categories(
+    {
+        0: "C",
+        1: "C#/Db",
+        2: "D",
+        3: "D#/Eb",
+        4: "E",
+        5: "F",
+        6: "F#/Gb",
+        7: "G",
+        8: "G#/Ab",
+        9: "A",
+        10: "A#/Bb",
+        11: "B",
+    }
+)
+store_and_print_info(tracks, "tracks")
+# %%
+isrc_agency_data = tracks[["isrcAgency", "isrcTerritory"]].drop_duplicates()
+store_and_print_info(isrc_agency_data, "isrc_agencies")
+
+# %%
