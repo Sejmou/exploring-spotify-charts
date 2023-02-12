@@ -1,12 +1,16 @@
-import { useFilterStore } from "../../../store/filter";
+import { useTracksExplorationStore } from "../../../store/trackDataExploration";
 import { api } from "../../../utils/api";
 import ChoroplethWorld from "../../visualizations/ChoroplethWorld";
 import SpotifyCountrySelectWorldMap from "./SpotifyCountrySelectWorldMap";
 
 const CountriesFilter = () => {
-  const countryNames = useFilterStore((state) => state.countryNames);
-  const addCountryName = useFilterStore((state) => state.addCountryName);
-  const removeCountryName = useFilterStore((state) => state.removeCountryName);
+  const regionNames = useTracksExplorationStore((state) => state.regionNames);
+  const addRegionName = useTracksExplorationStore(
+    (state) => state.addRegionName
+  );
+  const removeRegionName = useTracksExplorationStore(
+    (state) => state.removeRegionName
+  );
   const countries = api.countries.getAllWithCharts.useQuery();
 
   let countryMap = (
@@ -18,12 +22,12 @@ const CountriesFilter = () => {
       <SpotifyCountrySelectWorldMap
         mapZoom={0.75}
         countries={countries.data}
-        selectedCountryNames={countryNames ?? []}
+        selectedCountryNames={regionNames ?? []}
         onToggleCountry={(countryName) => {
-          if (countryNames?.includes(countryName)) {
-            removeCountryName(countryName);
+          if (regionNames?.includes(countryName)) {
+            removeRegionName(countryName);
           } else {
-            addCountryName(countryName);
+            addRegionName(countryName);
           }
         }}
       />
@@ -39,8 +43,8 @@ const CountriesFilter = () => {
           tracks charting in any chart (including global) will be included.
         </p>
         <p className="mt-2 text-sm">
-          {countryNames
-            ? "Filtering for tracks charting in: " + countryNames.join(", ")
+          {regionNames
+            ? "Filtering for tracks charting in: " + regionNames.join(", ")
             : "(no countries selected)"}
         </p>
       </div>

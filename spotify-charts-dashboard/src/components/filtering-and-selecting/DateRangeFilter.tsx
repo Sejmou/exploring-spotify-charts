@@ -1,17 +1,25 @@
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
 import { useState } from "react";
-import { useFilterStore } from "../../store/filter";
+import { useTrackComparisonFilterStore } from "../../store/trackComparison";
 import BasicDatePicker from "./BasicDatePicker";
 
 const minDate = dayjs("2017-01-01");
 const maxDate = dayjs("2021-12-31");
 
 const DateRangeFilter = () => {
-  const startInclusive = useFilterStore((state) => state.startInclusive);
-  const endInclusive = useFilterStore((state) => state.endInclusive);
-  const setStartInclusive = useFilterStore((state) => state.setStartInclusive);
-  const setEndInclusive = useFilterStore((state) => state.setEndInclusive);
+  const startInclusive = useTrackComparisonFilterStore(
+    (state) => state.startInclusive
+  );
+  const endInclusive = useTrackComparisonFilterStore(
+    (state) => state.endInclusive
+  );
+  const setStartInclusive = useTrackComparisonFilterStore(
+    (state) => state.setStartInclusive
+  );
+  const setEndInclusive = useTrackComparisonFilterStore(
+    (state) => state.setEndInclusive
+  );
 
   const [startDate, setStartDate] = useState<Dayjs | null>(
     startInclusive ? dayjs(startInclusive) : null

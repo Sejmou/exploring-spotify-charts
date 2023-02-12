@@ -1,5 +1,5 @@
 import dynamic from "next/dynamic";
-import { useFilterStore } from "../../store/filter";
+import { useTrackComparisonFilterStore } from "../../store/trackComparison";
 import { api } from "../../utils/api";
 import DateRangeFilter from "../filtering-and-selecting/DateRangeFilter";
 import RegionSelect from "../filtering-and-selecting/RegionSelect";
@@ -15,10 +15,16 @@ const ChartsViz = dynamic(() => import("../visualizations/ChartsViz"), {
 });
 
 export default function CompareTracks() {
-  const region = useFilterStore((state) => state.region);
-  const startInclusive = useFilterStore((state) => state.startInclusive);
-  const endInclusive = useFilterStore((state) => state.endInclusive);
-  const trackIds = useFilterStore((state) => state.trackIds);
+  const region = useTrackComparisonFilterStore((state) => state.region);
+  const startInclusive = useTrackComparisonFilterStore(
+    (state) => state.startInclusive
+  );
+  const endInclusive = useTrackComparisonFilterStore(
+    (state) => state.endInclusive
+  );
+  const trackIds = useTrackComparisonFilterStore(
+    (state) => state.comparisonTrackIds
+  );
 
   const charts = api.charts.getTrackCharts.useQuery(
     { region, startInclusive, endInclusive, trackIds },

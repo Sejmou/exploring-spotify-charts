@@ -12,18 +12,27 @@ import {
 import { useEffect, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import MusicNoteIcon from "@mui/icons-material/MusicNote";
-import { useFilterStore } from "../../store/filter";
+import { useTrackComparisonFilterStore } from "../../store/trackComparison";
 
-type TrackDataAPIResponse = RouterOutputs["tracks"]["getNamesAndArtists"];
+type TrackDataAPIResponse =
+  RouterOutputs["tracks"]["getTrackNamesArtistsAndStreamsOrdered"];
 
 export default function TrackSelect() {
-  const region = useFilterStore((state) => state.region);
-  const startInclusive = useFilterStore((state) => state.startInclusive);
-  const endInclusive = useFilterStore((state) => state.endInclusive);
-  const trackIds = useFilterStore((state) => state.trackIds);
-  const addTrackId = useFilterStore((state) => state.addTrackId);
+  const region = useTrackComparisonFilterStore((state) => state.region);
+  const startInclusive = useTrackComparisonFilterStore(
+    (state) => state.startInclusive
+  );
+  const endInclusive = useTrackComparisonFilterStore(
+    (state) => state.endInclusive
+  );
+  const trackIds = useTrackComparisonFilterStore(
+    (state) => state.comparisonTrackIds
+  );
+  const addTrackId = useTrackComparisonFilterStore(
+    (state) => state.addComparisonTrackId
+  );
 
-  const tracks = api.tracks.getNamesAndArtists.useQuery(
+  const tracks = api.tracks.getTrackNamesArtistsAndStreamsOrdered.useQuery(
     { startInclusive, endInclusive, region },
     {
       enabled: !!region,

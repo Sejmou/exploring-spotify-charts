@@ -4,18 +4,24 @@ import { divergingColors } from "../utils/misc";
 import { useState } from "react";
 import { Button, Dialog } from "@mui/material";
 import BasicTrackInfo from "./BasicTrackInfo";
-import { useFilterStore } from "../store/filter";
+import { useTrackComparisonFilterStore } from "../store/trackComparison";
 
 const SelectedTracksInfoAndLegend = () => {
   const [expanded, setExpanded] = useState(false);
-  const trackIds = useFilterStore((state) => state.trackIds);
-  const removeTrackId = useFilterStore((state) => state.removeTrackId);
-  const clearTrackIds = useFilterStore((state) => state.clearTrackIds);
+  const trackIds = useTrackComparisonFilterStore(
+    (state) => state.comparisonTrackIds
+  );
+  const removeTrackId = useTrackComparisonFilterStore(
+    (state) => state.removeComparisonTrackId
+  );
+  const clearTrackIds = useTrackComparisonFilterStore(
+    (state) => state.clearComparisonTrackIds
+  );
 
-  const tracks = api.tracks.getTrackDataForIds.useQuery(
+  const tracks = api.tracks.getTrackMetadataForIds.useQuery(
     { trackIds },
     { keepPreviousData: true }
-  ); // TODO: cleaner solution (useMutation etc.)
+  );
 
   if (tracks.status === "loading") {
     return <div>Loading...</div>;

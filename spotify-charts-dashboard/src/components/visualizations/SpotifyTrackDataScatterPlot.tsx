@@ -1,43 +1,23 @@
 import { CircularProgress } from "@mui/material";
 import { color } from "d3";
-import { useFilterStore } from "../../store/filter";
 import { api } from "../../utils/api";
 import ScatterPlot from "./ScatterPlot";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { RouterOutputs } from "../../utils/api";
 import BasicSelect from "../filtering-and-selecting/BasicSelect";
 import { capitalizeFirstLetter, truncate } from "../../utils/misc";
-import { useTrackDataExplorationStore } from "../../store/trackDataExploration";
-
-type PickByType<T, Value> = {
-  [P in keyof T as T[P] extends Value | undefined ? P : never]: T[P];
-};
-
-type TrackAttribute = keyof PickByType<
-  RouterOutputs["tracks"]["getTrackData"][0],
-  number
->;
+import { useTracksExplorationStore } from "../../store/trackDataExploration";
+import { numericTrackFeatures } from "../../utils/data";
+import type { NumericTrackFeatureName } from "../../utils/data";
 
 export type ScatterPlotWorkerMessage = {
-  trackData: RouterOutputs["tracks"]["getTrackData"];
+  trackData: RouterOutputs["tracks"]["getTrackXY"];
   filters: {
     trackIds?: string[];
   };
 };
 
-export type ScatterPlotWorkerResponse = RouterOutputs["tracks"]["getTrackData"];
-
-const attributeOptions: TrackAttribute[] = [
-  "acousticness",
-  "danceability",
-  "energy",
-  "instrumentalness",
-  "liveness",
-  "loudness",
-  "speechiness",
-  "tempo",
-  "valence",
-];
+export type ScatterPlotWorkerResponse = RouterOutputs["tracks"]["getTrackXY"];
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const pointColorObj = color("#1ED760")!;
@@ -45,27 +25,42 @@ pointColorObj.opacity = 0.2;
 const pointColor = pointColorObj.toString();
 
 const SpotifyTrackDataScatterPlot = () => {
-  const countryNames = useFilterStore((state) => state.countryNames);
-  const tracks = api.tracks.getTrackData.useQuery(undefined, {
-    staleTime: Infinity,
-    keepPreviousData: true,
-  });
-  const filteredTrackIds = api.tracks.getTrackIdsMatchingFilter.useQuery(
-    { countryNames },
-    { staleTime: Infinity, keepPreviousData: true }
+  const regionNames = useTracksExplorationStore((state) => state.regionNames);
+  const startInclusive = useTracksExplorationStore(
+    (state) => state.startInclusive
   );
+  const endInclusive = useTracksExplorationStore((state) => state.endInclusive);
+  const filterParams = useMemo(() => {
+    return {
+      regionNames,
+      startInclusive,
+      endInclusive,
+    };
+  }, [regionNames, startInclusive, endInclusive]);
+  const xFeature = useTracksExplorationStore((state) => state.xFeature);
+  const yFeature = useTracksExplorationStore((state) => state.yFeature);
+  const setXFeature = useTracksExplorationStore((state) => state.setXFeature);
+  const setYFeature = useTracksExplorationStore((state) => state.setYFeature);
 
-  const trackData = useTrackDataExplorationStore((state) => state.trackData);
-  const setTrackData = useTrackDataExplorationStore(
-    (state) => state.setTrackData
+  const trackXYData = api.tracks.getTrackXY.useQuery(
+    { ...filterParams, xFeature, yFeature },
+    {
+      staleTime: Infinity,
+      keepPreviousData: true,
+    }
   );
+  const trackMetadata = api.tracks.getTrackMetadata.useQuery(filterParams);
 
-  const [xAttr, setXAttr] = useState<TrackAttribute>("danceability");
-  const [yAttr, setYAttr] = useState<TrackAttribute>("energy");
+  const datapointsToPlot = useTracksExplorationStore(
+    (state) => state.datapointsToPlot
+  );
+  const setDatapointsToPlot = useTracksExplorationStore(
+    (state) => state.setDatapointsToPlot
+  );
 
   console.log({
-    allTrackData: tracks.data,
-    filteredTrackIds: filteredTrackIds.data,
+    plotData: trackXYData.data,
+    trackMetadata: trackMetadata.data,
   });
 
   const workerRef = useRef<Worker>();
@@ -78,64 +73,67 @@ const SpotifyTrackDataScatterPlot = () => {
       event: MessageEvent<ScatterPlotWorkerResponse>
     ) => {
       console.log("got message from worker", event.data);
-      setTrackData(event.data);
+      setDatapointsToPlot(event.data);
     };
     return () => {
       workerRef.current?.terminate();
     };
-  }, [setTrackData]);
+  }, [setDatapointsToPlot]);
 
   useEffect(() => {
-    if (!tracks.data || !filteredTrackIds.data) {
+    const xyData = trackXYData.data;
+    if (!xyData) {
+      setDatapointsToPlot([]);
       return;
     }
-    if (tracks.data.length < 3000) {
-      setTrackData(tracks.data);
+    if (xyData.length < 3000) {
+      setDatapointsToPlot(xyData);
       return;
     }
     workerRef.current?.postMessage({
-      trackData: tracks.data,
-      filters: {
-        trackIds: filteredTrackIds.data,
-      },
+      trackData: xyData,
     }); // tell the worker to process the data as we don't want to block the UI thread
-  }, [tracks.data, filteredTrackIds.data, setTrackData]);
+  }, [trackXYData.data, setDatapointsToPlot]);
 
-  if (tracks.isError) {
+  if (trackXYData.isError) {
     return <div>Error loading data, please try refreshing the page.</div>;
   }
 
   const plotArea =
-    tracks.isStale || tracks.isLoading ? (
+    trackXYData.isStale || trackXYData.isLoading ? (
       <div className="flex h-full w-full flex-col items-center justify-center gap-2">
-        <span>{tracks.isLoading && "Loading data..."}</span>
+        <span>{trackXYData.isLoading && "Loading data..."}</span>
         <CircularProgress />
       </div>
     ) : (
       <ScatterPlot
         datasets={[
           {
-            data: trackData.map((track) => {
+            data: datapointsToPlot.map((track) => {
               return {
-                x: track[xAttr],
-                y: track[yAttr],
+                x: track.x,
+                y: track.y,
               };
             }),
             backgroundColor: pointColor,
           },
         ]}
-        xAttr={capitalizeFirstLetter(xAttr)}
-        yAttr={capitalizeFirstLetter(yAttr)}
+        xAttr={capitalizeFirstLetter(xFeature)}
+        yAttr={capitalizeFirstLetter(yFeature)}
         beginAtZero={true}
         getLabel={(_, dataIdx) => {
-          const dataForTrack = trackData[dataIdx];
+          const metadata = trackMetadata.data;
+          if (!metadata) {
+            return "loading metadata...";
+          }
+          const dataForTrack = metadata[dataIdx];
           if (!dataForTrack) {
-            return "";
+            return "Could not find metadata :/";
           }
           return [
             `"${truncate(dataForTrack.name, 30)}"`,
             `by ${truncate(
-              dataForTrack.featuringArtists[0]?.artist.name ?? "Unknown Artist",
+              dataForTrack.featuringArtists[0]?.name ?? "Unknown Artist",
               30
             )}`,
             `${dataForTrack.genres[0]?.label ?? "Unknown Genre"}`,
@@ -156,11 +154,11 @@ const SpotifyTrackDataScatterPlot = () => {
           <BasicSelect
             className="w-full"
             label="x-axis attribute"
-            value={xAttr}
+            value={xFeature}
             onChange={(newValue: string) =>
-              setXAttr(newValue as TrackAttribute)
+              setXFeature(newValue as NumericTrackFeatureName)
             }
-            options={attributeOptions.map((o) => ({
+            options={numericTrackFeatures.map((o) => ({
               value: o,
               label: capitalizeFirstLetter(o),
             }))}
@@ -168,11 +166,11 @@ const SpotifyTrackDataScatterPlot = () => {
           <BasicSelect
             className="w-full"
             label="y-axis attribute"
-            value={yAttr}
+            value={yFeature}
             onChange={(newValue: string) =>
-              setYAttr(newValue as TrackAttribute)
+              setYFeature(newValue as NumericTrackFeatureName)
             }
-            options={attributeOptions.map((o) => ({
+            options={numericTrackFeatures.map((o) => ({
               value: o,
               label: capitalizeFirstLetter(o),
             }))}
