@@ -263,10 +263,23 @@ country_info_for_territories_fixed = pd.merge(
     right_on="isrcTerritory",
     how="right",
 )
-country_info_for_territories_fixed.loc[
-    country_info_for_territories_fixed.name == "Kosovo",
-    ["name", "alpha-2", "alpha-3", "region", "sub-region"],
-] = ["Kosovo", "XK", "XKX", "Europe", "Eastern Europe"]
+country_info_for_territories_fixed = pd.concat(
+    [
+        country_info_for_territories_fixed,
+        pd.DataFrame(
+            [
+                {
+                    "name": "Kosovo",
+                    "alpha-2": "XK",
+                    "alpha-3": "XKX",
+                    "region": "Europe",
+                    "sub-region": "Eastern Europe",
+                }
+            ]
+        ),
+    ]
+)
+
 country_info_for_territories_fixed.rename(
     columns={
         "alpha-2": "isoAlpha2",
@@ -326,6 +339,10 @@ tracks["key"] = tracks["key"].cat.rename_categories(
 store_and_print_info(tracks, "tracks")
 # %%
 isrc_agency_data = tracks[["isrcAgency", "isrcTerritory"]].drop_duplicates()
+isrc_agency_data["isrcTerritory"] = isrc_agency_data.isrcTerritory.replace(
+    renames_isrc_territory
+)
+
 store_and_print_info(isrc_agency_data, "isrc_agencies")
 
 # %%

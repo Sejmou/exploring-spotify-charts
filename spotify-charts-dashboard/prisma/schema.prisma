@@ -75,10 +75,8 @@ model Track {
     album               Album               @relation(fields: [albumId], references: [id])
     isrc                String
     isrcYear            Int
-    isrcAgency          ISRCAgency          @relation(fields: [isrcAgencyName, isrcAgencyTerritory], references: [name, territory])
-    isrcAgencyName      String
-    recordingCountry    Country             @relation(fields: [isrcAgencyTerritory], references: [name])
-    isrcAgencyTerritory String
+    isrcAgency          ISRCAgency          @relation(fields: [isrcAgencyId], references: [id])
+    isrcAgencyId        String
     danceability        Float
     energy              Float
     loudness            Float
@@ -96,29 +94,28 @@ model Track {
     timeSignature       String
 
     @@index([albumId])
-    @@index([isrcAgencyName, isrcAgencyTerritory])
-    @@index([isrcAgencyTerritory])
+    @@index([isrcAgencyId])
 }
 
 model ISRCAgency {
+    id        String   @id @default(cuid())
     name      String
-    country   Country @relation(fields: [territory], references: [name])
-    territory String
+    country   Country? @relation(fields: [territory], references: [name]) // optional because some agencies are global (maybe should have modelled this differently)
+    territory String?
     tracks    Track[]
 
-    @@id([name, territory], name: "isrcAgencyId")
+    @@unique([name, territory], name: "isrcAgencyId")
     @@index([territory])
 }
 
 model Country {
-    name            String              @id @default(cuid())
-    isoAlpha3       String
-    isoAlpha2       String
-    geoRegion       String
-    geoSubregion    String
-    chartEntries    CountryChartEntry[]
-    isrcAgencies    ISRCAgency[]
-    trackRecordings Track[]
+    name         String              @id @default(cuid())
+    isoAlpha3    String
+    isoAlpha2    String
+    geoRegion    String
+    geoSubregion String
+    chartEntries CountryChartEntry[]
+    isrcAgencies ISRCAgency[]
 }
 
 model CountryChartEntry {

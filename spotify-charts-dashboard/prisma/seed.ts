@@ -8,7 +8,7 @@ import { truncate } from "../src/utils/misc";
 // If this script is re-executed it will reset all the matching data in the database with the values from the JSON files as well (should not be a problem since the data is not modified in the application - at least as of today (8 Feb 2023))
 
 // CONFIG
-const skipIfRowCountsMatch = false; // if true, the script will skip the seeding process if the row counts of the tables match the row counts of the JSON files
+const skipIfRowCountsMatch = true; // if true, the script will skip the seeding process if the row counts of the tables match the row counts of the JSON files
 const useSubsetOfCountries = true; // if true, only the three countries (Germany, United States, Brazil) will be used for the country charts
 
 const seedDataDir = path.join(__dirname, "seed-data");
@@ -281,31 +281,53 @@ async function main() {
     existingTracks !== tracks.length
   ) {
     await prisma.iSRCAgency.deleteMany({});
+    await prisma.track.deleteMany({});
     const agencyData = isrcAgencyValidator.parse(
       await processFile("isrc_agencies.json")
     );
-    await prisma.iSRCAgency.createMany({
-      data: agencyData.map((d) => ({
+    const createAgencyData = agencyData
+      .map((d) => ({
         name: d.isrcAgency,
         territory: d.isrcTerritory,
-      })),
-    });
-    console.log("inserted", agencyData.length, "ISRC agencies");
+      }))
+      .map((d) => ({
+        name: d.name,
+        country: countries.find((c) => c.name === d.territory)
+          ? {
+              connect: {
+                // need to do it this way as otherwise linking of country to agency fails at runtime, urgh...
+                name: d.territory,
+              },
+            }
+          : undefined, // worldwide agencies have no country -> return undefined here to prevent connect attempt
+        tracks: {
+          create: tracks
+            .filter(
+              (t) => t.isrcAgency === d.name && t.isrcTerritory === d.territory
+            )
+            .map((track) => {
+              const { isrcAgency, isrcTerritory, ...trackRest } = track;
+              return {
+                ...trackRest,
+                name: truncate(track.name, 191), // truncate name (fails if column value length > 191 when using MySQL DB hosted on PlanetScale)
+              };
+            }),
+        },
+      }));
 
-    await prisma.track.deleteMany({});
-    await runAsyncFnInChunksSequential(
-      tracks.map((track) => {
-        const { isrcAgency, isrcTerritory, ...trackRest } = track;
-        return {
-          ...trackRest,
-          isrcAgencyName: isrcAgency,
-          isrcAgencyTerritory: isrcTerritory,
-          name: truncate(track.name, 191), // truncate name (fails if column value length > 191 when using MySQL DB hosted on PlanetScale)
-        };
-      }),
-      (chunk) => prisma.track.createMany({ data: chunk }),
-      15000
-    );
+    for (const agency of createAgencyData) {
+      console.log(
+        "inserting agency",
+        agency.name,
+        "with",
+        agency.tracks.create.length,
+        "tracks"
+      );
+      await prisma.iSRCAgency.create({
+        data: agency,
+      });
+    }
+    console.log("inserted", agencyData.length, "ISRC agencies");
     console.log("inserted", tracks.length, "tracks");
   }
 
