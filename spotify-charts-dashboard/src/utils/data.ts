@@ -15,6 +15,5 @@ export const numericTrackFeatures = [
   "tempo",
   "durationMs",
   "loudness",
-  "tempo",
   "isrcYear",
 ] as const satisfies readonly NumericTrackFeatureName[];

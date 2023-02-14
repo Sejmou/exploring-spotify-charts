@@ -155,7 +155,10 @@ export const tracksRouter = createTRPCRouter({
     }),
 });
 
-const filterResultCache = new NodeCache({ stdTTL: 20 * 60 }); // cache key cleared after 20 minutes
+const filterResultCache = new NodeCache({
+  stdTTL: 20 * 60,
+  checkperiod: 20 * 60, // don't really understand why keeping this at default (should be 600 according to docs) causes the cache to be cleared immediately
+}); // cache key cleared after 20 minutes
 
 type FilterParams = {
   startInclusive?: Date;
@@ -177,6 +180,7 @@ async function getTrackIdsMatchingFilter(
   >,
   filterParams: FilterParams
 ) {
+  const startTime = performance.now();
   const cacheKey = createFilterParamsKey(filterParams);
   const cachedTrackIds: string[] | undefined = filterResultCache.get(cacheKey);
   if (cachedTrackIds) {
@@ -217,6 +221,11 @@ async function getTrackIdsMatchingFilter(
 
   filterResultCache.set(cacheKey, trackIds);
 
+  console.log(
+    `Fetched trackIDs and cached result under cache key ${cacheKey} in ${
+      performance.now() - startTime
+    } ms`
+  );
   return trackIds;
 }
 
