@@ -57,17 +57,6 @@ const SpotifyTrackDataScatterPlot = () => {
     (state) => state.setDatapointsToPlot
   );
 
-  console.log({
-    plotData: trackXYData.data,
-    trackMetadata: trackMetadata.data,
-  });
-  const { isFetching, isLoading, isPreviousData } = trackXYData;
-  console.log({
-    isFetching,
-    isLoading,
-    isPreviousData,
-  });
-
   const workerRef = useRef<Worker>();
 
   useEffect(() => {
