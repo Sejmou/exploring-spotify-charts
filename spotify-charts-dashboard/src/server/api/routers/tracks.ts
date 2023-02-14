@@ -146,13 +146,11 @@ export const tracksRouter = createTRPCRouter({
       const trackXY = await getTrackXY(ctx.prisma, { trackIds, ...input });
       return trackXY;
     }),
-  getTrackMetadata: publicProcedure
-    .input(filterParams)
-    .query(async ({ ctx, input }) => {
-      const trackIds = await getTrackIdsMatchingFilter(ctx.prisma, input);
-      const trackMetadata = await getTrackMetadata(ctx.prisma, trackIds);
-      return trackMetadata;
-    }),
+  getTrackMetadata: publicProcedure.query(async ({ ctx }) => {
+    const trackIds = await getTrackIdsMatchingFilter(ctx.prisma, {}); // just get all track ids
+    const trackMetadata = await getTrackMetadata(ctx.prisma, trackIds);
+    return trackMetadata;
+  }),
 });
 
 const filterResultCache = new NodeCache({
@@ -290,7 +288,7 @@ async function getTrackMetadata(
       },
     },
   });
-  return tracks
+  const trackIdsAndMetadata = tracks
     .map((track) => {
       const artists = track.featuringArtists.map((entry) => entry.artist);
       const genres = artists.flatMap((artist) => {
@@ -313,5 +311,22 @@ async function getTrackMetadata(
         previewUrl: track.previewUrl ?? undefined,
       };
     })
-    .sort((a, b) => trackIds.indexOf(a.id) - trackIds.indexOf(b.id));
+    .map((track) => {
+      const { id, ...metadata } = track;
+      return [id, metadata] as [string, typeof metadata];
+    });
+  return Object.fromEntries(trackIdsAndMetadata) as Record<
+    string,
+    (typeof trackIdsAndMetadata)[0][1]
+  >;
+}
+
+function toRecord<
+  T extends { [K in keyof T]: string | number | symbol }, // added constraint
+  K extends keyof T
+>(array: T[], selector: K): Record<T[K], T> {
+  return array.reduce(
+    (acc, item) => ((acc[item[selector]] = item), acc),
+    {} as Record<T[K], T>
+  );
 }

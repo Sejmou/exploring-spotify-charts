@@ -28,7 +28,8 @@ type Props = {
   }[];
   xAttr: string;
   yAttr: string;
-  beginAtZero?: boolean;
+  beginAtZeroX?: boolean;
+  beginAtZeroY?: boolean;
   className?: string;
   getLabel?: (datasetIndex: number, dataIndex: number) => string | string[];
 };
@@ -77,7 +78,7 @@ export default function ScatterPlot(props: Props) {
         maintainAspectRatio: false,
         scales: {
           x: {
-            beginAtZero: props.beginAtZero,
+            beginAtZero: props.beginAtZeroX,
             title: {
               display: true,
               text: props.xAttr,
@@ -92,7 +93,7 @@ export default function ScatterPlot(props: Props) {
             },
           },
           y: {
-            beginAtZero: props.beginAtZero,
+            beginAtZero: props.beginAtZeroY,
             title: {
               display: true,
               text: props.yAttr,
@@ -136,11 +137,11 @@ export default function ScatterPlot(props: Props) {
           zoom: {
             limits: {
               x: {
-                min: xMin > 0 && props.beginAtZero ? 0 : xMin,
+                min: xMin > 0 && props.beginAtZeroX ? 0 : xMin,
                 max: xMax,
               },
               y: {
-                min: yMin > 0 && props.beginAtZero ? 0 : yMin,
+                min: yMin > 0 && props.beginAtZeroY ? 0 : yMin,
                 max: yMax,
               },
             },

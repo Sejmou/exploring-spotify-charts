@@ -48,7 +48,7 @@ const SpotifyTrackDataScatterPlot = () => {
       keepPreviousData: true,
     }
   );
-  const trackMetadata = api.tracks.getTrackMetadata.useQuery(filterParams);
+  const trackMetadata = api.tracks.getTrackMetadata.useQuery();
 
   const datapointsToPlot = useTracksExplorationStore(
     (state) => state.datapointsToPlot
@@ -114,15 +114,20 @@ const SpotifyTrackDataScatterPlot = () => {
         ]}
         xAttr={capitalizeFirstLetter(xFeature)}
         yAttr={capitalizeFirstLetter(yFeature)}
-        beginAtZero={true}
+        beginAtZeroX={!["tempo", "durationMs", "isrcYear"].includes(xFeature)}
+        beginAtZeroY={!["tempo", "durationMs", "isrcYear"].includes(yFeature)}
         getLabel={(_, dataIdx) => {
+          const trackId = datapointsToPlot[dataIdx]?.id;
+          if (!trackId) {
+            return "Could not find track details :/";
+          }
           const metadata = trackMetadata.data;
           if (!metadata) {
             return "loading metadata...";
           }
-          const dataForTrack = metadata[dataIdx];
+          const dataForTrack = metadata[trackId];
           if (!dataForTrack) {
-            return "Could not find metadata :/";
+            return ["Could not find metadata :/", "track ID: " + trackId];
           }
           return [
             `"${truncate(dataForTrack.name, 30)}"`,
