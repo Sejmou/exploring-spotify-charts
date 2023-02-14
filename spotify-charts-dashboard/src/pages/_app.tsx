@@ -1,5 +1,6 @@
 import { type AppType } from "next/app";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 import { api } from "../utils/api";
 
@@ -18,6 +19,7 @@ const MyApp: AppType = ({ Component, pageProps }) => {
   return (
     <ThemeProvider theme={darkTheme}>
       <Component {...pageProps} />
+      <ReactQueryDevtools initialIsOpen={false} />
     </ThemeProvider>
   );
 };

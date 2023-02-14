@@ -3,7 +3,7 @@ import { z } from "zod";
 import type { Genre, Prisma, PrismaClient } from "@prisma/client";
 import { createUnionSchema } from "../../utils";
 import { numericTrackFeatures } from "../../../utils/data";
-import { NumericTrackFeatureName } from "../../../utils/data";
+import type { NumericTrackFeatureName } from "../../../utils/data";
 
 const plotFeatureSchema = createUnionSchema(numericTrackFeatures); // really don't understand *how exactly* this works, but it does
 const plotFeatureInput = z.object({
@@ -175,7 +175,6 @@ async function getTrackIdsMatchingFilter(
       },
     },
   };
-  console.log("globalChartsWhereClause", globalChartsWhereClause);
   const trackIds = await prisma.track.findMany({
     select: { id: true },
     where: {
@@ -197,6 +196,7 @@ async function getTrackIdsMatchingFilter(
       },
     },
   });
+  console.log("got track ids");
   return trackIds.map((t) => t.id);
 }
 

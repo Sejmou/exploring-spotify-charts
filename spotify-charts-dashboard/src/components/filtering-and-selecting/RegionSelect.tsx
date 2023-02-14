@@ -16,9 +16,7 @@ const globalRegionSelectOption = {
 };
 
 export default function RegionSelect() {
-  const countries = api.countries.getAllWithCharts.useQuery(undefined, {
-    staleTime: Infinity,
-  });
+  const countries = api.countries.getAllWithCharts.useQuery();
 
   const region = useTrackComparisonFilterStore((state) => state.region);
   const setRegion = useTrackComparisonFilterStore((state) => state.setRegion);

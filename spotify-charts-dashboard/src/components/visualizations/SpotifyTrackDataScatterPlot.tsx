@@ -45,7 +45,6 @@ const SpotifyTrackDataScatterPlot = () => {
   const trackXYData = api.tracks.getTrackXY.useQuery(
     { ...filterParams, xFeature, yFeature },
     {
-      staleTime: Infinity,
       keepPreviousData: true,
     }
   );

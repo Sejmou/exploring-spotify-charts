@@ -316,16 +316,31 @@ async function main() {
       }));
 
     for (const agency of createAgencyData) {
+      // workaround required because on PlanetScale the creation of the agency together with the tracks (via connect) fails
+      const { tracks, ...agencyWithoutTracks } = agency;
       console.log(
         "inserting agency",
-        agency.name,
-        "with",
-        agency.tracks.create.length,
-        "tracks"
+        agencyWithoutTracks.name
+        // "with",
+        // agency.tracks.create.length,
+        // "tracks"
       );
-      await prisma.iSRCAgency.create({
-        data: agency,
+      const createdAgency = await prisma.iSRCAgency.create({
+        data: agencyWithoutTracks,
       });
+      console.log("created agency", createdAgency.name);
+      await prisma.track.createMany({
+        data: tracks.create.map((track) => ({
+          ...track,
+          isrcAgencyId: createdAgency.id,
+        })),
+      });
+      console.log(
+        "created",
+        tracks.create.length,
+        "tracks for agency",
+        agencyWithoutTracks.name
+      );
     }
     console.log("inserted", agencyData.length, "ISRC agencies");
     console.log("inserted", tracks.length, "tracks");
