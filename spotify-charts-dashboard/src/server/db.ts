@@ -41,8 +41,8 @@ if (env.NODE_ENV !== "production") {
 }
 
 prisma.$on("query", (e) => {
-  console.log("Query: " + truncate(e.query, 1024));
-  console.log("Params: " + truncate(e.params, 1024));
+  console.log("Query: " + truncate(e.query, 256));
+  console.log("Params: " + truncate(e.params, 128));
   console.log(`Duration: ${e.duration} ms`);
 });
 

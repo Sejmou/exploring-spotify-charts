@@ -2,7 +2,7 @@ import { CircularProgress } from "@mui/material";
 import { color } from "d3";
 import { api } from "../../utils/api";
 import ScatterPlot from "./ScatterPlot";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import type { RouterOutputs } from "../../utils/api";
 import BasicSelect from "../filtering-and-selecting/BasicSelect";
 import { capitalizeFirstLetter, truncate } from "../../utils/misc";
@@ -61,6 +61,12 @@ const SpotifyTrackDataScatterPlot = () => {
     plotData: trackXYData.data,
     trackMetadata: trackMetadata.data,
   });
+  const { isFetching, isLoading, isPreviousData } = trackXYData;
+  console.log({
+    isFetching,
+    isLoading,
+    isPreviousData,
+  });
 
   const workerRef = useRef<Worker>();
 
@@ -99,9 +105,9 @@ const SpotifyTrackDataScatterPlot = () => {
   }
 
   const plotArea =
-    trackXYData.isStale || trackXYData.isLoading ? (
+    trackXYData.isPreviousData || trackXYData.isLoading ? (
       <div className="flex h-full w-full flex-col items-center justify-center gap-2">
-        <span>{trackXYData.isLoading && "Loading data..."}</span>
+        <span>{trackXYData.isLoading ? "Loading data..." : "Updating..."}</span>
         <CircularProgress />
       </div>
     ) : (
