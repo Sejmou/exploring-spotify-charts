@@ -4,6 +4,7 @@ import type { Genre, Prisma, PrismaClient } from "@prisma/client";
 import { createUnionSchema } from "../../utils";
 import { numericTrackFeatures } from "../../../utils/data";
 import type { NumericTrackFeatureName } from "../../../utils/data";
+import NodeCache from "node-cache";
 
 const plotFeatureSchema = createUnionSchema(numericTrackFeatures); // really don't understand *how exactly* this works, but it does
 const plotFeatureInput = z.object({
@@ -154,18 +155,33 @@ export const tracksRouter = createTRPCRouter({
     }),
 });
 
+const filterResultCache = new NodeCache({ stdTTL: 20 * 60 }); // cache key cleared after 20 minutes
+
+type FilterParams = {
+  startInclusive?: Date;
+  endInclusive?: Date;
+  regionNames?: string[];
+};
+
+function createFilterParamsKey(filterParams: FilterParams) {
+  return `${filterParams.startInclusive?.toISOString() ?? ""}-${
+    filterParams.endInclusive?.toISOString() ?? ""
+  }-${[...(filterParams.regionNames ?? "")].sort().join("")}`;
+}
+
 async function getTrackIdsMatchingFilter(
   prisma: PrismaClient<
     Prisma.PrismaClientOptions,
     "info" | "warn" | "error" | "query",
     Prisma.RejectOnNotFound | Prisma.RejectPerOperation | undefined
   >,
-  filterParams: {
-    startInclusive?: Date;
-    endInclusive?: Date;
-    regionNames?: string[];
-  }
+  filterParams: FilterParams
 ) {
+  const cacheKey = createFilterParamsKey(filterParams);
+  const cachedTrackIds: string[] | undefined = filterResultCache.get(cacheKey);
+  if (cachedTrackIds) {
+    return cachedTrackIds;
+  }
   const { startInclusive, endInclusive, regionNames } = filterParams;
   const globalChartsWhereClause = {
     some: {
@@ -175,29 +191,33 @@ async function getTrackIdsMatchingFilter(
       },
     },
   };
-  const trackIds = await prisma.track.findMany({
-    select: { id: true },
-    where: {
-      globalChartEntries: regionNames?.includes("Global")
-        ? globalChartsWhereClause
-        : undefined,
-      countryChartEntries: {
-        some: {
-          date: {
-            gte: startInclusive,
-            lte: endInclusive,
-          },
-          country: {
-            name: {
-              in: regionNames,
+  const trackIds = (
+    await prisma.track.findMany({
+      select: { id: true },
+      where: {
+        globalChartEntries: regionNames?.includes("Global")
+          ? globalChartsWhereClause
+          : undefined,
+        countryChartEntries: {
+          some: {
+            date: {
+              gte: startInclusive,
+              lte: endInclusive,
+            },
+            country: {
+              name: {
+                in: regionNames,
+              },
             },
           },
         },
       },
-    },
-  });
-  console.log("got track ids");
-  return trackIds.map((t) => t.id);
+    })
+  ).map((t) => t.id);
+
+  filterResultCache.set(cacheKey, trackIds);
+
+  return trackIds;
 }
 
 async function getTrackXY(
