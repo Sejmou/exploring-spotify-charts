@@ -5,10 +5,9 @@ import {
   LineElement,
   Tooltip,
   Legend,
-  DatasetChartOptions,
 } from "chart.js";
 import { color, extent } from "d3";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useRef } from "react";
 import { Scatter } from "react-chartjs-2";
 import { useKeyPress } from "../../hooks/useKeyPress";
 

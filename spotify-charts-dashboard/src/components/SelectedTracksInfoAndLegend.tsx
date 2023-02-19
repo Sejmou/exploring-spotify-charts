@@ -1,7 +1,7 @@
 import { api } from "../utils/api";
 import TrackInfo from "./TrackDetails";
 import { divergingColors } from "../utils/misc";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button, Dialog } from "@mui/material";
 import BasicTrackInfo from "./BasicTrackInfo";
 import { useTrackComparisonFilterStore } from "../store/trackComparison";
@@ -23,18 +23,28 @@ const SelectedTracksInfoAndLegend = () => {
     { keepPreviousData: true }
   );
 
+  const trackData = useMemo(() => {
+    if (!tracks.data) {
+      return [];
+    }
+    const dataComplete = trackIds.every((id) => id in tracks.data);
+    if (!dataComplete) {
+      return [];
+    }
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return trackIds.map((id) => ({ id, ...tracks.data[id]! }));
+  }, [tracks.data, trackIds]);
+
+  if (trackData.length === 0) {
+    return <div></div>;
+  }
+
   if (tracks.status === "loading") {
     return <div>Loading...</div>;
   }
 
   if (tracks.status === "error") {
     return <div>Error: {tracks.error.message}</div>;
-  }
-
-  const trackData = tracks.data;
-
-  if (trackData.length === 0) {
-    return <div></div>;
   }
 
   return (
