@@ -1,8 +1,7 @@
 import { CircularProgress } from "@mui/material";
 import { color } from "d3";
 import { api } from "../../utils/api";
-import ScatterPlot from "./ScatterPlot";
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { RouterOutputs } from "../../utils/api";
 import BasicSelect from "../filtering-and-selecting/BasicSelect";
 import { capitalizeFirstLetter, truncate } from "../../utils/misc";
@@ -10,14 +9,21 @@ import { useTracksExplorationStore } from "../../store/trackDataExploration";
 import { numericTrackFeatures } from "../../utils/data";
 import type { NumericTrackFeatureName } from "../../utils/data";
 
-export type ScatterPlotWorkerMessage = {
-  trackData: RouterOutputs["tracks"]["getTrackXY"];
-  filters: {
-    trackIds?: string[];
-  };
-};
+import dynamic from "next/dynamic";
+const Scatterplot = dynamic(
+  () => import("react-large-scale-data-scatterplot"),
+  {
+    ssr: false,
+  }
+);
 
-export type ScatterPlotWorkerResponse = RouterOutputs["tracks"]["getTrackXY"];
+import type {
+  AxisConfig,
+  ColorEncodingConfig,
+} from "react-large-scale-data-scatterplot";
+
+type TrackData = RouterOutputs["tracks"]["getTrackMetadataForIds"][0] &
+  RouterOutputs["tracks"]["getTrackXY"][0];
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const pointColorObj = color("#1ED760")!;
@@ -50,44 +56,49 @@ const SpotifyTrackDataScatterPlot = () => {
   );
   const trackMetadata = api.tracks.getTrackMetadata.useQuery();
 
-  const datapointsToPlot = useTracksExplorationStore(
-    (state) => state.datapointsToPlot
-  );
-  const setDatapointsToPlot = useTracksExplorationStore(
-    (state) => state.setDatapointsToPlot
-  );
-
-  const workerRef = useRef<Worker>();
-
-  useEffect(() => {
-    workerRef.current = new Worker(
-      new URL("./trackChartDataWorker.ts", import.meta.url)
+  const [activeDatapointIdx, setActiveDatapointIdx] = useState<number>();
+  const [activeDatapoint, setActiveDatapoint] = useState<TrackData>();
+  const activeDatapointTooltip = useMemo(() => {
+    if (!activeDatapoint) return <div></div>;
+    return (
+      <div>
+        <div>Track: {activeDatapoint.name}</div>
+      </div>
     );
-    workerRef.current.onmessage = (
-      event: MessageEvent<ScatterPlotWorkerResponse>
-    ) => {
-      console.log("got message from worker", event.data);
-      setDatapointsToPlot(event.data);
-    };
-    return () => {
-      workerRef.current?.terminate();
-    };
-  }, [setDatapointsToPlot]);
+  }, [activeDatapoint]);
 
-  useEffect(() => {
-    const xyData = trackXYData.data;
-    if (!xyData) {
-      setDatapointsToPlot([]);
-      return;
-    }
-    if (xyData.length < 3000) {
-      setDatapointsToPlot(xyData);
-      return;
-    }
-    workerRef.current?.postMessage({
-      trackData: xyData,
-    }); // tell the worker to process the data as we don't want to block the UI thread
-  }, [trackXYData.data, setDatapointsToPlot]);
+  const handlePointHoverStart = useCallback(
+    (idx: number) => {
+      setActiveDatapointIdx(idx);
+    },
+    [setActiveDatapointIdx]
+  );
+  const handlePointClick = useCallback(
+    (idx: number) => {
+      alert(`clicked ${idx}`);
+      alert(JSON.stringify(activeDatapoint));
+    },
+    [activeDatapoint, setActiveDatapoint]
+  );
+  const handlePointHoverEnd = useCallback(() => {
+    setActiveDatapointIdx(undefined);
+  }, [setActiveDatapointIdx]);
+
+  const xAxisConfig: AxisConfig = useMemo(() => {
+    return {
+      data: trackXYData.data?.map((track) => track.x) ?? [],
+      featureName: capitalizeFirstLetter(xFeature),
+      beginAtZero: !["tempo", "durationMs", "isrcYear"].includes(xFeature),
+    };
+  }, [xFeature, trackXYData.data]);
+
+  const yAxisConfig: AxisConfig = useMemo(() => {
+    return {
+      data: trackXYData.data?.map((track) => track.y) ?? [],
+      featureName: capitalizeFirstLetter(yFeature),
+      beginAtZero: !["tempo", "durationMs", "isrcYear"].includes(yFeature),
+    };
+  }, [yFeature, trackXYData.data]);
 
   if (trackXYData.isError) {
     return <div>Error loading data, please try refreshing the page.</div>;
@@ -100,44 +111,10 @@ const SpotifyTrackDataScatterPlot = () => {
         <CircularProgress />
       </div>
     ) : (
-      <ScatterPlot
-        datasets={[
-          {
-            data: datapointsToPlot.map((track) => {
-              return {
-                x: track.x,
-                y: track.y,
-              };
-            }),
-            backgroundColor: pointColor,
-          },
-        ]}
-        xAttr={capitalizeFirstLetter(xFeature)}
-        yAttr={capitalizeFirstLetter(yFeature)}
-        beginAtZeroX={!["tempo", "durationMs", "isrcYear"].includes(xFeature)}
-        beginAtZeroY={!["tempo", "durationMs", "isrcYear"].includes(yFeature)}
-        getLabel={(_, dataIdx) => {
-          const trackId = datapointsToPlot[dataIdx]?.id;
-          if (!trackId) {
-            return "Could not find track details :/";
-          }
-          const metadata = trackMetadata.data;
-          if (!metadata) {
-            return "loading metadata...";
-          }
-          const dataForTrack = metadata[trackId];
-          if (!dataForTrack) {
-            return ["Could not find metadata :/", "track ID: " + trackId];
-          }
-          return [
-            `"${truncate(dataForTrack.name, 30)}"`,
-            `by ${truncate(
-              dataForTrack.featuringArtists[0]?.name ?? "Unknown Artist",
-              30
-            )}`,
-            `${dataForTrack.genres[0]?.label ?? "Unknown Genre"}`,
-          ];
-        }}
+      <Scatterplot
+        className="h-full w-full"
+        xAxis={xAxisConfig}
+        yAxis={yAxisConfig}
       />
     );
 
