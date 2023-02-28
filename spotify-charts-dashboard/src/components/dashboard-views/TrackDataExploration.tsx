@@ -1,4 +1,4 @@
-import CountriesFilter from "../filtering-and-selecting/CountriesFilter";
+import RegionFilter from "../filtering-and-selecting/RegionFilter";
 import PageLinkButton from "../PageLinkButton";
 import SpotifyChartsHeading from "../SpotifyChartsHeading";
 import SpotifyTrackDataScatterPlot from "../visualizations/SpotifyTrackDataScatterPlot";
@@ -21,7 +21,7 @@ const TrackDataExploration = () => {
         <div>
           <div></div>
           <div>
-            <CountriesFilter />
+            <RegionFilter />
           </div>
           {/* <div>Filter by genres</div> */}
         </div>

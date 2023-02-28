@@ -1,9 +1,12 @@
+import { Button } from "@mui/material";
+import { useState } from "react";
 import { useTracksExplorationStore } from "../../../store/trackDataExploration";
 import { api } from "../../../utils/api";
+import DialogWithCloseIcon from "../../DialogWithCloseIcon";
 import ChoroplethWorld from "../../visualizations/ChoroplethWorld";
 import SpotifyCountrySelectWorldMap from "./SpotifyCountrySelectWorldMap";
 
-const CountriesFilter = () => {
+const RegionFilter = () => {
   const regionNames = useTracksExplorationStore((state) => state.regionNames);
   const addRegionName = useTracksExplorationStore(
     (state) => state.addRegionName
@@ -12,6 +15,7 @@ const CountriesFilter = () => {
     (state) => state.removeRegionName
   );
   const countries = api.countries.getAllWithCharts.useQuery();
+  const [popupActive, setPopupActive] = useState(false);
 
   let countryMap = (
     <ChoroplethWorld data={[]} propName={""} colorMap={() => ""} />
@@ -36,20 +40,29 @@ const CountriesFilter = () => {
   return (
     <>
       <div className="max-h-96 py-2 px-4">
-        <h3 className="text-xl font-bold">Filter by country/countries</h3>
-        <p>
+        <h3 className="text-xl font-bold">Region</h3>
+        <p className="mt-2 text-sm">
+          {regionNames
+            ? "Included chart regions: " + regionNames.join(", ")
+            : "(no countries selected)"}
+        </p>
+        <Button onClick={() => setPopupActive(true)}>Change</Button>
+      </div>
+      <DialogWithCloseIcon
+        open={popupActive}
+        onClose={() => setPopupActive(false)}
+        fullWidth={true}
+        maxWidth="lg"
+        title="Filter by region(s)"
+      >
+        <p className="px-4">
           Click on any country. The scatter plot will be filtered to only
           include tracks that charted in the countries you selected. Otherwise,
           tracks charting in any chart (including global) will be included.
         </p>
-        <p className="mt-2 text-sm">
-          {regionNames
-            ? "Filtering for tracks charting in: " + regionNames.join(", ")
-            : "(no countries selected)"}
-        </p>
-      </div>
-      {countryMap}
+        {countryMap}
+      </DialogWithCloseIcon>
     </>
   );
 };
-export default CountriesFilter;
+export default RegionFilter;
