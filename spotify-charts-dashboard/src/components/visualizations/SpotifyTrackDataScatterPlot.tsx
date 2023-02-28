@@ -1,12 +1,9 @@
 import { CircularProgress } from "@mui/material";
-import { color } from "d3";
 import { api } from "../../utils/api";
 import { useCallback, useMemo, useState } from "react";
-import type { RouterOutputs } from "../../utils/api";
 import BasicSelect from "../filtering-and-selecting/BasicSelect";
-import { capitalizeFirstLetter, truncate } from "../../utils/misc";
 import { useTracksExplorationStore } from "../../store/trackDataExploration";
-import { numericTrackFeatures } from "../../utils/data";
+import { getFeatureLabel, numericTrackFeatures } from "../../utils/data";
 import type { NumericTrackFeatureName } from "../../utils/data";
 
 import dynamic from "next/dynamic";
@@ -16,19 +13,11 @@ const Scatterplot = dynamic(
     ssr: false,
   }
 );
+const ReactTooltip = dynamic(() => import("react-tooltip"), {
+  ssr: false,
+});
 
-import type {
-  AxisConfig,
-  ColorEncodingConfig,
-} from "react-large-scale-data-scatterplot";
-
-type TrackData = RouterOutputs["tracks"]["getTrackMetadataForIds"][0] &
-  RouterOutputs["tracks"]["getTrackXY"][0];
-
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const pointColorObj = color("#1ED760")!;
-pointColorObj.opacity = 0.2;
-const pointColor = pointColorObj.toString();
+import type { AxisConfig } from "react-large-scale-data-scatterplot";
 
 const SpotifyTrackDataScatterPlot = () => {
   const regionNames = useTracksExplorationStore((state) => state.regionNames);
@@ -54,40 +43,48 @@ const SpotifyTrackDataScatterPlot = () => {
       keepPreviousData: true,
     }
   );
-  const trackMetadata = api.tracks.getTrackMetadata.useQuery();
+  const [hoveredDatapointIdx, setHoveredDatapointIdx] = useState<number | null>(
+    null
+  );
+  const hoveredTrackID = useMemo(() => {
+    if (hoveredDatapointIdx === null) return null;
+    return trackXYData.data?.[hoveredDatapointIdx]?.id ?? null;
+  }, [hoveredDatapointIdx, trackXYData.data]);
+  const trackMetadata = api.tracks.getTrackMetadataForIds.useQuery({
+    trackIds: hoveredTrackID ? [hoveredTrackID] : [],
+  });
+  const hoveredTrackTooltipContent = useMemo(() => {
+    if (!hoveredTrackID) return "";
+    const data = trackMetadata.data;
+    if (!data) return <div>Loading metadata...</div>;
+    const metadata = data[hoveredTrackID];
+    if (!metadata) return <div>Track metadata not found</div>;
+    return <div>{metadata.name}</div>;
+  }, [trackMetadata.data, hoveredTrackID]);
 
-  const [activeDatapointIdx, setActiveDatapointIdx] = useState<number>();
-  const [activeDatapoint, setActiveDatapoint] = useState<TrackData>();
-  const activeDatapointTooltip = useMemo(() => {
-    if (!activeDatapoint) return <div></div>;
-    return (
-      <div>
-        <div>Track: {activeDatapoint.name}</div>
-      </div>
-    );
-  }, [activeDatapoint]);
-
-  const handlePointHoverStart = useCallback(
-    (idx: number) => {
-      setActiveDatapointIdx(idx);
+  const handlePointHover = useCallback(
+    (datapointIdx: number) => {
+      setHoveredDatapointIdx(datapointIdx);
     },
-    [setActiveDatapointIdx]
+    [setHoveredDatapointIdx]
   );
   const handlePointClick = useCallback(
-    (idx: number) => {
-      alert(`clicked ${idx}`);
-      alert(JSON.stringify(activeDatapoint));
+    (datapointIdx: number) => {
+      console.log(datapointIdx !== hoveredDatapointIdx);
+      if (datapointIdx !== hoveredDatapointIdx) {
+        setHoveredDatapointIdx(datapointIdx);
+      }
     },
-    [activeDatapoint, setActiveDatapoint]
+    [hoveredDatapointIdx]
   );
-  const handlePointHoverEnd = useCallback(() => {
-    setActiveDatapointIdx(undefined);
-  }, [setActiveDatapointIdx]);
+  const handlePointUnhover = useCallback(() => {
+    setHoveredDatapointIdx(null);
+  }, [setHoveredDatapointIdx]);
 
   const xAxisConfig: AxisConfig = useMemo(() => {
     return {
       data: trackXYData.data?.map((track) => track.x) ?? [],
-      featureName: capitalizeFirstLetter(xFeature),
+      featureName: getFeatureLabel(xFeature),
       beginAtZero: !["tempo", "durationMs", "isrcYear"].includes(xFeature),
     };
   }, [xFeature, trackXYData.data]);
@@ -95,7 +92,7 @@ const SpotifyTrackDataScatterPlot = () => {
   const yAxisConfig: AxisConfig = useMemo(() => {
     return {
       data: trackXYData.data?.map((track) => track.y) ?? [],
-      featureName: capitalizeFirstLetter(yFeature),
+      featureName: getFeatureLabel(yFeature),
       beginAtZero: !["tempo", "durationMs", "isrcYear"].includes(yFeature),
     };
   }, [yFeature, trackXYData.data]);
@@ -111,11 +108,17 @@ const SpotifyTrackDataScatterPlot = () => {
         <CircularProgress />
       </div>
     ) : (
-      <Scatterplot
-        className="h-full w-full"
-        xAxis={xAxisConfig}
-        yAxis={yAxisConfig}
-      />
+      <div data-tip="" className="h-full w-full">
+        <Scatterplot
+          className="h-full w-full fill-white" // fill sets color of SVG <text> elements for axis labels
+          xAxis={xAxisConfig}
+          yAxis={yAxisConfig}
+          onPointHoverStart={handlePointHover}
+          onPointHoverEnd={handlePointUnhover}
+          onPointClick={handlePointClick}
+        />
+        <ReactTooltip>{hoveredTrackTooltipContent}</ReactTooltip>
+      </div>
     );
 
   return (
@@ -136,7 +139,7 @@ const SpotifyTrackDataScatterPlot = () => {
             }
             options={numericTrackFeatures.map((o) => ({
               value: o,
-              label: capitalizeFirstLetter(o),
+              label: getFeatureLabel(o),
             }))}
           />
           <BasicSelect
@@ -148,7 +151,7 @@ const SpotifyTrackDataScatterPlot = () => {
             }
             options={numericTrackFeatures.map((o) => ({
               value: o,
-              label: capitalizeFirstLetter(o),
+              label: getFeatureLabel(o),
             }))}
           />
         </div>
