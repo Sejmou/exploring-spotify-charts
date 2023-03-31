@@ -3,21 +3,21 @@ import { api } from "../../utils/api";
 import { useCallback, useMemo, useState } from "react";
 import BasicSelect from "../filtering-and-selecting/BasicSelect";
 import { useTracksExplorationStore } from "../../store/trackDataExploration";
-import { getFeatureLabel, numericTrackFeatures } from "../../utils/data";
+import { numericTrackFeatures } from "../../utils/data";
 import type { NumericTrackFeatureName } from "../../utils/data";
 
 import dynamic from "next/dynamic";
-const Scatterplot = dynamic(
-  () => import("react-large-scale-data-scatterplot"),
-  {
-    ssr: false,
-  }
-);
+const Scatterplot = dynamic(() => import("react-big-dataset-scatterplot"), {
+  ssr: false,
+});
 const ReactTooltip = dynamic(() => import("react-tooltip"), {
   ssr: false,
 });
 
-import type { AxisConfig } from "react-large-scale-data-scatterplot";
+import type { RouterOutputs } from "../../utils/api";
+import type { AxisConfig } from "react-big-dataset-scatterplot";
+import { capitalizeFirstLetter } from "../../utils/misc";
+type TrackData = RouterOutputs["tracks"]["getTrackXY"];
 
 const SpotifyTrackDataScatterPlot = () => {
   const regionNames = useTracksExplorationStore((state) => state.regionNames);
@@ -82,19 +82,15 @@ const SpotifyTrackDataScatterPlot = () => {
   }, [setHoveredDatapointIdx]);
 
   const xAxisConfig: AxisConfig = useMemo(() => {
-    return {
-      data: trackXYData.data?.map((track) => track.x) ?? [],
-      featureName: getFeatureLabel(xFeature),
-      beginAtZero: !["tempo", "durationMs", "isrcYear"].includes(xFeature),
-    };
+    const trackData = trackXYData.data;
+    if (trackData === undefined) return { data: [], featureName: "(no data)" };
+    return getDisplayDataForAxis("x", xFeature, trackData);
   }, [xFeature, trackXYData.data]);
 
   const yAxisConfig: AxisConfig = useMemo(() => {
-    return {
-      data: trackXYData.data?.map((track) => track.y) ?? [],
-      featureName: getFeatureLabel(yFeature),
-      beginAtZero: !["tempo", "durationMs", "isrcYear"].includes(yFeature),
-    };
+    const trackData = trackXYData.data;
+    if (trackData === undefined) return { data: [], featureName: "(no data)" };
+    return getDisplayDataForAxis("y", yFeature, trackData);
   }, [yFeature, trackXYData.data]);
 
   if (trackXYData.isError) {
@@ -110,6 +106,8 @@ const SpotifyTrackDataScatterPlot = () => {
     ) : (
       <div data-tip="" className="h-full w-full">
         <Scatterplot
+          darkMode
+          margins={{ right: 1, top: 0 }}
           className="h-full w-full fill-white" // fill sets color of SVG <text> elements for axis labels
           xAxis={xAxisConfig}
           yAxis={yAxisConfig}
@@ -160,5 +158,49 @@ const SpotifyTrackDataScatterPlot = () => {
     </>
   );
 };
+
+function getDisplayDataForAxis(
+  axis: "x" | "y",
+  featureName: NumericTrackFeatureName,
+  trackData: TrackData
+): AxisConfig {
+  const data = trackData.map((d) => d[axis]);
+  return {
+    data,
+    featureName: getFeatureLabel(featureName),
+    beginAtZero: !["tempo", "durationMs", "isrcYear"].includes(featureName),
+    tickFormat: getFeatureTickFormat(featureName),
+  };
+}
+
+function getFeatureLabel(featureName: NumericTrackFeatureName) {
+  switch (featureName) {
+    case "isrcYear":
+      return "Year recorded";
+    case "durationMs":
+      return "Duration (min:sec)";
+    case "tempo":
+      return "Tempo (BPM)";
+    default:
+      return capitalizeFirstLetter(featureName);
+  }
+}
+
+function getFeatureTickFormat(featureName: NumericTrackFeatureName) {
+  switch (featureName) {
+    case "isrcYear":
+      return (d: number) => d.toString();
+    case "durationMs":
+      return (d: number) => millisecondsToMinutesAndSeconds(d);
+    default:
+      return undefined;
+  }
+}
+
+function millisecondsToMinutesAndSeconds(ms: number) {
+  const minutes = Math.floor(ms / 60000);
+  const seconds = ((ms % 60000) / 1000).toFixed(0);
+  return `${minutes}:${seconds.padStart(2, "0")}`;
+}
 
 export default SpotifyTrackDataScatterPlot;
