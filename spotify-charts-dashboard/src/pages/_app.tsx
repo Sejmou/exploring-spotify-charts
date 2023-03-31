@@ -18,8 +18,8 @@ const darkTheme = createTheme({
 const MyApp: AppType = ({ Component, pageProps }) => {
   return (
     <ThemeProvider theme={darkTheme}>
-      <Component {...pageProps} />
       <ReactQueryDevtools initialIsOpen={false} />
+      <Component {...pageProps} />
     </ThemeProvider>
   );
 };

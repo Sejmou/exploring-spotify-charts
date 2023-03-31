@@ -29,7 +29,7 @@ const DateRangeFilter = () => {
   );
 
   return (
-    <div className="flex gap-2">
+    <div className="flex w-96 gap-2">
       <BasicDatePicker
         value={startDate}
         label="Start Date"

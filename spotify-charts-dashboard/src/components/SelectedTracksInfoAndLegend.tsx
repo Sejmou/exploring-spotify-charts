@@ -35,16 +35,22 @@ const SelectedTracksInfoAndLegend = () => {
     return trackIds.map((id) => ({ id, ...tracks.data[id]! }));
   }, [tracks.data, trackIds]);
 
+  if (tracks.isFetching) {
+    return (
+      <div className="flex h-10">
+        <span className="self-center">Loading...</span>
+      </div>
+    );
+  }
+
   if (trackData.length === 0) {
-    return <div></div>;
-  }
-
-  if (tracks.status === "loading") {
-    return <div>Loading...</div>;
-  }
-
-  if (tracks.status === "error") {
-    return <div>Error: {tracks.error.message}</div>;
+    return (
+      <div className="flex h-10">
+        <span className="self-center">
+          Please add at least one track whose data you wish to explore.
+        </span>
+      </div>
+    );
   }
 
   return (

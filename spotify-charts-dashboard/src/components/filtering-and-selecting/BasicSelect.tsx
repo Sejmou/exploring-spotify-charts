@@ -19,7 +19,7 @@ export default function BasicSelect(props: Props) {
   };
 
   return (
-    <div className={props.className || ""} style={{ minWidth: 120 }}>
+    <div className={props.className} style={{ minWidth: 120 }}>
       <FormControl fullWidth>
         <InputLabel>{props.label}</InputLabel>
         <Select value={props.value} label={props.label} onChange={handleChange}>
