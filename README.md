@@ -9,7 +9,7 @@ Run `data_exploration_and_crawling/download_data_from_google_drive.py` to get th
 If you have conda installed this is easy: just run
 
 ```bash
-conda create -f environment.yml
+conda env create -f environment.yml
 conda activate sejmouvisds
 pip install -e .
 ```
