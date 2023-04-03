@@ -1,10 +1,12 @@
 import { CircularProgress } from "@mui/material";
-import { api } from "../../utils/api";
+import { api } from "../../../utils/api";
 import { useCallback, useMemo, useState } from "react";
-import BasicSelect from "../filtering-and-selecting/BasicSelect";
-import { useTracksExplorationStore } from "../../store/trackDataExploration";
-import { numericTrackFeatures } from "../../utils/data";
-import type { NumericTrackFeatureName } from "../../utils/data";
+import BasicSelect from "../../filtering-and-selecting/BasicSelect";
+import SelectedTrackInfoDialog from "./SelectedTrackInfoDialog";
+
+import { useTracksExplorationStore } from "../../../store/trackDataExploration";
+import { numericTrackFeatures } from "../../../utils/data";
+import type { NumericTrackFeatureName } from "../../../utils/data";
 
 import dynamic from "next/dynamic";
 const Scatterplot = dynamic(() => import("react-big-dataset-scatterplot"), {
@@ -14,9 +16,9 @@ const ReactTooltip = dynamic(() => import("react-tooltip"), {
   ssr: false,
 });
 
-import type { RouterOutputs } from "../../utils/api";
+import type { RouterOutputs } from "../../../utils/api";
 import type { AxisConfig } from "react-big-dataset-scatterplot";
-import { capitalizeFirstLetter } from "../../utils/misc";
+import { capitalizeFirstLetter } from "../../../utils/misc";
 type TrackData = RouterOutputs["tracks"]["getTrackXY"];
 
 const SpotifyTrackDataScatterPlot = () => {
@@ -70,9 +72,10 @@ const SpotifyTrackDataScatterPlot = () => {
   );
   const handlePointClick = useCallback(
     (datapointIdx: number) => {
-      console.log(datapointIdx !== hoveredDatapointIdx);
-      if (datapointIdx !== hoveredDatapointIdx) {
+      console.log(datapointIdx, hoveredDatapointIdx);
+      if (datapointIdx === hoveredDatapointIdx) {
         setHoveredDatapointIdx(datapointIdx);
+        setTrackInfoDialogOpen(true);
       }
     },
     [hoveredDatapointIdx]
@@ -93,6 +96,8 @@ const SpotifyTrackDataScatterPlot = () => {
     return getDisplayDataForAxis("y", yFeature, trackData);
   }, [yFeature, trackXYData.data]);
 
+  const [trackInfoDialogOpen, setTrackInfoDialogOpen] = useState(false);
+
   if (trackXYData.isError) {
     return <div>Error loading data, please try refreshing the page.</div>;
   }
@@ -104,7 +109,13 @@ const SpotifyTrackDataScatterPlot = () => {
         <CircularProgress />
       </div>
     ) : (
-      <div data-tip="" className="h-full w-full">
+      <div
+        data-tip=""
+        className="h-full w-full"
+        onWheel={() => {
+          console.log("scroll");
+        }}
+      >
         <Scatterplot
           darkMode
           margins={{ right: 1, top: 0 }}
@@ -155,6 +166,13 @@ const SpotifyTrackDataScatterPlot = () => {
         </div>
       </div>
       <div className="row-span-5">{plotArea}</div>
+      {hoveredTrackID && (
+        <SelectedTrackInfoDialog
+          trackId={hoveredTrackID}
+          open={trackInfoDialogOpen}
+          onClose={() => setTrackInfoDialogOpen(false)}
+        />
+      )}
     </>
   );
 };

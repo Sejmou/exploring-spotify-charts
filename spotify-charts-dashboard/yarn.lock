@@ -233,18 +233,6 @@
     minimatch "^3.1.2"
     strip-json-comments "^3.1.1"
 
-"@floating-ui/core@^1.2.4":
-  version "1.2.5"
-  resolved "https://registry.yarnpkg.com/@floating-ui/core/-/core-1.2.5.tgz#612f0d203e6f647490d572c7b798eebac9e3cf54"
-  integrity sha512-qrcbyfnRVziRlB6IYwjCopYhO7Vud750JlJyuljruIXcPxr22y8zdckcJGsuOdnQ639uVD1tTXddrcH3t3QYIQ==
-
-"@floating-ui/dom@^1.0.0":
-  version "1.2.5"
-  resolved "https://registry.yarnpkg.com/@floating-ui/dom/-/dom-1.2.5.tgz#c9ec259a24ce0958b1ea29674df4eee4455361a9"
-  integrity sha512-+sAUfpQ3Frz+VCbPCqj+cZzvEESy3fjSeT/pDWkYCWOBXYNNKZfuVsHuv8/JO2zze8+Eb/Q7a6hZVgzS81fLbQ==
-  dependencies:
-    "@floating-ui/core" "^1.2.4"
-
 "@humanwhocodes/config-array@^0.11.8":
   version "0.11.8"
   resolved "https://registry.yarnpkg.com/@humanwhocodes/config-array/-/config-array-0.11.8.tgz#03595ac2075a4dc0f191cc2131de14fbd7d410b9"
@@ -1348,7 +1336,7 @@ chokidar@^3.5.3:
   optionalDependencies:
     fsevents "~2.3.2"
 
-classnames@^2.3.0, classnames@^2.3.2:
+classnames@^2.3.2:
   version "2.3.2"
   resolved "https://registry.yarnpkg.com/classnames/-/classnames-2.3.2.tgz#351d813bf0137fcc6a76a16b88208d2560a0d924"
   integrity sha512-CSbhY4cFEJRe6/GQzIk5qXZ4Jeg5pcsP7b5peFSDpffpe1cqjASH/n9UTjBwOp6XpMSTwQ8Za2K5V02ueA7Tmw==
@@ -3312,17 +3300,16 @@ quick-lru@^5.1.1:
   resolved "https://registry.yarnpkg.com/quick-lru/-/quick-lru-5.1.1.tgz#366493e6b3e42a3a6885e2e99d18f80fb7a8c932"
   integrity sha512-WuyALRjWPDGtt/wzJiadO5AXY+8hZ80hVpe6MyivgraREW751X3SbhRvG3eLKOYN+8VEvqLcf3wdnt44Z4S4SA==
 
-react-big-dataset-scatterplot@^1.1.10:
-  version "1.1.10"
-  resolved "https://registry.yarnpkg.com/react-big-dataset-scatterplot/-/react-big-dataset-scatterplot-1.1.10.tgz#7dc79c38d3c3114a3b510a73f04914845f137a64"
-  integrity sha512-ikZCS7dGTvZW4OjoyYWWgI7ZEeKlkh/1iAtRV8XIA3Z+fziIGMjPSwa9Vm3HqzcKu4aoZOwg2madNzfEFexNyw==
+react-big-dataset-scatterplot@^1.1.15:
+  version "1.1.15"
+  resolved "https://registry.yarnpkg.com/react-big-dataset-scatterplot/-/react-big-dataset-scatterplot-1.1.15.tgz#291078f660284060bc72287ee8107a92271a7451"
+  integrity sha512-Vkts2M9ch1V1Af2IKyava0iUsUKLrbyJcV8oF+GMFchEbDWU1+7iNX4Lxhvc/SP1yi5Bp3BcS4BYUO2DMAexwQ==
   dependencies:
     "@react-three/fiber" "^8.11.1"
     classnames "^2.3.2"
     d3 "^7.8.2"
     immer "^9.0.19"
     react-resize-detector "^8.0.3"
-    react-tooltip "^5.10.1"
     three "^0.149.0"
     zustand "^4.3.5"
 
@@ -3386,14 +3373,6 @@ react-tooltip@4.2.21:
   dependencies:
     prop-types "^15.7.2"
     uuid "^7.0.3"
-
-react-tooltip@^5.10.1:
-  version "5.10.4"
-  resolved "https://registry.yarnpkg.com/react-tooltip/-/react-tooltip-5.10.4.tgz#e4f5608ad1613ccb3dd929704254ebc2a2e36808"
-  integrity sha512-QUBX6k3+qjOyAy64ntV/NkwzZqaghjcEpZ6Q5pqVbYUYS8kGcmIgXznRc2syQDlffCtzeWJGGMz93JYKjGo2Pw==
-  dependencies:
-    "@floating-ui/dom" "^1.0.0"
-    classnames "^2.3.0"
 
 react-transition-group@^4.4.5:
   version "4.4.5"

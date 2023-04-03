@@ -1,6 +1,6 @@
 import RegionFilter from "../filtering-and-selecting/RegionFilter";
 import SpotifyChartsHeading from "../SpotifyChartsHeading";
-import SpotifyTrackDataScatterPlot from "../visualizations/SpotifyTrackDataScatterPlot";
+import TrackDataScatterplot from "../visualizations/TrackDataScatterplot";
 import VizViewSwitcher from "../VizViewSwitcher";
 
 const TrackDataExploration = () => {
@@ -12,7 +12,7 @@ const TrackDataExploration = () => {
       </div>
       <div className="grid h-full w-full flex-1 grid-cols-2">
         <div className="grid h-full w-full grid-rows-6">
-          <SpotifyTrackDataScatterPlot />
+          <TrackDataScatterplot />
         </div>
         <div>
           <div></div>

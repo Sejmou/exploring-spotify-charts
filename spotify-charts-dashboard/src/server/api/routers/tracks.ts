@@ -139,6 +139,17 @@ export const tracksRouter = createTRPCRouter({
       const trackMetadata = await getTrackMetadata(ctx.prisma, input.trackIds);
       return trackMetadata;
     }),
+  getTrackMetadataForId: publicProcedure
+    .input(
+      z.object({
+        trackId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const trackMetadata = await getTrackMetadata(ctx.prisma, [input.trackId]);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      return trackMetadata[input.trackId]!;
+    }),
   getTrackXY: publicProcedure
     .input(plotFeatureInput.merge(filterParams))
     .query(async ({ ctx, input }) => {
