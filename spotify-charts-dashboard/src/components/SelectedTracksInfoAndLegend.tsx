@@ -1,34 +1,56 @@
 import { api } from "../utils/api";
 import TrackInfo from "./TrackDetails";
 import { divergingColors } from "../utils/misc";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button, Dialog } from "@mui/material";
 import BasicTrackInfo from "./BasicTrackInfo";
-import { useFilterStore } from "../store/filter";
+import { useTrackComparisonFilterStore } from "../store/trackComparison";
 
 const SelectedTracksInfoAndLegend = () => {
   const [expanded, setExpanded] = useState(false);
-  const trackIds = useFilterStore((state) => state.trackIds);
-  const removeTrackId = useFilterStore((state) => state.removeTrackId);
-  const clearTrackIds = useFilterStore((state) => state.clearTrackIds);
+  const trackIds = useTrackComparisonFilterStore(
+    (state) => state.comparisonTrackIds
+  );
+  const removeTrackId = useTrackComparisonFilterStore(
+    (state) => state.removeComparisonTrackId
+  );
+  const clearTrackIds = useTrackComparisonFilterStore(
+    (state) => state.clearComparisonTrackIds
+  );
 
-  const tracks = api.tracks.getTrackDataForIds.useQuery(
+  const tracks = api.tracks.getTrackMetadataForIds.useQuery(
     { trackIds },
     { keepPreviousData: true }
-  ); // TODO: cleaner solution (useMutation etc.)
+  );
 
-  if (tracks.status === "loading") {
-    return <div>Loading...</div>;
+  const trackData = useMemo(() => {
+    if (!tracks.data) {
+      return [];
+    }
+    const dataComplete = trackIds.every((id) => id in tracks.data);
+    if (!dataComplete) {
+      return [];
+    }
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return trackIds.map((id) => ({ id, ...tracks.data[id]! }));
+  }, [tracks.data, trackIds]);
+
+  if (tracks.isFetching) {
+    return (
+      <div className="flex h-10">
+        <span className="self-center">Loading...</span>
+      </div>
+    );
   }
-
-  if (tracks.status === "error") {
-    return <div>Error: {tracks.error.message}</div>;
-  }
-
-  const trackData = tracks.data;
 
   if (trackData.length === 0) {
-    return <div></div>;
+    return (
+      <div className="flex h-10">
+        <span className="self-center">
+          Please add at least one track whose data you wish to explore.
+        </span>
+      </div>
+    );
   }
 
   return (
@@ -73,7 +95,7 @@ const SelectedTracksInfoAndLegend = () => {
                     albumTitle={t.album.name}
                     releaseDate={t.album.releaseDate}
                     releaseType={t.album.type}
-                    genres={t.genres}
+                    genres={t.genres.map((g) => g.label)}
                     label={t.album.label}
                     albumCoverUrl={t.album.thumbnailUrl}
                     color={divergingColors[i]}

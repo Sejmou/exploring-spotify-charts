@@ -1,6 +1,5 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
-// NOTE: I am not sure whether this schema works on a fresh database created via the seed script! I think the @@map annotations might have to be deleted as I later renamed the tables in the Prisma schema using this approach without changing the DB
 
 generator client {
     provider        = "prisma-client-js"
@@ -8,24 +7,24 @@ generator client {
 }
 
 datasource db {
-    provider = "sqlite"
-    url      = env("DATABASE_URL")
-}
-
-model Example {
-    id        String   @id @default(cuid())
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    provider     = "mysql"
+    url          = env("DATABASE_URL")
+    relationMode = "prisma" // default "native" mode not supported by PlanetScale (to be exact, foreign key constraints are not supported - more info: https://www.prisma.io/docs/guides/database/using-prisma-with-planetscale#differences-to-consider)
 }
 
 model Artist {
     id           String             @id @default(cuid())
     name         String
-    genres       String
+    genres       Genre[]
     imgUrl       String?
     thumbnailUrl String?
     tracks       TrackArtistEntry[]
     albums       AlbumArtistEntry[]
+}
+
+model Genre {
+    label   String   @id @default(cuid())
+    artists Artist[]
 }
 
 model Album {
@@ -49,6 +48,8 @@ model AlbumArtistEntry {
     album    Album  @relation(fields: [albumId], references: [id])
 
     @@id([artistId, albumId], name: "albumFeatureId")
+    @@index([albumId])
+    @@index([artistId])
 }
 
 model TrackArtistEntry {
@@ -59,6 +60,8 @@ model TrackArtistEntry {
     track    Track  @relation(fields: [trackId], references: [id])
 
     @@id([artistId, trackId], name: "trackFeatureId")
+    @@index([trackId])
+    @@index([artistId])
 }
 
 model Track {
@@ -67,19 +70,16 @@ model Track {
     featuringArtists    TrackArtistEntry[]
     countryChartEntries CountryChartEntry[]
     globalChartEntries  GlobalChartEntry[]
-    explicit            Boolean
     previewUrl          String?
     albumId             String
     album               Album               @relation(fields: [albumId], references: [id])
     isrc                String
     isrcYear            Int
-    isrcAgency          String
-    isrcTerritory       String
+    isrcAgency          ISRCAgency          @relation(fields: [isrcAgencyId], references: [id])
+    isrcAgencyId        String
     danceability        Float
     energy              Float
-    key                 Float
     loudness            Float
-    mode                Int
     speechiness         Float
     acousticness        Float
     instrumentalness    Float
@@ -87,7 +87,25 @@ model Track {
     valence             Float
     tempo               Float
     durationMs          Float
-    timeSignature       Int
+    // categorical features - stored as strings (labels) for convenience
+    mode                String
+    key                 String
+    explicit            String
+    timeSignature       String
+
+    @@index([albumId])
+    @@index([isrcAgencyId])
+}
+
+model ISRCAgency {
+    id        String   @id @default(cuid())
+    name      String
+    country   Country? @relation(fields: [territory], references: [name]) // optional because some agencies are global (maybe should have modelled this differently)
+    territory String?
+    tracks    Track[]
+
+    @@unique([name, territory], name: "isrcAgencyId")
+    @@index([territory])
 }
 
 model Country {
@@ -97,14 +115,13 @@ model Country {
     geoRegion    String
     geoSubregion String
     chartEntries CountryChartEntry[]
-
-    @@map("Region") // every Spotify Region that is not the Global region is actually a Country, so this should be called Country, but I realized later and don't want to break my existing DB for now lol
+    isrcAgencies ISRCAgency[]
 }
 
 model CountryChartEntry {
     id          String   @id @default(cuid())
     country     Country  @relation(fields: [countryName], references: [name])
-    countryName String   @map("regionName")
+    countryName String
     track       Track    @relation(fields: [trackId], references: [id])
     trackId     String
     date        DateTime
@@ -112,7 +129,9 @@ model CountryChartEntry {
     streams     Float
 
     @@unique([countryName, trackId, date], name: "chartEntryId")
-    @@map("RegionChartEntry") // should have been named CountryChartEntry from the start, but I realized later and don't want to break my existing DB for now - note also that this has nothing to do with the Country genre lol
+    @@index([countryName])
+    @@index([trackId])
+    @@index([date])
 }
 
 model GlobalChartEntry {
@@ -124,4 +143,6 @@ model GlobalChartEntry {
     streams Float
 
     @@unique([trackId, date], name: "chartEntryId")
+    @@index([trackId])
+    @@index([date])
 }

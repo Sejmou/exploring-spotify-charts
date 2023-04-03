@@ -44,8 +44,10 @@ export const api = createTRPCNext<AppRouter>({
           url: `${getBaseUrl()}/api/trpc`,
         }),
       ],
-      defaultOptions: {
-        queries: { staleTime: Infinity }, // for this application, backend data never changes, so it is safe to cache forever
+      queryClientConfig: {
+        defaultOptions: {
+          queries: { staleTime: Infinity }, // for this application, backend data never changes, so it is safe to cache forever
+        },
       },
     };
   },

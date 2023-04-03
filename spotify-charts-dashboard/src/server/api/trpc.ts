@@ -75,6 +75,17 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
  */
 export const createTRPCRouter = t.router;
 
+const loggerMiddleware = t.middleware(async ({ path, type, next }) => {
+  const start = Date.now();
+  const result = await next();
+  const durationMs = Date.now() - start;
+  result.ok
+    ? console.log("OK request timing:", { path, type, durationMs })
+    : console.log("Non-OK request timing", { path, type, durationMs });
+
+  return result;
+});
+
 /**
  * Public (unauthed) procedure
  *
@@ -82,4 +93,4 @@ export const createTRPCRouter = t.router;
  * tRPC API. It does not guarantee that a user querying is authorized, but you
  * can still access user session data if they are logged in
  */
-export const publicProcedure = t.procedure;
+export const publicProcedure = t.procedure.use(loggerMiddleware);

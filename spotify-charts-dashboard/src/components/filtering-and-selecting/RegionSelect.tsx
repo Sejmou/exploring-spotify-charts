@@ -3,9 +3,9 @@ import TextField from "@mui/material/TextField";
 import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
 import type { RouterOutputs } from "../../utils/api";
 import { api } from "../../utils/api";
-import { useFilterStore } from "../../store/filter";
+import { useTrackComparisonFilterStore } from "../../store/trackComparison";
 
-type CountriesAPIResponse = RouterOutputs["countries"]["getAll"];
+type CountriesAPIResponse = RouterOutputs["countries"]["getAllWithCharts"];
 
 const globalRegionSelectOption = {
   name: "Global",
@@ -16,12 +16,10 @@ const globalRegionSelectOption = {
 };
 
 export default function RegionSelect() {
-  const countries = api.countries.getAll.useQuery(undefined, {
-    staleTime: Infinity,
-  });
+  const countries = api.countries.getAllWithCharts.useQuery();
 
-  const region = useFilterStore((state) => state.region);
-  const setRegion = useFilterStore((state) => state.setRegion);
+  const region = useTrackComparisonFilterStore((state) => state.region);
+  const setRegion = useTrackComparisonFilterStore((state) => state.setRegion);
 
   const filterOptions = createFilterOptions<CountriesAPIResponse[0]>({
     matchFrom: "any",

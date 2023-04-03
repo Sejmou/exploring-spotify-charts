@@ -9,6 +9,7 @@ import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from multiprocessing import Pool
 import tqdm
+import json
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -72,7 +73,7 @@ tracks_filtered = tracks_filtered[
 tracks_filtered = tracks_filtered.loc[
     :,
     ~tracks_filtered.columns.str.startswith("album")
-    | tracks_filtered.columns.str.contains("albumId"),
+    | tracks_filtered.columns.str.contains("album_id"),
 ]  # remove album columns that are not albumId -> stored in albums table
 store_and_print_info(tracks_filtered, "tracks")
 
@@ -89,11 +90,11 @@ top50 = (
     .rename(columns={"id": "trackId", "region": "countryName"})
 )
 top50_filtered = top50[top50.trackId.isin(tracks_filtered.id)]
-top50_global = top50_filtered[top50_filtered.countryName == "global"].drop(
+top50_global = top50_filtered[top50_filtered.countryName == "Global"].drop(
     columns=["countryName"]
 )
 store_and_print_info(top50_global, "top50_global")
-top50_countries = top50_filtered[top50_filtered.countryName != "global"]
+top50_countries = top50_filtered[top50_filtered.countryName != "Global"]
 store_and_print_info(top50_countries, "top50_countries")
 
 countries = pd.read_csv(get_data_path("spotify_region_metadata.csv")).rename(
@@ -137,7 +138,7 @@ def fetch_album_info(album_ids):
     return chunk_data
 
 
-pool = Pool(processes=8)
+pool = Pool(processes=4)  # might have to lower that number depending on your machine
 results = list(
     tqdm.tqdm(
         pool.imap_unordered(
@@ -155,7 +156,7 @@ results = list(
 # results = [task.get() for task in tasks]
 album_data = pd.concat(results).reset_index(drop=True)
 album_data.rename(columns={"album_type": "type"}, inplace=True)
-album_data["artistIds"] = album_data.artists.apply(get_artist_ids)
+album_data["artist_ids"] = album_data.artists.apply(get_artist_ids)
 album_data[["thumbnail_url", "img_url"]] = album_data.images.apply(
     extract_image_urls
 ).apply(pd.Series)
@@ -163,20 +164,20 @@ album_data.drop(columns=["artists", "images"], inplace=True)
 
 album_artist_mapping = pd.DataFrame(
     album_data.set_index("id").artistIds.explode()
-).rename(columns={"artistIds": "artistId"})
+).rename(columns={"artist_ids": "artist_id"})
 album_artist_mapping["rank"] = album_artist_mapping.groupby("id").cumcount() + 1
 album_artist_mapping = album_artist_mapping.reset_index().rename(
-    columns={"id": "albumId"}
+    columns={"id": "album_id"}
 )
 store_and_print_info(album_artist_mapping, "album_artists")
 
-album_data.drop(columns=["artistIds"], inplace=True)
+album_data.drop(columns=["artist_ids"], inplace=True)
 store_and_print_info(album_data, "albums")
 
 
 # %%
-album_artist_ids = (
-    album_data.artistIds.explode().drop_duplicates().reset_index(drop=True)
+album_artist_ids = album_artist_mapping.artist_id.drop_duplicates().reset_index(
+    drop=True
 )
 # we don't have the artist data for all albums, so we need to fetch the missing data from the Spotify API as well
 missing_album_artist_ids = album_artist_ids[~album_artist_ids.isin(artists.id)].rename(
@@ -217,6 +218,131 @@ artist_final_data.drop(
     ],
     inplace=True,
 )
+# %%
+artist_final_data["genres"] = artist_final_data.genres.apply(
+    json.dumps
+)  # important, otherwise this is NOT a valid JSON array in the output and parsing will fail (took me a few hours to figure that out lol)
 store_and_print_info(artist_final_data, "artists")
+
+# %%
+# add regions mentioned in ISRC territory column of tracks
+full_country_info = pd.read_csv(
+    "https://raw.githubusercontent.com/lukes/ISO-3166-Countries-with-Regional-Codes/master/all/all.csv"
+)
+tracks = pd.read_json(os.path.join(script_dir, "seed-data", "tracks.json"))
+territories = tracks.isrcTerritory.drop_duplicates()
+
+country_info_for_territories = pd.merge(
+    full_country_info,
+    territories,
+    left_on="name",
+    right_on="isrcTerritory",
+    how="right",
+)
+country_info_for_territories[country_info_for_territories.name.isna()]
+
+renames_country_info = {
+    "United States of America": "United States",
+    "United Kingdom of Great Britain and Northern Ireland": "United Kingdom",
+    "Czechia": "Czech Republic",
+    "Taiwan, Province of China": "Taiwan",
+    "Korea, Republic of": "South Korea",
+}
+full_country_info_fixed = full_country_info.replace({"name": renames_country_info})
+
+renames_isrc_territory = {
+    "Chinese Taipei": "Taiwan",
+    "Hong Kong SAR, China": "Hong Kong",
+}
+territories = territories.replace(renames_isrc_territory)
+
+country_info_for_territories_fixed = pd.merge(
+    full_country_info_fixed,
+    territories,
+    left_on="name",
+    right_on="isrcTerritory",
+    how="right",
+)
+country_info_for_territories_fixed = pd.concat(
+    [
+        country_info_for_territories_fixed,
+        pd.DataFrame(
+            [
+                {
+                    "name": "Kosovo",
+                    "alpha-2": "XK",
+                    "alpha-3": "XKX",
+                    "region": "Europe",
+                    "sub-region": "Eastern Europe",
+                }
+            ]
+        ),
+    ]
+)
+
+country_info_for_territories_fixed.rename(
+    columns={
+        "alpha-2": "isoAlpha2",
+        "alpha-3": "isoAlpha3",
+        "region": "geoRegion",
+        "sub-region": "geoSubregion",
+    },
+    inplace=True,
+)
+countries = pd.read_json(os.path.join(script_dir, "seed-data", "countries.json"))
+
+countries_complete = pd.concat(
+    [countries, country_info_for_territories_fixed[countries.columns]]
+).drop_duplicates()
+countries_complete = countries_complete[~countries_complete.name.isna()]
+store_and_print_info(countries_complete, "countries")
+
+# %%
+# map categorical track features encoded with boolean/numbers to human-readable strings
+tracks = pd.read_json(os.path.join(script_dir, "seed-data", "tracks.json"))
+
+tracks["mode"] = tracks["mode"].astype("category")
+tracks["mode"] = tracks["mode"].cat.rename_categories({0: "Minor", 1: "Major"})
+
+
+def rename_least_frequent_to_other(series, share_of_total=0.01):
+    """Rename least frequent values to 'Other'."""
+    counts = series.value_counts()
+    least_frequent = counts[counts < share_of_total * counts.sum()]
+    return series.replace(least_frequent.index, "Other")
+
+
+tracks["timeSignature"] = rename_least_frequent_to_other(tracks.timeSignature)
+tracks["timeSignature"] = tracks["timeSignature"].astype("category")
+tracks["timeSignature"] = tracks["timeSignature"].cat.rename_categories(
+    {3: "3/4", 4: "4/4", 5: "5/4"}
+)
+tracks["explicit"] = tracks["explicit"].astype("category")
+tracks["explicit"] = tracks["explicit"].cat.rename_categories({0: "No", 1: "Yes"})
+tracks["key"] = tracks["key"].astype("category")
+tracks["key"] = tracks["key"].cat.rename_categories(
+    {
+        0: "C",
+        1: "C#/Db",
+        2: "D",
+        3: "D#/Eb",
+        4: "E",
+        5: "F",
+        6: "F#/Gb",
+        7: "G",
+        8: "G#/Ab",
+        9: "A",
+        10: "A#/Bb",
+        11: "B",
+    }
+)
+store_and_print_info(tracks, "tracks")
+# %%
+isrc_agency_data = tracks[["isrcAgency", "isrcTerritory"]].drop_duplicates()
+isrc_agency_data["isrcTerritory"] = isrc_agency_data.isrcTerritory.replace(
+    renames_isrc_territory
+)
+
+store_and_print_info(isrc_agency_data, "isrc_agencies")
 
 # %%

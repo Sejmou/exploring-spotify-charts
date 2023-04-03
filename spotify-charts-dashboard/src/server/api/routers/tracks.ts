@@ -1,8 +1,24 @@
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import { z } from "zod";
+import type { Genre, Prisma, PrismaClient } from "@prisma/client";
+import { createUnionSchema } from "../../utils";
+import { numericTrackFeatures } from "../../../utils/data";
+import type { NumericTrackFeatureName } from "../../../utils/data";
+import NodeCache from "node-cache";
+
+const plotFeatureSchema = createUnionSchema(numericTrackFeatures); // really don't understand *how exactly* this works, but it does
+const plotFeatureInput = z.object({
+  xFeature: plotFeatureSchema,
+  yFeature: plotFeatureSchema,
+});
+const filterParams = z.object({
+  startInclusive: z.date().optional(),
+  endInclusive: z.date().optional(),
+  regionNames: z.array(z.string()).optional(),
+});
 
 export const tracksRouter = createTRPCRouter({
-  getNamesAndArtists: publicProcedure
+  getTrackNamesArtistsAndStreamsOrdered: publicProcedure
     .input(
       z.object({
         startInclusive: z.date().optional(),
@@ -113,198 +129,205 @@ export const tracksRouter = createTRPCRouter({
 
       return trackArtistsAndNamesWithStreams;
     }),
-  getTrackDataForIds: publicProcedure
+  getTrackMetadataForIds: publicProcedure
     .input(
       z.object({
         trackIds: z.array(z.string()),
       })
     )
     .query(async ({ ctx, input }) => {
-      const tracks = await ctx.prisma.track.findMany({
-        select: {
-          id: true,
-          name: true,
-          previewUrl: true,
-          featuringArtists: {
-            select: {
-              artist: {
-                select: { name: true, genres: true },
-              },
-              rank: true,
-            },
-          },
-          album: {
-            select: {
-              name: true,
-              type: true,
-              thumbnailUrl: true,
-              releaseDate: true,
-              label: true,
-            },
-          },
-        },
-        where: {
-          id: {
-            in: input.trackIds,
-          },
-        },
-      });
-      return tracks
-        .map((track) => {
-          const artistsSorted = track.featuringArtists.sort(
-            (a, b) => a.rank - b.rank
-          );
-          const artists = artistsSorted.map((entry) => entry.artist);
-          const genres = artists.flatMap((artist) => {
-            // necessary workaround as artist genres are stored as a stringified JSON array in the database (SQL does not support string arrays)
-            const { genres, error } = parseGenreJSONStringArray(artist.genres);
-            if (error) {
-              console.log(
-                "could not parse all artist genres for track",
-                track.id
-              );
-              console.log("error parsing genres for artist: ", {
-                artist,
-              });
-            }
-            return genres;
-          });
-          const genresNoDuplicates = genres.reduce((acc, curr) => {
-            if (!acc.includes(curr)) {
-              acc.push(curr);
-            }
-            return acc;
-          }, [] as string[]);
-          return {
-            ...track,
-            featuringArtists: artists,
-            genres: genresNoDuplicates,
-            album: {
-              ...track.album,
-              thumbnailUrl: track.album.thumbnailUrl ?? undefined,
-            },
-            previewUrl: track.previewUrl ?? undefined,
-          };
-        })
-        .sort(
-          (a, b) => input.trackIds.indexOf(a.id) - input.trackIds.indexOf(b.id)
-        );
+      const trackMetadata = await getTrackMetadata(ctx.prisma, input.trackIds);
+      return trackMetadata;
     }),
-  getTrackData: publicProcedure.query(async ({ ctx, input }) => {
-    const tracks = await ctx.prisma.track.findMany({
-      select: {
-        id: true,
-        name: true,
-        speechiness: true,
-        acousticness: true,
-        danceability: true,
-        energy: true,
-        instrumentalness: true,
-        liveness: true,
-        loudness: true,
-        tempo: true,
-        valence: true,
-        timeSignature: true,
-        key: true,
-        durationMs: true,
-        featuringArtists: {
-          select: {
-            artist: {
-              select: {
-                id: true,
-                name: true,
-                genres: true,
+  getTrackMetadataForId: publicProcedure
+    .input(
+      z.object({
+        trackId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const trackMetadata = await getTrackMetadata(ctx.prisma, [input.trackId]);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      return trackMetadata[input.trackId]!;
+    }),
+  getTrackXY: publicProcedure
+    .input(plotFeatureInput.merge(filterParams))
+    .query(async ({ ctx, input }) => {
+      const trackIds = await getTrackIdsMatchingFilter(ctx.prisma, input);
+      const trackXY = await getTrackXY(ctx.prisma, { trackIds, ...input });
+      return trackXY;
+    }),
+  getTrackMetadata: publicProcedure.query(async ({ ctx }) => {
+    const trackIds = await getTrackIdsMatchingFilter(ctx.prisma, {}); // just get all track ids
+    const trackMetadata = await getTrackMetadata(ctx.prisma, trackIds);
+    return trackMetadata;
+  }),
+});
+
+const filterResultCache = new NodeCache({
+  stdTTL: 20 * 60,
+  checkperiod: 20 * 60, // don't really understand why keeping this at default (should be 600 according to docs) causes the cache to be cleared immediately
+}); // cache key cleared after 20 minutes
+
+type FilterParams = {
+  startInclusive?: Date;
+  endInclusive?: Date;
+  regionNames?: string[];
+};
+
+function createFilterParamsKey(filterParams: FilterParams) {
+  return `${filterParams.startInclusive?.toISOString() ?? ""}-${
+    filterParams.endInclusive?.toISOString() ?? ""
+  }-${[...(filterParams.regionNames ?? "")].sort().join("")}`;
+}
+
+async function getTrackIdsMatchingFilter(
+  prisma: PrismaClient<
+    Prisma.PrismaClientOptions,
+    "info" | "warn" | "error" | "query",
+    Prisma.RejectOnNotFound | Prisma.RejectPerOperation | undefined
+  >,
+  filterParams: FilterParams
+) {
+  const startTime = performance.now();
+  const cacheKey = createFilterParamsKey(filterParams);
+  const cachedTrackIds: string[] | undefined = filterResultCache.get(cacheKey);
+  if (cachedTrackIds) {
+    return cachedTrackIds;
+  }
+  const { startInclusive, endInclusive, regionNames } = filterParams;
+  const globalChartsWhereClause = {
+    some: {
+      date: {
+        gte: startInclusive,
+        lte: endInclusive,
+      },
+    },
+  };
+  const trackIds = (
+    await prisma.track.findMany({
+      select: { id: true },
+      where: {
+        globalChartEntries: regionNames?.includes("Global")
+          ? globalChartsWhereClause
+          : undefined,
+        countryChartEntries: {
+          some: {
+            date: {
+              gte: startInclusive,
+              lte: endInclusive,
+            },
+            country: {
+              name: {
+                in: regionNames,
               },
             },
-            rank: true,
-          },
-        },
-        album: {
-          select: {
-            releaseDate: true,
           },
         },
       },
-    });
-    console.log("tracks", tracks);
-    return tracks.map((track) => {
-      const artistsSorted = track.featuringArtists.sort(
-        (a, b) => a.rank - b.rank
-      );
-      const artists = artistsSorted.map((entry) => entry.artist);
+    })
+  ).map((t) => t.id);
+
+  filterResultCache.set(cacheKey, trackIds);
+
+  console.log(
+    `Fetched trackIDs and cached result under cache key ${cacheKey} in ${
+      performance.now() - startTime
+    } ms`
+  );
+  return trackIds;
+}
+
+async function getTrackXY(
+  prisma: PrismaClient<
+    Prisma.PrismaClientOptions,
+    "info" | "warn" | "error" | "query",
+    Prisma.RejectOnNotFound | Prisma.RejectPerOperation | undefined
+  >,
+  input: {
+    trackIds: string[];
+    xFeature: NumericTrackFeatureName;
+    yFeature: NumericTrackFeatureName;
+  }
+) {
+  const { trackIds, xFeature, yFeature } = input;
+  const trackXY: { id: string; x: number; y: number }[] =
+    await prisma.$queryRawUnsafe(
+      // query should be safe as inputs are "sanitized" at this point
+      `SELECT id, ${xFeature} as 'x', ${yFeature} as 'y' FROM Track` +
+        (trackIds
+          ? ` WHERE id IN (${trackIds.map((id) => `'${id}'`).join(",")})`
+          : "")
+    );
+  return trackXY;
+}
+
+async function getTrackMetadata(
+  prisma: PrismaClient<
+    Prisma.PrismaClientOptions,
+    "info" | "warn" | "error" | "query",
+    Prisma.RejectOnNotFound | Prisma.RejectPerOperation | undefined
+  >,
+  trackIds: string[]
+) {
+  const tracks = await prisma.track.findMany({
+    select: {
+      id: true,
+      name: true,
+      previewUrl: true,
+      featuringArtists: {
+        select: {
+          artist: {
+            select: { name: true, genres: true },
+          },
+          rank: true,
+        },
+      },
+      album: {
+        select: {
+          name: true,
+          type: true,
+          thumbnailUrl: true,
+          releaseDate: true,
+          label: true,
+        },
+      },
+    },
+    where: {
+      id: {
+        in: trackIds,
+      },
+    },
+  });
+  const trackIdsAndMetadata = tracks
+    .map((track) => {
+      const artists = track.featuringArtists.map((entry) => entry.artist);
       const genres = artists.flatMap((artist) => {
-        // necessary workaround as artist genres are stored as a stringified JSON array in the database (SQL does not support string arrays)
-        const { genres, error } = parseGenreJSONStringArray(artist.genres);
-        if (error) {
-          console.log("could not parse all artist genres for track", track.id);
-          console.log("error parsing genres for artist: ", {
-            artist,
-          });
-        }
-        return genres;
+        return artist.genres;
       });
       const genresNoDuplicates = genres.reduce((acc, curr) => {
         if (!acc.includes(curr)) {
           acc.push(curr);
         }
         return acc;
-      }, [] as string[]);
-      const { album, ...stuffToKeep } = track;
+      }, [] as Genre[]);
       return {
-        ...stuffToKeep,
+        ...track,
+        featuringArtists: artists,
         genres: genresNoDuplicates,
-        releaseDate: album.releaseDate,
+        album: {
+          ...track.album,
+          thumbnailUrl: track.album.thumbnailUrl ?? undefined,
+        },
+        previewUrl: track.previewUrl ?? undefined,
       };
+    })
+    .map((track) => {
+      const { id, ...metadata } = track;
+      return [id, metadata] as [string, typeof metadata];
     });
-  }),
-  getTrackIdsMatchingFilter: publicProcedure
-    .input(
-      z.object({
-        startInclusive: z.date().optional(),
-        endInclusive: z.date().optional(),
-        countryNames: z.array(z.string()).optional(),
-      })
-    )
-    .query(async ({ ctx, input }) => {
-      const trackIds = input.countryNames
-        ? (
-            await ctx.prisma.countryChartEntry.groupBy({
-              by: ["trackId"],
-              where: {
-                date: {
-                  gte: input.startInclusive,
-                  lte: input.endInclusive,
-                },
-                countryName: {
-                  in: input.countryNames,
-                },
-              },
-            })
-          ).map((t) => t.trackId)
-        : (
-            await ctx.prisma.track.findMany({
-              select: {
-                id: true,
-              },
-            })
-          ).map((t) => t.id);
-      return trackIds;
-    }),
-});
-
-function parseGenreJSONStringArray(genreString: string) {
-  const genres = [];
-  let error = false;
-  try {
-    const parsedGenres = z
-      .array(z.string())
-      .parse(JSON.parse(genreString.replace(/'/g, '"')));
-    // need to convert single to double quotes as I f*cked up when I created the database (should have stored strings in JSON array with double quotes -> otherwise invalid JSON)
-    // sometimes the genres are still invalid JSON (e.g. `["children's music", 'kindermusik']` instead of `["children's music", "kindermusik"]` - haven't found way around this yet
-    // TODO: fix this
-    genres.push(...parsedGenres);
-  } catch {
-    error = true;
-  }
-  return { genres, error };
+  return Object.fromEntries(trackIdsAndMetadata) as Record<
+    string,
+    (typeof trackIdsAndMetadata)[0][1]
+  >;
 }
