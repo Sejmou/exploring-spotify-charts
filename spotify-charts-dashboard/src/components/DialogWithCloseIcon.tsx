@@ -1,4 +1,5 @@
-import { Dialog, DialogProps, IconButton } from "@mui/material";
+import type { DialogProps } from "@mui/material";
+import { Dialog, IconButton } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 
 type Props = DialogProps & {
@@ -13,12 +14,11 @@ const DialogWithCloseIcon = (props: Props) => {
         <div className="flex w-full justify-between">
           <div></div>
           <div className="self-center text-xl font-bold">{title}</div>
-          <IconButton
-            className="m-2"
-            onClick={(e) => props.onClose?.(e, "backdropClick")}
-          >
-            <CloseIcon />
-          </IconButton>
+          <div className="m-2">
+            <IconButton onClick={(e) => props.onClose?.(e, "backdropClick")}>
+              <CloseIcon />
+            </IconButton>
+          </div>
         </div>
         {children}
       </div>

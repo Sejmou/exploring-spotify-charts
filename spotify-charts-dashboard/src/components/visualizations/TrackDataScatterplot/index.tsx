@@ -109,17 +109,10 @@ const SpotifyTrackDataScatterPlot = () => {
         <CircularProgress />
       </div>
     ) : (
-      <div
-        data-tip=""
-        className="h-full w-full"
-        onWheel={() => {
-          console.log("scroll");
-        }}
-      >
+      <div data-tip="" className="h-full w-full flex-1">
         <Scatterplot
           darkMode
           margins={{ right: 1, top: 0 }}
-          className="h-full w-full fill-white" // fill sets color of SVG <text> elements for axis labels
           xAxis={xAxisConfig}
           yAxis={yAxisConfig}
           onPointHoverStart={handlePointHover}
@@ -131,12 +124,11 @@ const SpotifyTrackDataScatterPlot = () => {
     );
 
   return (
-    <>
-      <div>
-        <h2 className="mb-2 text-3xl font-bold">Explore relationships</h2>
-        <p className="my-2">
-          This scatterplot contains all the tracks in the dataset matching the
-          filter criteria (for now, only country filtering is supported).
+    <div className="flex h-full w-full flex-col gap-2">
+      <div className="flex w-full flex-col gap-2 md:flex-row">
+        <p>
+          Pick features of the songs in the dataset. Try filtering as well. Can
+          you identify patterns?
         </p>
         <div className="flex w-full gap-2">
           <BasicSelect
@@ -165,7 +157,7 @@ const SpotifyTrackDataScatterPlot = () => {
           />
         </div>
       </div>
-      <div className="row-span-5">{plotArea}</div>
+      {plotArea}
       {hoveredTrackID && (
         <SelectedTrackInfoDialog
           trackId={hoveredTrackID}
@@ -173,7 +165,7 @@ const SpotifyTrackDataScatterPlot = () => {
           onClose={() => setTrackInfoDialogOpen(false)}
         />
       )}
-    </>
+    </div>
   );
 };
 

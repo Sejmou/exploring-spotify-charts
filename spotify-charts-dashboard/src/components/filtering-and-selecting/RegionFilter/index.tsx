@@ -38,8 +38,8 @@ const RegionFilter = () => {
     );
   }
   return (
-    <>
-      <div className="max-h-96 py-2 px-4">
+    <div>
+      <div className="max-h-96">
         <h3 className="text-xl font-bold">Region</h3>
         <p className="mt-2 text-sm">
           {regionNames
@@ -62,7 +62,7 @@ const RegionFilter = () => {
         </p>
         {countryMap}
       </DialogWithCloseIcon>
-    </>
+    </div>
   );
 };
 export default RegionFilter;
