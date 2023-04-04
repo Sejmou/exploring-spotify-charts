@@ -48,7 +48,7 @@ const SelectedTracksInfoAndLegend = () => {
     return (
       <div className="flex h-10">
         <span className="self-center">
-          Please add at least one track whose data you wish to explore.
+          Add tracks to see their features and chart performance here.
         </span>
       </div>
     );

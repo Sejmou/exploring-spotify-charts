@@ -1,25 +1,27 @@
 import type { NextRouter } from "next/router";
 import { useRouter } from "next/router";
 import BasicSelect from "./filtering-and-selecting/BasicSelect";
+import classNames from "classnames";
 
-const VizViewSwitcher = () => {
+const VizViewSwitcher = ({ className }: { className?: string }) => {
   const subpageData = useViewSubpageData();
   const router = useRouter();
 
   return (
-    <BasicSelect
-      className="w-56"
-      label={"Current Data View"}
-      onChange={(newHref: string) => {
-        console.log(newHref);
-        void router.push(newHref);
-      }}
-      value={subpageData.find((o) => o.isCurrent)?.href}
-      options={subpageData.map((o) => ({
-        value: o.href,
-        label: o.title,
-      }))}
-    />
+    <div className={classNames("min-w-[200px]", className)}>
+      <BasicSelect
+        label={"Current Data View"}
+        onChange={(newHref: string) => {
+          console.log(newHref);
+          void router.push(newHref);
+        }}
+        value={subpageData.find((o) => o.isCurrent)?.href}
+        options={subpageData.map((o) => ({
+          value: o.href,
+          label: o.title,
+        }))}
+      />
+    </div>
   );
 };
 export default VizViewSwitcher;

@@ -8,7 +8,7 @@ const TrackDataExploration = () => {
     <div className="flex h-full w-full flex-col gap-2">
       <div className="flex flex-wrap gap-4">
         <SpotifyChartsHeading />
-        <VizViewSwitcher />
+        <VizViewSwitcher className="w-full md:w-auto" />
       </div>
       <div className="flex h-full w-full flex-1 flex-col xl:flex-row xl:gap-4">
         <div className="flex h-full w-full flex-col">

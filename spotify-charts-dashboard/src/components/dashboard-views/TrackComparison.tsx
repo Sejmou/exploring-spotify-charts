@@ -46,12 +46,12 @@ export default function CompareTracks() {
 
   return (
     <div className="flex h-full w-full flex-col gap-2">
-      <div className="flex flex-wrap gap-4">
+      <div className="flex flex-col gap-2 md:flex-row">
         <SpotifyChartsHeading />
-        <VizViewSwitcher />
-        <DateRangeFilter />
+        <VizViewSwitcher className="w-full grow-0 sm:w-auto" />
+        <DateRangeFilter className="md:grow" />
         <RegionSelect />
-        <TrackSelect />
+        <TrackSelect className="md:w-full md:grow" />
       </div>
       <SelectedTracksInfoAndLegend />
       {canViewTrackComparison && (

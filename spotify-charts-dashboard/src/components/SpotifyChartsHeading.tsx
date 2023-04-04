@@ -19,7 +19,7 @@ const SpotifyChartsHeading = ({ className }: Props) => {
         data-tip=""
         id="chart-heading"
         className={classNames(
-          "min-h-[56px] text-5xl font-extrabold tracking-tight text-white",
+          "text-white, min-h-[56px] whitespace-nowrap text-5xl font-extrabold tracking-tight",
           className
         )}
         onMouseEnter={() => setShowTooltip(true)}

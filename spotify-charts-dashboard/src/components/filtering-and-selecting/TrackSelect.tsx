@@ -13,11 +13,12 @@ import { useEffect, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import MusicNoteIcon from "@mui/icons-material/MusicNote";
 import { useTrackComparisonFilterStore } from "../../store/trackComparison";
+import classNames from "classnames";
 
 type TrackDataAPIResponse =
   RouterOutputs["tracks"]["getTrackNamesArtistsAndStreamsOrdered"];
 
-export default function TrackSelect() {
+export default function TrackSelect({ className }: { className?: string }) {
   const region = useTrackComparisonFilterStore((state) => state.region);
   const startInclusive = useTrackComparisonFilterStore(
     (state) => state.startInclusive
@@ -68,63 +69,64 @@ export default function TrackSelect() {
   }, [region]);
 
   return (
-    <div className="flex items-center gap-2">
-      <Autocomplete
-        key={key}
-        disabled={!region}
-        sx={{ width: 400 }}
-        options={tracks.data?.filter((t) => !trackIds.includes(t.id)) ?? []}
-        filterOptions={autocompleteFilterOptions}
-        autoHighlight
-        getOptionLabel={(option) =>
-          option.name + " - " + option.featuringArtists.join(", ")
-        }
-        renderOption={(props, option) => (
-          // important: key should be LAST here, i.e. NOT before {...props}: https://stackoverflow.com/a/69396153/13727176
-          <ListItem component="li" {...props} key={option.id}>
-            <ListItemAvatar>
-              {!option.album.thumbnailUrl ? (
-                <Avatar variant="square">
-                  <MusicNoteIcon />
-                </Avatar>
-              ) : (
-                <Avatar
-                  variant="square"
-                  alt={option.album.name}
-                  src={option.album.thumbnailUrl}
-                />
-              )}
-            </ListItemAvatar>
-            <ListItemText
-              primary={option.name}
-              secondary={option.featuringArtists.join(", ")}
-            />
-          </ListItem>
-        )}
-        renderInput={(params) => (
-          <div>
-            <TextField
-              {...params}
-              label={inputText}
-              inputProps={{
-                ...params.inputProps,
-                autoComplete: "new-password", // disable autocomplete and autofill
-              }}
-            />
-          </div>
-        )}
-        onChange={(_, newValue) => setCurrentTrack(newValue)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            if (currentTrack) {
-              addTrackId(currentTrack.id);
-              setCurrentTrack(null);
-              setKey((key) => key + 1); // need this hack to clear autocomplete
-            }
+    <div className={classNames("flex items-center gap-2", className)}>
+      <div className="w-full min-w-[240px]">
+        <Autocomplete
+          key={key}
+          disabled={!region}
+          options={tracks.data?.filter((t) => !trackIds.includes(t.id)) ?? []}
+          filterOptions={autocompleteFilterOptions}
+          autoHighlight
+          getOptionLabel={(option) =>
+            option.name + " - " + option.featuringArtists.join(", ")
           }
-        }}
-        isOptionEqualToValue={(option, value) => option.id === value.id}
-      />
+          renderOption={(props, option) => (
+            // important: key should be LAST here, i.e. NOT before {...props}: https://stackoverflow.com/a/69396153/13727176
+            <ListItem component="li" {...props} key={option.id}>
+              <ListItemAvatar>
+                {!option.album.thumbnailUrl ? (
+                  <Avatar variant="square">
+                    <MusicNoteIcon />
+                  </Avatar>
+                ) : (
+                  <Avatar
+                    variant="square"
+                    alt={option.album.name}
+                    src={option.album.thumbnailUrl}
+                  />
+                )}
+              </ListItemAvatar>
+              <ListItemText
+                primary={option.name}
+                secondary={option.featuringArtists.join(", ")}
+              />
+            </ListItem>
+          )}
+          renderInput={(params) => (
+            <div>
+              <TextField
+                {...params}
+                label={inputText}
+                inputProps={{
+                  ...params.inputProps,
+                  autoComplete: "new-password", // disable autocomplete and autofill
+                }}
+              />
+            </div>
+          )}
+          onChange={(_, newValue) => setCurrentTrack(newValue)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              if (currentTrack) {
+                addTrackId(currentTrack.id);
+                setCurrentTrack(null);
+                setKey((key) => key + 1); // need this hack to clear autocomplete
+              }
+            }
+          }}
+          isOptionEqualToValue={(option, value) => option.id === value.id}
+        />
+      </div>
       <Button
         disabled={!currentTrack}
         variant="outlined"

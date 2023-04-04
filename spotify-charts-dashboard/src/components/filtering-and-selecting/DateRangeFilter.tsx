@@ -3,11 +3,12 @@ import dayjs from "dayjs";
 import { useState } from "react";
 import { useTrackComparisonFilterStore } from "../../store/trackComparison";
 import BasicDatePicker from "./BasicDatePicker";
+import classNames from "classnames";
 
 const minDate = dayjs("2017-01-01");
 const maxDate = dayjs("2021-12-31");
 
-const DateRangeFilter = () => {
+const DateRangeFilter = ({ className }: { className?: string }) => {
   const startInclusive = useTrackComparisonFilterStore(
     (state) => state.startInclusive
   );
@@ -29,7 +30,7 @@ const DateRangeFilter = () => {
   );
 
   return (
-    <div className="flex w-96 gap-2">
+    <div className={classNames("flex min-w-[320px] gap-2", className)}>
       <BasicDatePicker
         value={startDate}
         label="Start Date"
