@@ -45,13 +45,13 @@ const SpotifyTrackDataScatterPlot = () => {
       keepPreviousData: true,
     }
   );
-  const [hoveredDatapointIdx, setHoveredDatapointIdx] = useState<number | null>(
+  const [activeDatapointIdx, setActiveDatapointIdx] = useState<number | null>(
     null
   );
   const hoveredTrackID = useMemo(() => {
-    if (hoveredDatapointIdx === null) return null;
-    return trackXYData.data?.[hoveredDatapointIdx]?.id ?? null;
-  }, [hoveredDatapointIdx, trackXYData.data]);
+    if (activeDatapointIdx === null) return null;
+    return trackXYData.data?.[activeDatapointIdx]?.id ?? null;
+  }, [activeDatapointIdx, trackXYData.data]);
   const trackMetadata = api.tracks.getTrackMetadataForIds.useQuery({
     trackIds: hoveredTrackID ? [hoveredTrackID] : [],
   });
@@ -66,23 +66,36 @@ const SpotifyTrackDataScatterPlot = () => {
 
   const handlePointHover = useCallback(
     (datapointIdx: number) => {
-      setHoveredDatapointIdx(datapointIdx);
+      setActiveDatapointIdx(datapointIdx);
     },
-    [setHoveredDatapointIdx]
+    [setActiveDatapointIdx]
   );
   const handlePointClick = useCallback(
     (datapointIdx: number) => {
-      console.log(datapointIdx, hoveredDatapointIdx);
-      if (datapointIdx === hoveredDatapointIdx) {
-        setHoveredDatapointIdx(datapointIdx);
+      if (datapointIdx === activeDatapointIdx) {
+        setActiveDatapointIdx(datapointIdx);
         setTrackInfoDialogOpen(true);
       }
     },
-    [hoveredDatapointIdx]
+    [activeDatapointIdx]
   );
   const handlePointUnhover = useCallback(() => {
-    setHoveredDatapointIdx(null);
-  }, [setHoveredDatapointIdx]);
+    setActiveDatapointIdx(null);
+  }, [setActiveDatapointIdx]);
+
+  const [trackInfoDialogOpen, setTrackInfoDialogOpen] = useState(false);
+  const handlePointTap = useCallback((datapointIdx: number) => {
+    setActiveDatapointIdx(datapointIdx);
+    setTrackInfoDialogOpen(true);
+  }, []);
+  const handleDialogClose = useCallback(() => {
+    setTrackInfoDialogOpen(false);
+    if (activeDatapointIdx !== null) {
+      setActiveDatapointIdx(null);
+    }
+  }, [activeDatapointIdx]);
+
+  console.log({ activeDatapointIdx, trackInfoDialogOpen });
 
   const xAxisConfig: AxisConfig = useMemo(() => {
     const trackData = trackXYData.data;
@@ -95,8 +108,6 @@ const SpotifyTrackDataScatterPlot = () => {
     if (trackData === undefined) return { data: [], featureName: "(no data)" };
     return getDisplayDataForAxis("y", yFeature, trackData);
   }, [yFeature, trackXYData.data]);
-
-  const [trackInfoDialogOpen, setTrackInfoDialogOpen] = useState(false);
 
   if (trackXYData.isError) {
     return <div>Error loading data, please try refreshing the page.</div>;
@@ -118,6 +129,7 @@ const SpotifyTrackDataScatterPlot = () => {
           onPointHoverStart={handlePointHover}
           onPointHoverEnd={handlePointUnhover}
           onPointClick={handlePointClick}
+          onPointTap={handlePointTap}
         />
         <ReactTooltip>{hoveredTrackTooltipContent}</ReactTooltip>
       </div>
@@ -127,8 +139,8 @@ const SpotifyTrackDataScatterPlot = () => {
     <div className="flex h-full w-full flex-col gap-2">
       <div className="flex w-full flex-col gap-2 md:flex-row">
         <p>
-          Pick features of the songs in the dataset. Try filtering as well. Can
-          you identify patterns?
+          Discover how track features differ between tracks. Click/tap any
+          datapoint for details.
         </p>
         <div className="flex w-full gap-2">
           <BasicSelect
@@ -162,7 +174,7 @@ const SpotifyTrackDataScatterPlot = () => {
         <SelectedTrackInfoDialog
           trackId={hoveredTrackID}
           open={trackInfoDialogOpen}
-          onClose={() => setTrackInfoDialogOpen(false)}
+          onClose={handleDialogClose}
         />
       )}
     </div>

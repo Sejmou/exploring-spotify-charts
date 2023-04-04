@@ -1,5 +1,6 @@
 import { api } from "../../../utils/api";
 import DialogWithCloseIcon from "../../DialogWithCloseIcon";
+import LoadingSpinner from "../../LoadingSpinner";
 import TrackInfo from "../../TrackDetails";
 
 type Props = {
@@ -23,7 +24,7 @@ const SelectedTrackInfoDialog = ({ trackId, open, onClose }: Props) => {
       title="Track Details"
     >
       <div className="bg-[#121212] p-4 ">
-        {t && (
+        {t ? (
           <TrackInfo
             trackId={t.id}
             trackTitle={t.name}
@@ -37,6 +38,8 @@ const SelectedTrackInfoDialog = ({ trackId, open, onClose }: Props) => {
             color={"#7fc97f"}
             previewUrl={t.previewUrl}
           />
+        ) : (
+          <LoadingSpinner />
         )}
       </div>
     </DialogWithCloseIcon>
