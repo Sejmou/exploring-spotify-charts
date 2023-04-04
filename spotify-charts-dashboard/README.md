@@ -1,12 +1,12 @@
-# Create T3 App
+# Spotify Charts Visualization Website
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+This is a web Next.js web app featuring an interactive visualization of Spotify chart tracks (2017 - 2021) using data collected both from Spotify's daily charts and the Spotify API.
 
-## What's next? How do I make an app with this?
+The deployed website is available under (https://spotify-charts-viz.vercel.app/)[https://spotify-charts-viz.vercel.app/].
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+## Tech Stack
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+The project makes use of the [T3 Stack](https://create.t3.gg/) and was bootstrapped with `create-t3-app`. Technologies used include:
 
 - [Next.js](https://nextjs.org)
 - [NextAuth.js](https://next-auth.js.org)
@@ -14,20 +14,12 @@ If you are not familiar with the different technologies used in this project, pl
 - [Tailwind CSS](https://tailwindcss.com)
 - [tRPC](https://trpc.io)
 
-## Learn More
+The app fetches data from a MySQL cloud database hosted on [PlanetScale](https://planetscale.com/).
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+## Local Development, Deployment etc.
+Most information can probably be found on the [T3 Stack](https://create.t3.gg/) website. I only added some additional stuff that might potentially be relevant for me for future reference 
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
-
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
-
-## How do I deploy this?
-
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
-
-## local Postgres setup (TODO: complete docs later)
+### local Postgres setup
 ```sql
 CREATE DATABASE spotify_db;
 CREATE USER spotify_admin WITH PASSWORD 'yourpass';
@@ -39,7 +31,9 @@ add in `.env`:
 postgresql://spotify_admin:yourpass@localhost/spotify_db
 ```
 
-## differences with MySQL
+Of course, you will also need to update `prisma.schema` accordingly. Check their docs for details. 
+
+### differences with MySQL
 use `mysql` in connection string instead of `postgresql`
 
 for user creation and granting privileges, use
