@@ -74,7 +74,7 @@ const SelectedTracksInfoAndLegend = () => {
           title="Track Details"
         >
           <div className="bg-[#121212] p-4 ">
-            <div className="grid gap-4 lg:grid-cols-2">
+            <div className="flex flex-col gap-4 lg:grid lg:grid-cols-2">
               {trackData.map((t, i) => (
                 <TrackInfo
                   key={t.id}
