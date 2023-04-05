@@ -1,5 +1,5 @@
 import type { RouterOutputs } from "../../utils/api";
-import { getFeatureLabel } from "../../utils/data";
+import { getFeatureLabel, getFeatureDataFormat } from "../../utils/data";
 import BarChart from "./BarChart";
 
 type TrackDataProps = keyof Props["trackData"][0];
@@ -21,11 +21,9 @@ const TrackDataBarChart = ({ trackData, feature, className }: Props) => {
     propName: getFeatureLabel(feature),
     data: trackData.map((trackData) => ({
       x: trackData.name,
-      y:
-        feature != "durationMs"
-          ? trackData[feature]
-          : trackData[feature] / 60000,
+      y: trackData[feature],
     })),
+    yTickFormat: getFeatureDataFormat(feature),
   };
 
   return (

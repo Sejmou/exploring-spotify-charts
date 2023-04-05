@@ -6,7 +6,7 @@ import VizViewSwitcher from "../VizViewSwitcher";
 const TrackDataExploration = () => {
   return (
     <div className="flex h-full w-full flex-1 flex-col gap-2">
-      <div className="flex flex-wrap gap-4">
+      <div className="flex flex-wrap gap-2">
         <SpotifyChartsHeading />
         <VizViewSwitcher className="w-full md:w-auto" />
       </div>

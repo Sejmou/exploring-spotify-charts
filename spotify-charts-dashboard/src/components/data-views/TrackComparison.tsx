@@ -51,7 +51,7 @@ export default function CompareTracks() {
           <SpotifyChartsHeading />
           <VizViewSwitcher className="w-full" />
         </div>
-        <DateRangeFilter className="w-full lg:w-auto" />
+        <DateRangeFilter className="w-full md:w-auto" />
         <div className="flex w-full flex-col gap-2 sm:flex-row">
           <RegionSelect className="sm:w-1/3" />
           <TrackSelect className="sm:w-2/3" />
@@ -61,32 +61,27 @@ export default function CompareTracks() {
       {canViewTrackComparison && (
         <div className="flex h-full w-full flex-1 flex-col gap-2">
           <div className="flex flex-1 flex-col">
-            <h2 className="text-3xl font-bold">Chart Performance</h2>
-            <div className="h-[420px] md:h-[600px]">
-              <ChartsViz data={charts.data} />
-            </div>
-          </div>
-          <div className="flex flex-1 flex-col">
             <h2 className="mt-2 text-3xl font-bold">Features</h2>
-            <div className="h-[256px] sm:h-[420px] lg:h-[600px]">
+            <div className="h-[256px] sm:h-[420px] lg:h-[500px]">
               <TrackDataRadarChart trackData={charts.data.trackData} />
             </div>
             <div className="flex w-full flex-col lg:flex-row">
               <TrackDataBarChart
                 trackData={charts.data.trackData}
                 feature="durationMs"
-                className="lg:w-1/3"
+                className="h-[150px] lg:h-[200px] lg:w-1/2"
               />
               <TrackDataBarChart
                 trackData={charts.data.trackData}
                 feature="tempo"
-                className="lg:w-1/3"
+                className="lg-h-[200px] h-[150px] lg:w-1/2"
               />
-              <TrackDataBarChart
-                trackData={charts.data.trackData}
-                feature="loudness"
-                className="lg:w-1/3"
-              />
+            </div>
+          </div>
+          <div className="flex flex-1 flex-col">
+            <h2 className="text-3xl font-bold">Chart Performance</h2>
+            <div className="h-[420px] md:h-[600px]">
+              <ChartsViz data={charts.data} />
             </div>
           </div>
         </div>

@@ -17,6 +17,7 @@ type Props = {
     x: string;
     y: number;
   }[];
+  yTickFormat?: (value: number, index: number) => string;
 };
 
 ChartJS.register(
@@ -28,7 +29,7 @@ ChartJS.register(
   Legend
 );
 
-export default function BarChart({ data, propName }: Props) {
+export default function BarChart({ data, propName, yTickFormat }: Props) {
   const chartData = {
     labels: [propName],
     datasets: data.map((d, i) => ({
@@ -40,6 +41,13 @@ export default function BarChart({ data, propName }: Props) {
         .toString(),
     })),
   };
+
+  const ticksCallback = yTickFormat
+    ? function (val: string | number, index: number) {
+        if (yTickFormat) return yTickFormat(val as number, index);
+      }
+    : undefined;
+
   return (
     <Bar
       options={{
@@ -65,6 +73,7 @@ export default function BarChart({ data, propName }: Props) {
             ticks: {
               color: "white",
               backdropColor: "#222",
+              callback: ticksCallback,
             },
           },
         },
