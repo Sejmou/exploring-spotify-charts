@@ -8,8 +8,8 @@ import { truncate } from "../src/utils/misc";
 // If this script is re-executed it will reset all the matching data in the database with the values from the JSON files as well (should not be a problem since the data is not modified in the application - at least as of today (8 Feb 2023))
 
 // CONFIG
-const skipIfRowCountsMatch = true; // if true, the script will skip the seeding process if the row counts of the tables match the row counts of the JSON files
-const useSubsetOfCountries = true; // if true, only the three countries (Germany, United States, Brazil) will be used for the country charts
+const skipIfRowCountsMatch = false; // if true, the script will skip the seeding process if the row counts of the tables match the row counts of the JSON files
+const useSubsetOfCountries = false; // if true, only the three countries (Germany, United States, Brazil) will be used for the country charts
 
 const seedDataDir = path.join(__dirname, "seed-data");
 

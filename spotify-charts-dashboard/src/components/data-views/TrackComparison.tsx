@@ -51,7 +51,7 @@ export default function CompareTracks() {
           <SpotifyChartsHeading />
           <VizViewSwitcher className="w-full" />
         </div>
-        <DateRangeFilter className="w-full md:w-auto" />
+        <DateRangeFilter className="w-full md:w-min" />
         <div className="flex w-full flex-col gap-2 sm:flex-row">
           <RegionSelect className="sm:w-1/3" />
           <TrackSelect className="sm:w-2/3" />
@@ -74,7 +74,7 @@ export default function CompareTracks() {
               <TrackDataBarChart
                 trackData={charts.data.trackData}
                 feature="tempo"
-                className="lg-h-[200px] h-[150px] lg:w-1/2"
+                className="h-[150px] lg:h-[200px] lg:w-1/2"
               />
             </div>
           </div>
