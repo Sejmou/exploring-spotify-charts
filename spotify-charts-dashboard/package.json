@@ -39,6 +39,7 @@
     "react-big-dataset-scatterplot": "^1.1.16",
     "react-chartjs-2": "^5.2.0",
     "react-dom": "^18.2.0",
+    "react-intersection-observer": "^9.4.3",
     "react-responsive": "^9.0.2",
     "react-simple-maps": "^3.0.0",
     "react-tooltip": "4.2.21",

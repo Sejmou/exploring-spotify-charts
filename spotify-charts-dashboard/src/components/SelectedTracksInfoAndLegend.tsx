@@ -6,6 +6,8 @@ import { Button } from "@mui/material";
 import BasicTrackInfo from "./BasicTrackInfo";
 import { useTrackComparisonFilterStore } from "../store/trackComparison";
 import DialogWithCloseIcon from "./DialogWithCloseIcon";
+import { useInView } from "react-intersection-observer";
+import classNames from "classnames";
 
 const SelectedTracksInfoAndLegend = () => {
   const [expanded, setExpanded] = useState(false);
@@ -33,6 +35,27 @@ const SelectedTracksInfoAndLegend = () => {
     return trackIds.map((id) => ({ id, ...tracks.data[id]! }));
   }, [tracks.data, trackIds]);
 
+  const legendElementContent = (
+    <div className="flex flex-1 overflow-x-auto">
+      {trackData.map((t, i) => {
+        return (
+          <BasicTrackInfo
+            key={t.id}
+            onRemove={removeTrackId}
+            trackId={t.id}
+            color={divergingColors[i] || "white"}
+            artists={t.featuringArtists.map((a) => a.name)}
+            trackTitle={t.name}
+          />
+        );
+      })}
+    </div>
+  );
+
+  const { ref: wrapperRef, inView: wrapperInView } = useInView();
+
+  const [showStickyLegend, setShowStickyLegend] = useState(false);
+
   if (tracks.isFetching) {
     return (
       <div className="flex h-10">
@@ -52,53 +75,62 @@ const SelectedTracksInfoAndLegend = () => {
   }
 
   return (
-    <div className="flex w-full flex-col gap-2 sm:flex-row">
-      <div className="flex flex-1 overflow-x-auto">
-        {trackData.map((t, i) => {
-          return (
-            <BasicTrackInfo
-              key={t.id}
-              onRemove={removeTrackId}
-              trackId={t.id}
-              color={divergingColors[i] || "white"}
-              artists={t.featuringArtists.map((a) => a.name)}
-              trackTitle={t.name}
-            />
-          );
-        })}
-        <DialogWithCloseIcon
-          open={expanded}
-          onClose={() => setExpanded(false)}
-          fullWidth={true}
-          maxWidth="lg"
-          title="Track Details"
+    <>
+      {!wrapperInView && (
+        <div
+          className={classNames(
+            "sticky top-0 left-0 z-10 flex w-full flex-col gap-2 p-2 sm:flex-row",
+            { "bg-[#121212]": showStickyLegend }
+          )}
         >
-          <div className="bg-[#121212] p-4 ">
-            <div className="flex flex-col gap-4 lg:grid lg:grid-cols-2">
-              {trackData.map((t, i) => (
-                <TrackInfo
-                  key={t.id}
-                  trackId={t.id}
-                  trackTitle={t.name}
-                  artists={t.featuringArtists.map((a) => a.name)}
-                  albumTitle={t.album.name}
-                  releaseDate={t.album.releaseDate}
-                  releaseType={t.album.type}
-                  genres={t.genres.map((g) => g.label)}
-                  label={t.album.label}
-                  albumCoverUrl={t.album.thumbnailUrl}
-                  color={divergingColors[i]}
-                  previewUrl={t.previewUrl}
-                />
-              ))}
-            </div>
+          {!showStickyLegend && <div className="flex-1"></div>}
+          {showStickyLegend && legendElementContent}
+          <div className="self-center bg-[#121212]">
+            <Button
+              className="self-center"
+              onClick={() => setShowStickyLegend((prev) => !prev)}
+            >
+              {!showStickyLegend ? "Show" : "Hide"} Legend
+            </Button>
           </div>
-        </DialogWithCloseIcon>
+        </div>
+      )}
+      <div ref={wrapperRef} className="flex w-full flex-col gap-2 sm:flex-row">
+        {legendElementContent}
+        <Button className="self-center" onClick={() => setExpanded(true)}>
+          Track Details
+        </Button>
       </div>
-      <Button className="self-center" onClick={() => setExpanded(true)}>
-        Track Details
-      </Button>
-    </div>
+
+      <DialogWithCloseIcon
+        open={expanded}
+        onClose={() => setExpanded(false)}
+        fullWidth={true}
+        maxWidth="lg"
+        title="Track Details"
+      >
+        <div className="bg-[#121212] p-4 ">
+          <div className="flex flex-col gap-4 lg:grid lg:grid-cols-2">
+            {trackData.map((t, i) => (
+              <TrackInfo
+                key={t.id}
+                trackId={t.id}
+                trackTitle={t.name}
+                artists={t.featuringArtists.map((a) => a.name)}
+                albumTitle={t.album.name}
+                releaseDate={t.album.releaseDate}
+                releaseType={t.album.type}
+                genres={t.genres.map((g) => g.label)}
+                label={t.album.label}
+                albumCoverUrl={t.album.thumbnailUrl}
+                color={divergingColors[i]}
+                previewUrl={t.previewUrl}
+              />
+            ))}
+          </div>
+        </div>
+      </DialogWithCloseIcon>
+    </>
   );
 };
 
