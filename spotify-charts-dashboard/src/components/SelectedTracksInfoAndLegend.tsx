@@ -15,9 +15,6 @@ const SelectedTracksInfoAndLegend = () => {
   const removeTrackId = useTrackComparisonFilterStore(
     (state) => state.removeComparisonTrackId
   );
-  const clearTrackIds = useTrackComparisonFilterStore(
-    (state) => state.clearComparisonTrackIds
-  );
 
   const tracks = api.tracks.getTrackMetadataForIds.useQuery(
     { trackIds },
@@ -55,54 +52,52 @@ const SelectedTracksInfoAndLegend = () => {
   }
 
   return (
-    <div className="flex w-full flex-wrap gap-2">
-      <div className="self-center">Tracks:</div>
-      <div className="flex">
-        <>
-          {trackData.map((t, i) => {
-            return (
-              <BasicTrackInfo
-                key={t.id}
-                onRemove={removeTrackId}
-                trackId={t.id}
-                color={divergingColors[i] || "white"}
-                artists={t.featuringArtists.map((a) => a.name)}
-                trackTitle={t.name}
-              />
-            );
-          })}
-          <DialogWithCloseIcon
-            open={expanded}
-            onClose={() => setExpanded(false)}
-            fullWidth={true}
-            maxWidth="lg"
-            title="Track Details"
-          >
-            <div className="bg-[#121212] p-4 ">
-              <div className="grid grid-cols-2 gap-4 lg:grid-cols-2">
-                {trackData.map((t, i) => (
-                  <TrackInfo
-                    key={t.id}
-                    trackId={t.id}
-                    trackTitle={t.name}
-                    artists={t.featuringArtists.map((a) => a.name)}
-                    albumTitle={t.album.name}
-                    releaseDate={t.album.releaseDate}
-                    releaseType={t.album.type}
-                    genres={t.genres.map((g) => g.label)}
-                    label={t.album.label}
-                    albumCoverUrl={t.album.thumbnailUrl}
-                    color={divergingColors[i]}
-                    previewUrl={t.previewUrl}
-                  />
-                ))}
-              </div>
+    <div className="flex w-full flex-col gap-2 sm:flex-row">
+      <div className="flex flex-1 overflow-x-auto">
+        {trackData.map((t, i) => {
+          return (
+            <BasicTrackInfo
+              key={t.id}
+              onRemove={removeTrackId}
+              trackId={t.id}
+              color={divergingColors[i] || "white"}
+              artists={t.featuringArtists.map((a) => a.name)}
+              trackTitle={t.name}
+            />
+          );
+        })}
+        <DialogWithCloseIcon
+          open={expanded}
+          onClose={() => setExpanded(false)}
+          fullWidth={true}
+          maxWidth="lg"
+          title="Track Details"
+        >
+          <div className="bg-[#121212] p-4 ">
+            <div className="grid gap-4 lg:grid-cols-2">
+              {trackData.map((t, i) => (
+                <TrackInfo
+                  key={t.id}
+                  trackId={t.id}
+                  trackTitle={t.name}
+                  artists={t.featuringArtists.map((a) => a.name)}
+                  albumTitle={t.album.name}
+                  releaseDate={t.album.releaseDate}
+                  releaseType={t.album.type}
+                  genres={t.genres.map((g) => g.label)}
+                  label={t.album.label}
+                  albumCoverUrl={t.album.thumbnailUrl}
+                  color={divergingColors[i]}
+                  previewUrl={t.previewUrl}
+                />
+              ))}
             </div>
-          </DialogWithCloseIcon>
-        </>
+          </div>
+        </DialogWithCloseIcon>
       </div>
-      <Button onClick={() => setExpanded((prev) => !prev)}>Details</Button>
-      <Button onClick={clearTrackIds}>Clear All</Button>
+      <Button className="self-center" onClick={() => setExpanded(true)}>
+        Track Details
+      </Button>
     </div>
   );
 };

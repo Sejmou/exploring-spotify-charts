@@ -13,9 +13,10 @@ type BarChartableFeatures = Extends<
 type Props = {
   trackData: RouterOutputs["charts"]["getTrackCharts"]["trackData"];
   feature: BarChartableFeatures;
+  className?: string;
 };
 
-const TrackDataBarChart = ({ trackData, feature }: Props) => {
+const TrackDataBarChart = ({ trackData, feature, className }: Props) => {
   const chartProps = {
     propName: getFeatureLabel(feature),
     data: trackData.map((trackData) => ({
@@ -28,7 +29,7 @@ const TrackDataBarChart = ({ trackData, feature }: Props) => {
   };
 
   return (
-    <div>
+    <div className={className}>
       <BarChart {...chartProps} />
     </div>
   );

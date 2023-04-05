@@ -8,7 +8,7 @@ type TrackComparisonFilterState = {
   comparisonTrackIds: string[];
   addComparisonTrackId: (id: string) => void;
   removeComparisonTrackId: (id: string) => void;
-  clearComparisonTrackIds: () => void;
+  clearComparisonTrackIds: () => void; // TODO: not used atm, maybe remove
   setStartInclusive: (date?: Date) => void;
   setEndInclusive: (date?: Date) => void;
   setRegion: (region?: string) => void;

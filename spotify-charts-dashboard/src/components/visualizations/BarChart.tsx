@@ -1,4 +1,3 @@
-import React from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -43,7 +42,6 @@ export default function BarChart({ data, propName }: Props) {
   };
   return (
     <Bar
-      className="relative"
       options={{
         responsive: true,
         maintainAspectRatio: false,
