@@ -14,7 +14,7 @@ import type { RouterOutputs } from "../../utils/api";
 import { capitalizeFirstLetter } from "../../utils/misc";
 
 type Props = {
-  data?: RouterOutputs["charts"]["getTrackCharts"];
+  trackData?: RouterOutputs["charts"]["getTrackCharts"]["trackData"];
 };
 
 const SpotifySongMetrics = [
@@ -36,9 +36,9 @@ ChartJS.register(
   Legend
 );
 
-export default function RadarChart({ data }: Props) {
-  if (!data) return <div>RadarChart would show here</div>;
-  const chartDatasets = data.trackData.map((trackData, i) => {
+export default function TrackDataRadarChart({ trackData }: Props) {
+  if (!trackData) return <div>RadarChart would show here</div>;
+  const chartDatasets = trackData.map((trackData, i) => {
     const data = SpotifySongMetrics.map((metric) => trackData[metric]);
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const colorObj = color(divergingColors[i] || "white")!;
@@ -62,7 +62,6 @@ export default function RadarChart({ data }: Props) {
 
   return (
     <Radar
-      className="relative"
       data={chartData}
       options={{
         responsive: true,

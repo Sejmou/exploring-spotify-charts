@@ -17,7 +17,7 @@ export default function BasicDatePicker(props: Props) {
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <DatePicker
         {...props}
-        renderInput={(params) => <TextField {...params} />}
+        renderInput={(params) => <TextField {...params} fullWidth />}
       />
     </LocalizationProvider>
   );

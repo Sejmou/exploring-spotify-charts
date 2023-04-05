@@ -5,8 +5,8 @@ import DateRangeFilter from "../filtering-and-selecting/DateRangeFilter";
 import RegionSelect from "../filtering-and-selecting/RegionSelect";
 import SelectedTracksInfoAndLegend from "../SelectedTracksInfoAndLegend";
 import TrackSelect from "../filtering-and-selecting/TrackSelect";
-import BarCharts from "../visualizations/BarCharts";
-import RadarChart from "../visualizations/RadarChart";
+import TrackDataBarChart from "../visualizations/TrackDataBarChart";
+import TrackDataRadarChart from "../visualizations/TrackDataRadarChart";
 import SpotifyChartsHeading from "../SpotifyChartsHeading";
 import VizViewSwitcher from "../VizViewSwitcher";
 
@@ -46,28 +46,45 @@ export default function CompareTracks() {
 
   return (
     <div className="flex h-full w-full flex-col gap-2">
-      <div className="flex flex-col gap-2 md:flex-row">
-        <SpotifyChartsHeading />
-        <VizViewSwitcher className="w-full grow-0 sm:w-auto" />
-        <DateRangeFilter className="md:grow" />
-        <RegionSelect />
-        <TrackSelect className="md:w-full md:grow" />
+      <div className="flex flex-col gap-2 md:flex-row md:flex-wrap">
+        <div className="flex grow-0 flex-wrap gap-2 md:flex-nowrap">
+          <SpotifyChartsHeading />
+          <VizViewSwitcher className="w-full md:w-auto" />
+        </div>
+        <DateRangeFilter className="w-full lg:w-auto" />
+        <RegionSelect className="" />
+        <TrackSelect className="" />
       </div>
       <SelectedTracksInfoAndLegend />
       {canViewTrackComparison && (
-        <>
-          <div className="grid h-full w-full flex-1 grid-cols-9 grid-rows-3">
-            <div className="col-span-6 row-span-2">
+        <div className="flex h-full w-full flex-1 flex-col gap-2">
+          <div className="flex flex-1 flex-col">
+            <h2 className="text-3xl font-bold">Chart Performance</h2>
+            <div className="md:h-[600px]">
               <ChartsViz data={charts.data} />
             </div>
-            <div className="col-span-3 row-span-2">
-              <RadarChart data={charts.data} />
+          </div>
+          <div className="flex flex-1 flex-col">
+            <h2 className="mt-2 text-3xl font-bold">Features</h2>
+            <div className="h-[420px]">
+              <TrackDataRadarChart trackData={charts.data.trackData} />
             </div>
-            <div className="col-span-9 row-span-1">
-              <BarCharts trackData={charts.data.trackData} />
+            <div className="flex flex-col">
+              <TrackDataBarChart
+                trackData={charts.data.trackData}
+                feature="durationMs"
+              />
+              <TrackDataBarChart
+                trackData={charts.data.trackData}
+                feature="tempo"
+              />
+              <TrackDataBarChart
+                trackData={charts.data.trackData}
+                feature="loudness"
+              />
             </div>
           </div>
-        </>
+        </div>
       )}
     </div>
   );

@@ -1,6 +1,6 @@
 import { type NextPage } from "next";
 import Head from "next/head";
-import CountryTrackCountOverview from "../../components/dashboard-views/CountryChartsOverview";
+import CountryTrackCountOverview from "../../components/data-views/CountryChartsOverview";
 
 const DataOverview: NextPage = () => {
   return (

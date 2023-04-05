@@ -1,6 +1,6 @@
 import { type NextPage } from "next";
 import Head from "next/head";
-import TrackComparison from "../../components/dashboard-views/TrackComparison";
+import TrackComparison from "../../components/data-views/TrackComparison";
 
 const CompareTracks: NextPage = () => {
   return (
@@ -13,7 +13,7 @@ const CompareTracks: NextPage = () => {
         />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className="flex h-screen w-full flex-col items-center gap-4 bg-[#121212] p-4 text-white">
+      <main className="flex min-h-screen w-full flex-col items-center gap-4 bg-[#121212] p-4 text-white">
         <TrackComparison />
       </main>
     </>

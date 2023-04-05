@@ -5,7 +5,11 @@ import BasicSelect from "../../filtering-and-selecting/BasicSelect";
 import SelectedTrackInfoDialog from "./SelectedTrackInfoDialog";
 
 import { useTracksExplorationStore } from "../../../store/trackDataExploration";
-import { numericTrackFeatures } from "../../../utils/data";
+import {
+  getFeatureDataFormat,
+  getFeatureLabel,
+  numericTrackFeatures,
+} from "../../../utils/data";
 import type { NumericTrackFeatureName } from "../../../utils/data";
 
 import dynamic from "next/dynamic";
@@ -18,7 +22,7 @@ const ReactTooltip = dynamic(() => import("react-tooltip"), {
 
 import type { RouterOutputs } from "../../../utils/api";
 import type { AxisConfig } from "react-big-dataset-scatterplot";
-import { capitalizeFirstLetter } from "../../../utils/misc";
+
 type TrackData = RouterOutputs["tracks"]["getTrackXY"];
 
 const SpotifyTrackDataScatterPlot = () => {
@@ -191,38 +195,8 @@ function getDisplayDataForAxis(
     data,
     featureName: getFeatureLabel(featureName),
     beginAtZero: !["tempo", "durationMs", "isrcYear"].includes(featureName),
-    tickFormat: getFeatureTickFormat(featureName),
+    tickFormat: getFeatureDataFormat(featureName),
   };
-}
-
-function getFeatureLabel(featureName: NumericTrackFeatureName) {
-  switch (featureName) {
-    case "isrcYear":
-      return "Year recorded";
-    case "durationMs":
-      return "Duration (min:sec)";
-    case "tempo":
-      return "Tempo (BPM)";
-    default:
-      return capitalizeFirstLetter(featureName);
-  }
-}
-
-function getFeatureTickFormat(featureName: NumericTrackFeatureName) {
-  switch (featureName) {
-    case "isrcYear":
-      return (d: number) => d.toString();
-    case "durationMs":
-      return (d: number) => millisecondsToMinutesAndSeconds(d);
-    default:
-      return undefined;
-  }
-}
-
-function millisecondsToMinutesAndSeconds(ms: number) {
-  const minutes = Math.floor(ms / 60000);
-  const seconds = ((ms % 60000) / 1000).toFixed(0);
-  return `${minutes}:${seconds.padStart(2, "0")}`;
 }
 
 export default SpotifyTrackDataScatterPlot;
