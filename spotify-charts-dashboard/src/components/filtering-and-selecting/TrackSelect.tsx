@@ -16,7 +16,7 @@ import { useTrackComparisonFilterStore } from "../../store/trackComparison";
 import classNames from "classnames";
 
 type TrackDataAPIResponse =
-  RouterOutputs["tracks"]["getTrackNamesArtistsAndStreamsOrdered"];
+  RouterOutputs["tracks"]["getNamesArtistsAndStreamsOrdered"];
 
 export default function TrackSelect({ className }: { className?: string }) {
   const region = useTrackComparisonFilterStore((state) => state.region);
@@ -33,7 +33,7 @@ export default function TrackSelect({ className }: { className?: string }) {
     (state) => state.addComparisonTrackId
   );
 
-  const tracks = api.tracks.getTrackNamesArtistsAndStreamsOrdered.useQuery(
+  const tracks = api.tracks.getNamesArtistsAndStreamsOrdered.useQuery(
     { startInclusive, endInclusive, region },
     {
       enabled: !!region,

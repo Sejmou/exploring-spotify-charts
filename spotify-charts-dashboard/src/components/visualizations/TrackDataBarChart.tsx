@@ -11,7 +11,7 @@ type BarChartableFeatures = Extends<
 >;
 
 type Props = {
-  trackData: RouterOutputs["charts"]["getTrackCharts"]["trackData"];
+  trackData: RouterOutputs["tracks"]["getNumericFeaturesForIds"];
   feature: BarChartableFeatures;
   className?: string;
 };

@@ -23,7 +23,7 @@ const ReactTooltip = dynamic(() => import("react-tooltip"), {
 import type { RouterOutputs } from "../../../utils/api";
 import type { AxisConfig } from "react-big-dataset-scatterplot";
 
-type TrackData = RouterOutputs["tracks"]["getTrackXY"];
+type TrackData = RouterOutputs["tracks"]["getXYDataForIds"];
 
 const SpotifyTrackDataScatterPlot = () => {
   const regionNames = useTracksExplorationStore((state) => state.regionNames);
@@ -43,7 +43,7 @@ const SpotifyTrackDataScatterPlot = () => {
   const setXFeature = useTracksExplorationStore((state) => state.setXFeature);
   const setYFeature = useTracksExplorationStore((state) => state.setYFeature);
 
-  const trackXYData = api.tracks.getTrackXY.useQuery(
+  const trackXYData = api.tracks.getXYDataForIds.useQuery(
     { ...filterParams, xFeature, yFeature },
     {
       keepPreviousData: true,
@@ -56,7 +56,7 @@ const SpotifyTrackDataScatterPlot = () => {
     if (activeDatapointIdx === null) return null;
     return trackXYData.data?.[activeDatapointIdx]?.id ?? null;
   }, [activeDatapointIdx, trackXYData.data]);
-  const trackMetadata = api.tracks.getTrackMetadataForIds.useQuery({
+  const trackMetadata = api.tracks.getMetadataForIds.useQuery({
     trackIds: hoveredTrackID ? [hoveredTrackID] : [],
   });
   const hoveredTrackTooltipContent = useMemo(() => {

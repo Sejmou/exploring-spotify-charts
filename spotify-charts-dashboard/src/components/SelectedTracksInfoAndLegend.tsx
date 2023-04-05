@@ -16,7 +16,7 @@ const SelectedTracksInfoAndLegend = () => {
     (state) => state.removeComparisonTrackId
   );
 
-  const tracks = api.tracks.getTrackMetadataForIds.useQuery(
+  const tracks = api.tracks.getMetadataForIds.useQuery(
     { trackIds },
     { keepPreviousData: true }
   );

@@ -16,7 +16,7 @@ export const chartsRouter = createTRPCRouter({
       if (!input.trackIds) {
         console.warn("No track ids provided");
         return {
-          trackData: [],
+          trackChartData: [],
           dateRange: [],
         };
       }
@@ -58,18 +58,6 @@ export const chartsRouter = createTRPCRouter({
 
       console.log("track charts", trackCharts);
       const chartsGroupedByTrackId = groupByTrackId(trackCharts);
-      const tracks = await ctx.prisma.track.findMany({
-        where: {
-          id: {
-            in: trackIds,
-          },
-        },
-      });
-      const tracksSorted = tracks.sort((a, b) => {
-        const aIdx = trackIds.indexOf(a.id);
-        const bIdx = trackIds.indexOf(b.id);
-        return aIdx - bIdx;
-      });
 
       console.log("TRACK IDS", trackIds);
 
@@ -119,7 +107,7 @@ export const chartsRouter = createTRPCRouter({
 
       if (!minDate || !maxDate) {
         return {
-          trackData: [],
+          trackChartData: [],
           dateRange: [],
         };
       }
@@ -171,11 +159,23 @@ export const chartsRouter = createTRPCRouter({
         )
       );
 
+      const otherTrackData = await ctx.prisma.track.findMany({
+        select: {
+          id: true,
+          name: true,
+        },
+        where: {
+          id: {
+            in: trackIds,
+          },
+        },
+      });
+
       return {
-        trackData: tracksSorted.map((track) => ({
-          ...track,
+        trackChartData: otherTrackData.map((data) => ({
+          ...data,
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          charts: chartDataForStartToEndWithEmptyValues.get(track.id),
+          charts: chartDataForStartToEndWithEmptyValues.get(data.id),
         })),
         dateRange: datesFromMinToMax,
       };

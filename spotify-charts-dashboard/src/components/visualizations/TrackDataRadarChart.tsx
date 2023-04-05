@@ -14,7 +14,7 @@ import type { RouterOutputs } from "../../utils/api";
 import { capitalizeFirstLetter } from "../../utils/misc";
 
 type Props = {
-  trackData?: RouterOutputs["charts"]["getTrackCharts"]["trackData"];
+  trackData?: RouterOutputs["tracks"]["getNumericFeaturesForIds"];
 };
 
 const SpotifySongMetrics = [

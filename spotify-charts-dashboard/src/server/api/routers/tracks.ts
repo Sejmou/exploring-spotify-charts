@@ -18,7 +18,7 @@ const filterParams = z.object({
 });
 
 export const tracksRouter = createTRPCRouter({
-  getTrackNamesArtistsAndStreamsOrdered: publicProcedure
+  getNamesArtistsAndStreamsOrdered: publicProcedure
     .input(
       z.object({
         startInclusive: z.date().optional(),
@@ -129,7 +129,7 @@ export const tracksRouter = createTRPCRouter({
 
       return trackArtistsAndNamesWithStreams;
     }),
-  getTrackMetadataForIds: publicProcedure
+  getMetadataForIds: publicProcedure
     .input(
       z.object({
         trackIds: z.array(z.string()),
@@ -139,7 +139,7 @@ export const tracksRouter = createTRPCRouter({
       const trackMetadata = await getTrackMetadata(ctx.prisma, input.trackIds);
       return trackMetadata;
     }),
-  getTrackMetadataForId: publicProcedure
+  getMetadataForId: publicProcedure
     .input(
       z.object({
         trackId: z.string(),
@@ -150,18 +150,42 @@ export const tracksRouter = createTRPCRouter({
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       return trackMetadata[input.trackId]!;
     }),
-  getTrackXY: publicProcedure
+  getXYDataForIds: publicProcedure
     .input(plotFeatureInput.merge(filterParams))
     .query(async ({ ctx, input }) => {
       const trackIds = await getTrackIdsMatchingFilter(ctx.prisma, input);
       const trackXY = await getTrackXY(ctx.prisma, { trackIds, ...input });
       return trackXY;
     }),
-  getTrackMetadata: publicProcedure.query(async ({ ctx }) => {
-    const trackIds = await getTrackIdsMatchingFilter(ctx.prisma, {}); // just get all track ids
-    const trackMetadata = await getTrackMetadata(ctx.prisma, trackIds);
-    return trackMetadata;
-  }),
+  getNumericFeaturesForIds: publicProcedure
+    .input(
+      z.object({
+        trackIds: z.array(z.string()),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const trackIds = input.trackIds;
+      const numericFeaturesSelect = numericTrackFeatures.reduce(
+        (acc, feature) => ({
+          ...acc,
+          [feature]: true,
+        }),
+        {} as Record<NumericTrackFeatureName, boolean>
+      );
+      const trackData = await ctx.prisma.track.findMany({
+        select: {
+          id: true,
+          name: true,
+          ...numericFeaturesSelect,
+        },
+        where: {
+          id: {
+            in: trackIds,
+          },
+        },
+      });
+      return trackData;
+    }),
 });
 
 const filterResultCache = new NodeCache({

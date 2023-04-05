@@ -9,7 +9,7 @@ type Props = {
   trackId: string;
 };
 const SelectedTrackInfoDialog = ({ trackId, open, onClose }: Props) => {
-  const track = api.tracks.getTrackMetadataForId.useQuery(
+  const track = api.tracks.getMetadataForId.useQuery(
     { trackId },
     { keepPreviousData: true }
   );

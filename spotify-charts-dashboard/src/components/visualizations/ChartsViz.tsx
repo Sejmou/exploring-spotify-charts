@@ -39,7 +39,7 @@ type Props = {
 };
 
 const ChartsViz = ({ data }: Props) => {
-  const chartDatasets = data.trackData.map((data, i) => ({
+  const chartDatasets = data.trackChartData.map((data, i) => ({
     id: data.id,
     label: data.name,
     data: data.charts?.map((c) => c?.rank || null) ?? [],
