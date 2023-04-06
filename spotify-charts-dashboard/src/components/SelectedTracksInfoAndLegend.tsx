@@ -85,7 +85,7 @@ const SelectedTracksInfoAndLegend = () => {
         >
           {!showStickyLegend && <div className="flex-1"></div>}
           {showStickyLegend && legendElementContent}
-          <div className="self-center bg-[#121212]">
+          <div className="self-end bg-[#121212]">
             <Button
               className="self-center"
               onClick={() => setShowStickyLegend((prev) => !prev)}
