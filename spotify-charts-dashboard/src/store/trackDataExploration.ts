@@ -4,7 +4,7 @@ import type { RouterOutputs } from "../utils/api";
 import { numericTrackFeatures } from "../utils/data";
 import type { NumericTrackFeatureName } from "../utils/data";
 
-type TrackIDsAndXYs = RouterOutputs["tracks"]["getTrackXY"][0];
+type TrackIDsAndXYs = RouterOutputs["tracks"]["getXYDataForIds"][0];
 
 type TracksExplorationState = {
   datapointsToPlot: TrackIDsAndXYs[];
