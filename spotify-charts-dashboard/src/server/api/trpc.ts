@@ -31,8 +31,8 @@ type CreateContextOptions = Record<string, never>;
  * - trpc's `createSSGHelpers` where we don't have req/res
  * @see https://create.t3.gg/en/usage/trpc#-servertrpccontextts
  */
-const createInnerTRPCContext = async (_opts: CreateContextOptions) => {
-  const drizzle = await createDrizzleDb(); // not sure if this should be here or rather in createTRPCContext
+const createInnerTRPCContext = (_opts: CreateContextOptions) => {
+  const drizzle = createDrizzleDb(); // not sure if this should be here or rather in createTRPCContext
 
   return {
     prisma,

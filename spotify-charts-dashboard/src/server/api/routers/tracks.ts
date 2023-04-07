@@ -5,7 +5,9 @@ import { createUnionSchema } from "../../utils";
 import { numericTrackFeatures } from "../../../utils/data";
 import type { NumericTrackFeatureName } from "../../../utils/data";
 import { track } from "~/server/drizzle/schema";
-import { eq, inArray } from "drizzle-orm/expressions";
+import { inArray } from "drizzle-orm/expressions";
+import type { PlanetScaleDatabase } from "drizzle-orm/planetscale-serverless";
+import type { MySql2Database } from "drizzle-orm/mysql2";
 
 const plotFeatureSchema = createUnionSchema(numericTrackFeatures); // really don't understand *how exactly* this works, but it does
 const plotFeatureInput = z.object({
@@ -155,7 +157,7 @@ export const tracksRouter = createTRPCRouter({
     .input(plotFeatureInput.merge(filterParams))
     .query(async ({ ctx, input }) => {
       const trackIds = await getTrackIdsMatchingFilter(ctx.prisma, input);
-      const trackXY = await getTrackXY(ctx.prisma, { trackIds, ...input });
+      const trackXY = await getTrackXY(ctx.drizzle, { trackIds, ...input });
       return trackXY;
     }),
   getNumericFeaturesForIds: publicProcedure
@@ -186,26 +188,6 @@ export const tracksRouter = createTRPCRouter({
         },
       });
       return trackData;
-    }),
-  getTracksDrizzle: publicProcedure
-    .input(
-      z.object({
-        trackIds: z.array(z.string()),
-      })
-    )
-    .query(async ({ ctx, input }) => {
-      const trackIds = input.trackIds;
-      // equivalent query in Prisma
-      // const tracks = await ctx.prisma.track.findMany({
-      //   where: { id: { in: trackIds } },
-      // });
-      console.log("fetching tracks with drizzle");
-      const tracks = await ctx.drizzle
-        .select()
-        .from(track)
-        .where(inArray(track.id, trackIds));
-      console.log({ fetchedTracks: tracks });
-      return tracks;
     }),
 });
 
@@ -261,11 +243,7 @@ async function getTrackIdsMatchingFilter(
 }
 
 async function getTrackXY(
-  prisma: PrismaClient<
-    Prisma.PrismaClientOptions,
-    "info" | "warn" | "error" | "query",
-    Prisma.RejectOnNotFound | Prisma.RejectPerOperation | undefined
-  >,
+  db: PlanetScaleDatabase | MySql2Database,
   input: {
     trackIds: string[];
     xFeature: NumericTrackFeatureName;
@@ -273,14 +251,10 @@ async function getTrackXY(
   }
 ) {
   const { trackIds, xFeature, yFeature } = input;
-  const query =
-    `SELECT id, ${xFeature} as 'x', ${yFeature} as 'y' FROM Track` +
-    (trackIds
-      ? ` WHERE id IN (${trackIds.map((id) => `'${id}'`).join(",")})`
-      : "");
-  const trackXY: { id: string; x: number; y: number }[] =
-    // query should be safe as inputs are "sanitized" at this point
-    await prisma.$queryRawUnsafe(query);
+  const trackXY = await db
+    .select({ id: track.id, x: track[xFeature], y: track[yFeature] })
+    .from(track)
+    .where(inArray(track.id, trackIds));
   return trackXY;
 }
 
