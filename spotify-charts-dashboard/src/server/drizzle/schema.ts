@@ -1,10 +1,7 @@
 // schema created by running
 // npx drizzle-kit introspect:mysql --out=migrations/ --connectionString=mysql://spotify_admin:yourpass@localhost/spotify_db
-
 import {
   mysqlTable,
-  mysqlSchema,
-  AnyMySqlColumn,
   varchar,
   datetime,
   index,
@@ -13,7 +10,6 @@ import {
   uniqueIndex,
   double,
 } from "drizzle-orm/mysql-core";
-import { sql } from "drizzle-orm/sql";
 
 export const album = mysqlTable("Album", {
   id: varchar("id", { length: 191 }).primaryKey().notNull(),
@@ -82,6 +78,10 @@ export const countryChartEntry = mysqlTable(
       ),
       trackIdIdx: index("CountryChartEntry_trackId_idx").on(table.trackId),
       dateIdx: index("CountryChartEntry_date_idx").on(table.date),
+      trackIdDateIdx: index("CountryChartEntry_trackId_date_idx").on(
+        table.trackId,
+        table.date
+      ),
     };
   }
 );
@@ -107,6 +107,10 @@ export const globalChartEntry = mysqlTable(
       ),
       trackIdIdx: index("GlobalChartEntry_trackId_idx").on(table.trackId),
       dateIdx: index("GlobalChartEntry_date_idx").on(table.date),
+      trackIdDateIdx: index("GlobalChartEntry_trackId_date_idx").on(
+        table.trackId,
+        table.date
+      ),
     };
   }
 );
@@ -190,7 +194,7 @@ export const artistToGenre = mysqlTable(
   (table) => {
     return {
       abUnique: uniqueIndex("_ArtistToGenre_AB_unique").on(table.a, table.b),
-      bIdx: index("ArtistToGenre_B").on(table.b), // was initially created without name by drizzle-kit introspect which resulted in type error, so I added some name
+      bIdx: index("ArtistToGenre_B").on(table.b),
       artistToGenreAB: primaryKey(table.a, table.b),
     };
   }

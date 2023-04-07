@@ -2,12 +2,21 @@ import { createTRPCRouter, publicProcedure } from "../trpc";
 import { z } from "zod";
 import type { Genre, Prisma, PrismaClient } from "@prisma/client";
 import { createUnionSchema } from "../../utils";
-import { numericTrackFeatures } from "../../../utils/data";
+import {
+  javaScriptDateToMySQLDateTime,
+  numericTrackFeatures,
+} from "../../../utils/data";
 import type { NumericTrackFeatureName } from "../../../utils/data";
-import { track } from "~/server/drizzle/schema";
-import { inArray } from "drizzle-orm/expressions";
+import {
+  countryChartEntry,
+  globalChartEntry,
+  track,
+} from "~/server/drizzle/schema";
+import { and, gte, inArray, lte } from "drizzle-orm/expressions";
 import type { PlanetScaleDatabase } from "drizzle-orm/planetscale-serverless";
 import type { MySql2Database } from "drizzle-orm/mysql2";
+import { sql, type SQL } from "drizzle-orm";
+import NodeCache from "node-cache";
 
 const plotFeatureSchema = createUnionSchema(numericTrackFeatures); // really don't understand *how exactly* this works, but it does
 const plotFeatureInput = z.object({
@@ -156,7 +165,7 @@ export const tracksRouter = createTRPCRouter({
   getXYDataForIds: publicProcedure
     .input(plotFeatureInput.merge(filterParams))
     .query(async ({ ctx, input }) => {
-      const trackIds = await getTrackIdsMatchingFilter(ctx.prisma, input);
+      const trackIds = await getTrackIdsMatchingFilter(ctx.drizzle, input);
       const trackXY = await getTrackXY(ctx.drizzle, { trackIds, ...input });
       return trackXY;
     }),
@@ -197,47 +206,89 @@ type FilterParams = {
   regionNames?: string[];
 };
 
+// we can cache trackID filter results as the data is static atm
+const filterResultCache = new NodeCache({
+  stdTTL: 20 * 60,
+  checkperiod: 20 * 60, // don't really understand why keeping this at default (should be 600 according to docs) causes the cache to be cleared immediately
+}); // cache key cleared after 20 minutes
+
+function createFilterParamsKey(filterParams: FilterParams) {
+  const key = `${filterParams.startInclusive?.toISOString() ?? ""}-${
+    filterParams.endInclusive?.toISOString() ?? ""
+  }-${[...(filterParams.regionNames ?? "")].sort().join("")}`;
+  console.log("created filter key", key);
+  return key;
+}
+
 async function getTrackIdsMatchingFilter(
-  prisma: PrismaClient<
-    Prisma.PrismaClientOptions,
-    "info" | "warn" | "error" | "query",
-    Prisma.RejectOnNotFound | Prisma.RejectPerOperation | undefined
-  >,
+  db: PlanetScaleDatabase | MySql2Database,
   filterParams: FilterParams
 ) {
-  const { startInclusive, endInclusive, regionNames } = filterParams;
-  const globalChartsWhereClause = {
-    some: {
-      date: {
-        gte: startInclusive,
-        lte: endInclusive,
-      },
-    },
-  };
+  const { startInclusive, endInclusive, regionNames = [] } = filterParams;
 
-  const trackIds = (
-    await prisma.track.findMany({
-      select: { id: true },
-      where: {
-        globalChartEntries: regionNames?.includes("Global")
-          ? globalChartsWhereClause
-          : undefined,
-        countryChartEntries: {
-          some: {
-            date: {
-              gte: startInclusive,
-              lte: endInclusive,
-            },
-            country: {
-              name: {
-                in: regionNames,
-              },
-            },
-          },
-        },
-      },
+  const cacheKey = createFilterParamsKey(filterParams);
+  const cachedTrackIds: string[] | undefined = filterResultCache.get(cacheKey);
+  if (cachedTrackIds) {
+    console.log("using cached track ids for key", cacheKey);
+    return cachedTrackIds;
+  }
+
+  const countryChartsBase = db
+    .select({
+      trackId: sql<string>`distinct(${countryChartEntry.trackId})`,
     })
-  ).map((t) => t.id);
+    .from(countryChartEntry);
+
+  const regionChartWhereClauses: SQL[] = [];
+
+  if (startInclusive)
+    regionChartWhereClauses.push(
+      gte(countryChartEntry.date, javaScriptDateToMySQLDateTime(startInclusive))
+    );
+  if (endInclusive)
+    regionChartWhereClauses.push(
+      lte(countryChartEntry.date, javaScriptDateToMySQLDateTime(endInclusive))
+    );
+  if (regionNames.length > 0)
+    regionChartWhereClauses.push(
+      inArray(countryChartEntry.countryName, regionNames)
+    );
+
+  const trackIdsInCountryCharts = (
+    await (regionChartWhereClauses.length > 0
+      ? countryChartsBase.where(and(...regionChartWhereClauses))
+      : countryChartsBase)
+  ).map((row) => row.trackId);
+
+  const globalChartsBase = db
+    .select({
+      trackId: sql<string>`distinct(${globalChartEntry.trackId})`,
+    })
+    .from(globalChartEntry);
+
+  const globalChartWhereClauses: SQL[] = [];
+
+  if (startInclusive)
+    globalChartWhereClauses.push(
+      gte(globalChartEntry.date, javaScriptDateToMySQLDateTime(startInclusive))
+    );
+  if (endInclusive)
+    globalChartWhereClauses.push(
+      lte(globalChartEntry.date, javaScriptDateToMySQLDateTime(endInclusive))
+    );
+
+  const trackIdsInGlobalCharts = regionNames.includes("Global")
+    ? (
+        await (globalChartWhereClauses.length > 0
+          ? globalChartsBase.where(and(...globalChartWhereClauses))
+          : globalChartsBase)
+      ).map((row) => row.trackId)
+    : [];
+
+  const trackIds = [
+    ...new Set([...trackIdsInCountryCharts, ...trackIdsInGlobalCharts]),
+  ];
+  filterResultCache.set(cacheKey, trackIds);
 
   return trackIds;
 }

@@ -132,6 +132,7 @@ model CountryChartEntry {
     @@index([countryName])
     @@index([trackId])
     @@index([date])
+    @@index([trackId, date])
 }
 
 model GlobalChartEntry {
@@ -143,6 +144,7 @@ model GlobalChartEntry {
     streams Float
 
     @@unique([trackId, date], name: "chartEntryId")
+    @@index([trackId, date])
     @@index([trackId])
     @@index([date])
 }
