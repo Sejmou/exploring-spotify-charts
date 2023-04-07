@@ -43,6 +43,11 @@ const SpotifyTrackDataScatterPlot = () => {
   const setXFeature = useTracksExplorationStore((state) => state.setXFeature);
   const setYFeature = useTracksExplorationStore((state) => state.setYFeature);
 
+  const exampleTracks = api.tracks.getTracksDrizzle.useQuery({
+    trackIds: ["00cbRAOr6wTPE9WBMejhiM"],
+  });
+  console.log({ dataFromDrizzle: exampleTracks.data });
+
   const trackXYData = api.tracks.getXYDataForIds.useQuery(
     { ...filterParams, xFeature, yFeature },
     {

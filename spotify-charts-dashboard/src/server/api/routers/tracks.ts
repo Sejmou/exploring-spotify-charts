@@ -4,6 +4,8 @@ import type { Genre, Prisma, PrismaClient } from "@prisma/client";
 import { createUnionSchema } from "../../utils";
 import { numericTrackFeatures } from "../../../utils/data";
 import type { NumericTrackFeatureName } from "../../../utils/data";
+import { track } from "~/server/drizzle/schema";
+import { eq, inArray } from "drizzle-orm/expressions";
 
 const plotFeatureSchema = createUnionSchema(numericTrackFeatures); // really don't understand *how exactly* this works, but it does
 const plotFeatureInput = z.object({
@@ -184,6 +186,26 @@ export const tracksRouter = createTRPCRouter({
         },
       });
       return trackData;
+    }),
+  getTracksDrizzle: publicProcedure
+    .input(
+      z.object({
+        trackIds: z.array(z.string()),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const trackIds = input.trackIds;
+      // equivalent query in Prisma
+      // const tracks = await ctx.prisma.track.findMany({
+      //   where: { id: { in: trackIds } },
+      // });
+      console.log("fetching tracks with drizzle");
+      const tracks = await ctx.drizzle
+        .select()
+        .from(track)
+        .where(inArray(track.id, trackIds));
+      console.log({ fetchedTracks: tracks });
+      return tracks;
     }),
 });
 

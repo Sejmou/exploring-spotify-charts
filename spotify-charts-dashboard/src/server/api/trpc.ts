@@ -18,7 +18,7 @@
  */
 import { type CreateNextContextOptions } from "@trpc/server/adapters/next";
 
-import { prisma } from "../db";
+import { prisma } from "../prisma-db";
 
 type CreateContextOptions = Record<string, never>;
 
@@ -31,9 +31,12 @@ type CreateContextOptions = Record<string, never>;
  * - trpc's `createSSGHelpers` where we don't have req/res
  * @see https://create.t3.gg/en/usage/trpc#-servertrpccontextts
  */
-const createInnerTRPCContext = (_opts: CreateContextOptions) => {
+const createInnerTRPCContext = async (_opts: CreateContextOptions) => {
+  const drizzle = await createDrizzleDb(); // not sure if this should be here or rather in createTRPCContext
+
   return {
     prisma,
+    drizzle,
   };
 };
 
@@ -54,6 +57,7 @@ export const createTRPCContext = (_opts: CreateNextContextOptions) => {
  */
 import { initTRPC } from "@trpc/server";
 import superjson from "superjson";
+import { createDrizzleDb } from "../drizzle/db";
 
 const t = initTRPC.context<typeof createTRPCContext>().create({
   transformer: superjson,
