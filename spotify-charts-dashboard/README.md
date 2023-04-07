@@ -39,12 +39,12 @@ for user creation and granting privileges, use
 ```sql
 CREATE USER 'spotify_admin'@'localhost' IDENTIFIED BY 'yourpass';
 USE spotify_charts;
-GRANT ALL PRIVILEGES ON * TO 'spotify_admin'@'localhost';
+GRANT ALL PRIVILEGES ON spotify_charts.* TO 'spotify_admin'@'localhost';
 ```
 
 add in `.env`:
 ```
-postgresql://spotify_admin:yourpass@localhost/spotify_charts
+mysql://spotify_admin:yourpass@localhost/spotify_charts
 ```
 
 Side-note: to connect via `mysql` directly, use:
@@ -100,3 +100,20 @@ Local address to connect your application: 127.0.0.1:38225 (press ctrl-c to quit
 ```
 
 Then you could in theory also run `mysql` and `mysqldump`, but `mysqldump` fails for this database as more than 100k rows are fetched during the dump and for some reason the connection crashes.
+
+### Create dump of local database
+
+```
+sudo mysqldump --databases spotify_db > backup-spotify_db-`date +%s`.sql
+```
+
+(without `--databases` flag the `CREATE DATABASE` would not be included)
+
+### Recreate local database from dump
+
+Assumption: database dump file is called `backup-spotify_db-1680860653.sql`
+
+
+``` 
+sudo mysql spotify_db2 < backup-spotify_db-1680860653.sql 
+```

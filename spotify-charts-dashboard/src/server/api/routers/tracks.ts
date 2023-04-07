@@ -4,7 +4,6 @@ import type { Genre, Prisma, PrismaClient } from "@prisma/client";
 import { createUnionSchema } from "../../utils";
 import { numericTrackFeatures } from "../../../utils/data";
 import type { NumericTrackFeatureName } from "../../../utils/data";
-import NodeCache from "node-cache";
 
 const plotFeatureSchema = createUnionSchema(numericTrackFeatures); // really don't understand *how exactly* this works, but it does
 const plotFeatureInput = z.object({
@@ -188,22 +187,11 @@ export const tracksRouter = createTRPCRouter({
     }),
 });
 
-const filterResultCache = new NodeCache({
-  stdTTL: 20 * 60,
-  checkperiod: 20 * 60, // don't really understand why keeping this at default (should be 600 according to docs) causes the cache to be cleared immediately
-}); // cache key cleared after 20 minutes
-
 type FilterParams = {
   startInclusive?: Date;
   endInclusive?: Date;
   regionNames?: string[];
 };
-
-function createFilterParamsKey(filterParams: FilterParams) {
-  return `${filterParams.startInclusive?.toISOString() ?? ""}-${
-    filterParams.endInclusive?.toISOString() ?? ""
-  }-${[...(filterParams.regionNames ?? "")].sort().join("")}`;
-}
 
 async function getTrackIdsMatchingFilter(
   prisma: PrismaClient<
@@ -213,12 +201,6 @@ async function getTrackIdsMatchingFilter(
   >,
   filterParams: FilterParams
 ) {
-  const startTime = performance.now();
-  const cacheKey = createFilterParamsKey(filterParams);
-  const cachedTrackIds: string[] | undefined = filterResultCache.get(cacheKey);
-  if (cachedTrackIds) {
-    return cachedTrackIds;
-  }
   const { startInclusive, endInclusive, regionNames } = filterParams;
   const globalChartsWhereClause = {
     some: {
@@ -228,6 +210,7 @@ async function getTrackIdsMatchingFilter(
       },
     },
   };
+
   const trackIds = (
     await prisma.track.findMany({
       select: { id: true },
@@ -252,13 +235,6 @@ async function getTrackIdsMatchingFilter(
     })
   ).map((t) => t.id);
 
-  filterResultCache.set(cacheKey, trackIds);
-
-  console.log(
-    `Fetched trackIDs and cached result under cache key ${cacheKey} in ${
-      performance.now() - startTime
-    } ms`
-  );
   return trackIds;
 }
 
@@ -275,14 +251,14 @@ async function getTrackXY(
   }
 ) {
   const { trackIds, xFeature, yFeature } = input;
+  const query =
+    `SELECT id, ${xFeature} as 'x', ${yFeature} as 'y' FROM Track` +
+    (trackIds
+      ? ` WHERE id IN (${trackIds.map((id) => `'${id}'`).join(",")})`
+      : "");
   const trackXY: { id: string; x: number; y: number }[] =
-    await prisma.$queryRawUnsafe(
-      // query should be safe as inputs are "sanitized" at this point
-      `SELECT id, ${xFeature} as 'x', ${yFeature} as 'y' FROM Track` +
-        (trackIds
-          ? ` WHERE id IN (${trackIds.map((id) => `'${id}'`).join(",")})`
-          : "")
-    );
+    // query should be safe as inputs are "sanitized" at this point
+    await prisma.$queryRawUnsafe(query);
   return trackXY;
 }
 
