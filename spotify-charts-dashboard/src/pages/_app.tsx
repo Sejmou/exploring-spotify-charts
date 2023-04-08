@@ -4,7 +4,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 import { api } from "../utils/api";
 
-// import "react-big-dataset-scatterplot/dist/styles.css";
+import "react-big-dataset-scatterplot/dist/styles.css";
 import "../styles/globals.css";
 
 const darkTheme = createTheme({
