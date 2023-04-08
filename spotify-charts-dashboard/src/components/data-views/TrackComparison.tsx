@@ -1,7 +1,7 @@
 import dynamic from "next/dynamic";
 import { useTrackComparisonFilterStore } from "../../store/trackComparison";
 import { api } from "../../utils/api";
-import DateRangeFilter from "../filtering-and-selecting/DateRangeFilter";
+import { DateRangeFilterTrackComparison as DateRangeFilter } from "../filtering-and-selecting/DateRangeFilter";
 import RegionSelect from "../filtering-and-selecting/RegionSelect";
 import SelectedTracksInfoAndLegend from "../SelectedTracksInfoAndLegend";
 import TrackSelect from "../filtering-and-selecting/TrackSelect";

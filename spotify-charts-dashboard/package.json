@@ -38,7 +38,7 @@
     "mysql2": "^3.2.0",
     "next": "^13.2.1",
     "react": "^18.2.0",
-    "react-big-dataset-scatterplot": "^1.1.16",
+    "react-big-dataset-scatterplot": "^1.1.17",
     "react-chartjs-2": "^5.2.0",
     "react-dom": "^18.2.0",
     "react-intersection-observer": "^9.4.3",

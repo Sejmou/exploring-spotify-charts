@@ -4,24 +4,26 @@ import { useState } from "react";
 import { useTrackComparisonFilterStore } from "../../store/trackComparison";
 import BasicDatePicker from "./BasicDatePicker";
 import classNames from "classnames";
+import { useTracksExplorationStore } from "~/store/trackDataExploration";
 
 const minDate = dayjs("2017-01-01");
 const maxDate = dayjs("2021-12-31");
 
-const DateRangeFilter = ({ className }: { className?: string }) => {
-  const startInclusive = useTrackComparisonFilterStore(
-    (state) => state.startInclusive
-  );
-  const endInclusive = useTrackComparisonFilterStore(
-    (state) => state.endInclusive
-  );
-  const setStartInclusive = useTrackComparisonFilterStore(
-    (state) => state.setStartInclusive
-  );
-  const setEndInclusive = useTrackComparisonFilterStore(
-    (state) => state.setEndInclusive
-  );
+type Props = {
+  className?: string;
+  startInclusive?: Date;
+  endInclusive?: Date;
+  setStartInclusive: (date?: Date | undefined) => void;
+  setEndInclusive: (date?: Date | undefined) => void;
+};
 
+const DateRangeFilter = ({
+  className,
+  startInclusive,
+  endInclusive,
+  setStartInclusive,
+  setEndInclusive,
+}: Props) => {
   const [startDate, setStartDate] = useState<Dayjs | null>(
     startInclusive ? dayjs(startInclusive) : null
   );
@@ -55,4 +57,60 @@ const DateRangeFilter = ({ className }: { className?: string }) => {
   );
 };
 
-export default DateRangeFilter;
+//TODO: is this the best solution to configure the same component for different stores?
+
+export const DateRangeFilterTrackComparison = ({
+  className,
+}: {
+  className?: string;
+}) => {
+  const startInclusive = useTrackComparisonFilterStore(
+    (state) => state.startInclusive
+  );
+  const endInclusive = useTrackComparisonFilterStore(
+    (state) => state.endInclusive
+  );
+  const setStartInclusive = useTrackComparisonFilterStore(
+    (state) => state.setStartInclusive
+  );
+  const setEndInclusive = useTrackComparisonFilterStore(
+    (state) => state.setEndInclusive
+  );
+
+  return (
+    <DateRangeFilter
+      startInclusive={startInclusive}
+      endInclusive={endInclusive}
+      setStartInclusive={setStartInclusive}
+      setEndInclusive={setEndInclusive}
+      className={className}
+    />
+  );
+};
+
+export const DateRangeFilterTrackExploration = ({
+  className,
+}: {
+  className?: string;
+}) => {
+  const startInclusive = useTracksExplorationStore(
+    (state) => state.startInclusive
+  );
+  const endInclusive = useTracksExplorationStore((state) => state.endInclusive);
+  const setStartInclusive = useTracksExplorationStore(
+    (state) => state.setStartInclusive
+  );
+  const setEndInclusive = useTracksExplorationStore(
+    (state) => state.setEndInclusive
+  );
+
+  return (
+    <DateRangeFilter
+      startInclusive={startInclusive}
+      endInclusive={endInclusive}
+      setStartInclusive={setStartInclusive}
+      setEndInclusive={setEndInclusive}
+      className={className}
+    />
+  );
+};

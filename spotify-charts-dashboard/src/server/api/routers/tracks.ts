@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { Genre, Prisma, PrismaClient } from "@prisma/client";
 import { createUnionSchema } from "../../utils";
 import {
+  javaScriptDateToMySQLDate,
   javaScriptDateToMySQLDateTime,
   numericTrackFeatures,
 } from "../../../utils/data";
@@ -227,7 +228,10 @@ async function getTrackIdsMatchingFilter(
   db: PlanetScaleDatabase | MySql2Database,
   filterParams: FilterParams
 ) {
+  const start = Date.now();
   const { startInclusive, endInclusive, regionNames = [] } = filterParams;
+
+  console.log({ filterParams });
 
   const countryChartsBase = db
     .select({
@@ -239,11 +243,11 @@ async function getTrackIdsMatchingFilter(
 
   if (startInclusive)
     regionChartWhereClauses.push(
-      gte(countryChartEntry.date, javaScriptDateToMySQLDateTime(startInclusive))
+      gte(countryChartEntry.date, javaScriptDateToMySQLDate(startInclusive))
     );
   if (endInclusive)
     regionChartWhereClauses.push(
-      lte(countryChartEntry.date, javaScriptDateToMySQLDateTime(endInclusive))
+      lte(countryChartEntry.date, javaScriptDateToMySQLDate(endInclusive))
     );
   if (regionNames.length > 0)
     regionChartWhereClauses.push(
@@ -292,6 +296,8 @@ async function getTrackIdsMatchingFilter(
       .where(not(inArray(track.id, matchingTrackIds)))
   ).map((row) => row.trackId);
 
+  console.log(`getTrackIdsMatchingFilter took ${Date.now() - start}ms`);
+
   return { matchingTrackIds, notMatchingTrackIds };
 }
 
@@ -303,11 +309,13 @@ async function getTrackXY(
     yFeature: NumericTrackFeatureName;
   }
 ) {
+  const start = Date.now();
   const { trackIds, xFeature, yFeature } = input;
   const trackXY = await db
     .select({ id: track.id, x: track[xFeature], y: track[yFeature] })
     .from(track)
     .where(inArray(track.id, trackIds));
+  console.log(`getTrackXY took ${Date.now() - start}ms`);
   return trackXY;
 }
 

@@ -3705,10 +3705,10 @@ quick-lru@^5.1.1:
   resolved "https://registry.yarnpkg.com/quick-lru/-/quick-lru-5.1.1.tgz#366493e6b3e42a3a6885e2e99d18f80fb7a8c932"
   integrity sha512-WuyALRjWPDGtt/wzJiadO5AXY+8hZ80hVpe6MyivgraREW751X3SbhRvG3eLKOYN+8VEvqLcf3wdnt44Z4S4SA==
 
-react-big-dataset-scatterplot@^1.1.16:
-  version "1.1.16"
-  resolved "https://registry.yarnpkg.com/react-big-dataset-scatterplot/-/react-big-dataset-scatterplot-1.1.16.tgz#9b2f2384e6a0e135eb003b15de8b54a8c5519f4e"
-  integrity sha512-JmHJs/XVpk1oDPEr17LMJhOYYUf2U0CX62Uoe+hexgSQQPI8NUnX9F8qOf8YRoJgse3kawqYTbNb+RPyys98EQ==
+react-big-dataset-scatterplot@^1.1.17:
+  version "1.1.17"
+  resolved "https://registry.yarnpkg.com/react-big-dataset-scatterplot/-/react-big-dataset-scatterplot-1.1.17.tgz#6ff6e69470020798d289da03713d57f2a966f4bb"
+  integrity sha512-uHClufu1KH4rZOisU9OkN2go7XIXlIP8I8HNA/BsxWX7UZELOOF3f3B6xjakg9fps8BcYRNI5M+LBOj8eAj3bA==
   dependencies:
     "@react-three/fiber" "^8.11.1"
     classnames "^2.3.2"

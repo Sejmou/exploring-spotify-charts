@@ -46,3 +46,7 @@ export function getFeatureDataFormat(featureName: NumericTrackFeatureName) {
 export function javaScriptDateToMySQLDateTime(date: Date) {
   return date.toISOString().slice(0, 19).replace("T", " ");
 }
+
+export function javaScriptDateToMySQLDate(date: Date) {
+  return date.toISOString().slice(0, 10);
+}

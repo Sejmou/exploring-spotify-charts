@@ -124,7 +124,7 @@ model CountryChartEntry {
     countryName String
     track       Track    @relation(fields: [trackId], references: [id])
     trackId     String
-    date        DateTime
+    date        DateTime @db.Date
     rank        Int
     streams     Float
 
@@ -139,7 +139,7 @@ model GlobalChartEntry {
     id      String   @id @default(cuid())
     track   Track    @relation(fields: [trackId], references: [id])
     trackId String
-    date    DateTime
+    date    DateTime @db.Date
     rank    Int
     streams Float
 

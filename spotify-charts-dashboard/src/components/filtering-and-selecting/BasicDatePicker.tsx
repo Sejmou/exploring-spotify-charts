@@ -17,6 +17,7 @@ export default function BasicDatePicker(props: Props) {
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <DatePicker
         {...props}
+        inputFormat="DD/MM/YYYY"
         renderInput={(params) => <TextField {...params} fullWidth />}
       />
     </LocalizationProvider>

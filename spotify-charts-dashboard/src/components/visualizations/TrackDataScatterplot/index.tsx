@@ -50,11 +50,6 @@ const SpotifyTrackDataScatterPlot = () => {
     { ...filterParams, xFeature, yFeature },
     {
       keepPreviousData: true,
-      trpc: {
-        context: {
-          skipBatch: true,
-        },
-      },
     }
   );
   const [activeDatapointIdx, setActiveDatapointIdx] = useState<number | null>(
@@ -84,6 +79,7 @@ const SpotifyTrackDataScatterPlot = () => {
   );
   const handlePointClick = useCallback(
     (datapointIdx: number) => {
+      console.log("clicked", datapointIdx);
       if (datapointIdx === activeDatapointIdx) {
         setActiveDatapointIdx(datapointIdx);
         setTrackInfoDialogOpen(true);
@@ -91,6 +87,9 @@ const SpotifyTrackDataScatterPlot = () => {
     },
     [activeDatapointIdx]
   );
+
+  console.log({ activeDatapointIdx });
+
   const handlePointUnhover = useCallback(() => {
     setActiveDatapointIdx(null);
   }, [setActiveDatapointIdx]);
@@ -125,7 +124,7 @@ const SpotifyTrackDataScatterPlot = () => {
     const notMatchingColor = "#6d6d6d";
     return {
       mode: "color-encodings",
-      featureName: "Matching filter",
+      featureNameHeading: "Matching filter",
       data: trackXYData.data.map((track) => {
         return track.matching ? "Yes" : "No";
       }),
@@ -150,7 +149,7 @@ const SpotifyTrackDataScatterPlot = () => {
       <div data-tip="" className="plot-container h-full w-full flex-1">
         <Scatterplot
           darkMode
-          margins={{ right: 1, top: 0 }}
+          margins={{ right: 1, top: colorEncodings ? 8 : 0 }}
           xAxis={xAxisConfig}
           yAxis={yAxisConfig}
           onPointHoverStart={handlePointHover}

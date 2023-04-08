@@ -1,3 +1,4 @@
+import { DateRangeFilterTrackExploration as DateRangeFilter } from "../filtering-and-selecting/DateRangeFilter";
 import RegionFilter from "../filtering-and-selecting/RegionFilter";
 import SpotifyChartsHeading from "../SpotifyChartsHeading";
 import TrackDataScatterplot from "../visualizations/TrackDataScatterplot";
@@ -14,8 +15,9 @@ const TrackDataExploration = () => {
         <div className="h-[420px] md:h-[640px] xl:h-auto xl:flex-1">
           <TrackDataScatterplot />
         </div>
-        <div className="flex flex-col xl:w-96">
+        <div className="flex flex-col gap-2 xl:w-96">
           <h2 className="text-3xl font-bold">Filters</h2>
+          <DateRangeFilter />
           <RegionFilter />
           <span>More coming soon...</span>
         </div>
