@@ -21,7 +21,10 @@ const ReactTooltip = dynamic(() => import("react-tooltip"), {
 });
 
 import type { RouterOutputs } from "../../../utils/api";
-import type { AxisConfig } from "react-big-dataset-scatterplot";
+import type {
+  AxisConfig,
+  VertexColorEncodingConfig,
+} from "react-big-dataset-scatterplot";
 
 type TrackData = RouterOutputs["tracks"]["getXYDataForIds"];
 
@@ -99,8 +102,6 @@ const SpotifyTrackDataScatterPlot = () => {
     }
   }, [activeDatapointIdx]);
 
-  console.log({ activeDatapointIdx, trackInfoDialogOpen });
-
   const xAxisConfig: AxisConfig = useMemo(() => {
     const trackData = trackXYData.data;
     if (trackData === undefined) return { data: [], featureName: "(no data)" };
@@ -113,6 +114,23 @@ const SpotifyTrackDataScatterPlot = () => {
     return getDisplayDataForAxis("y", yFeature, trackData);
   }, [yFeature, trackXYData.data]);
 
+  const colorEncodings: VertexColorEncodingConfig | undefined = useMemo(() => {
+    if (trackXYData.data === undefined) return;
+    const spotifyGreen = "#1DB954";
+    const notMatchingColor = "#6d6d6d";
+    return {
+      mode: "color-encodings",
+      featureName: "Matching filter",
+      data: trackXYData.data.map((track) => {
+        return track.matching ? "Yes" : "No";
+      }),
+      encodings: [
+        ["Yes", spotifyGreen],
+        ["No", notMatchingColor],
+      ],
+    };
+  }, [trackXYData.data]);
+
   if (trackXYData.isError) {
     return <div>Error loading data, please try refreshing the page.</div>;
   }
@@ -124,7 +142,7 @@ const SpotifyTrackDataScatterPlot = () => {
         <CircularProgress />
       </div>
     ) : (
-      <div data-tip="" className="h-full w-full flex-1">
+      <div data-tip="" className="plot-container h-full w-full flex-1">
         <Scatterplot
           darkMode
           margins={{ right: 1, top: 0 }}
@@ -134,6 +152,7 @@ const SpotifyTrackDataScatterPlot = () => {
           onPointHoverEnd={handlePointUnhover}
           onPointClick={handlePointClick}
           onPointTap={handlePointTap}
+          color={colorEncodings}
         />
         <ReactTooltip>{hoveredTrackTooltipContent}</ReactTooltip>
       </div>

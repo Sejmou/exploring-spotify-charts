@@ -12,11 +12,10 @@ import {
   globalChartEntry,
   track,
 } from "~/server/drizzle/schema";
-import { and, gte, inArray, lte } from "drizzle-orm/expressions";
+import { and, gte, inArray, lte, not } from "drizzle-orm/expressions";
 import type { PlanetScaleDatabase } from "drizzle-orm/planetscale-serverless";
 import type { MySql2Database } from "drizzle-orm/mysql2";
 import { sql, type SQL } from "drizzle-orm";
-import NodeCache from "node-cache";
 
 const plotFeatureSchema = createUnionSchema(numericTrackFeatures); // really don't understand *how exactly* this works, but it does
 const plotFeatureInput = z.object({
@@ -165,9 +164,27 @@ export const tracksRouter = createTRPCRouter({
   getXYDataForIds: publicProcedure
     .input(plotFeatureInput.merge(filterParams))
     .query(async ({ ctx, input }) => {
-      const trackIds = await getTrackIdsMatchingFilter(ctx.drizzle, input);
-      const trackXY = await getTrackXY(ctx.drizzle, { trackIds, ...input });
-      return trackXY;
+      const { matchingTrackIds, notMatchingTrackIds } =
+        await getTrackIdsMatchingFilter(ctx.drizzle, input);
+      const trackXYMatching = (
+        await getTrackXY(ctx.drizzle, {
+          trackIds: matchingTrackIds,
+          ...input,
+        })
+      ).map((trackXY) => ({
+        ...trackXY,
+        matching: true,
+      }));
+      const trackXYNotMatching = (
+        await getTrackXY(ctx.drizzle, {
+          trackIds: notMatchingTrackIds,
+          ...input,
+        })
+      ).map((trackXY) => ({
+        ...trackXY,
+        matching: false,
+      }));
+      return [...trackXYNotMatching, ...trackXYMatching];
     }),
   getNumericFeaturesForIds: publicProcedure
     .input(
@@ -206,32 +223,11 @@ type FilterParams = {
   regionNames?: string[];
 };
 
-// we can cache trackID filter results as the data is static atm
-const filterResultCache = new NodeCache({
-  stdTTL: 20 * 60,
-  checkperiod: 20 * 60, // don't really understand why keeping this at default (should be 600 according to docs) causes the cache to be cleared immediately
-}); // cache key cleared after 20 minutes
-
-function createFilterParamsKey(filterParams: FilterParams) {
-  const key = `${filterParams.startInclusive?.toISOString() ?? ""}-${
-    filterParams.endInclusive?.toISOString() ?? ""
-  }-${[...(filterParams.regionNames ?? "")].sort().join("")}`;
-  console.log("created filter key", key);
-  return key;
-}
-
 async function getTrackIdsMatchingFilter(
   db: PlanetScaleDatabase | MySql2Database,
   filterParams: FilterParams
 ) {
   const { startInclusive, endInclusive, regionNames = [] } = filterParams;
-
-  const cacheKey = createFilterParamsKey(filterParams);
-  const cachedTrackIds: string[] | undefined = filterResultCache.get(cacheKey);
-  if (cachedTrackIds) {
-    console.log("using cached track ids for key", cacheKey);
-    return cachedTrackIds;
-  }
 
   const countryChartsBase = db
     .select({
@@ -285,12 +281,18 @@ async function getTrackIdsMatchingFilter(
       ).map((row) => row.trackId)
     : [];
 
-  const trackIds = [
+  const matchingTrackIds = [
     ...new Set([...trackIdsInCountryCharts, ...trackIdsInGlobalCharts]),
   ];
-  filterResultCache.set(cacheKey, trackIds);
 
-  return trackIds;
+  const notMatchingTrackIds = (
+    await db
+      .select({ trackId: track.id })
+      .from(track)
+      .where(not(inArray(track.id, matchingTrackIds)))
+  ).map((row) => row.trackId);
+
+  return { matchingTrackIds, notMatchingTrackIds };
 }
 
 async function getTrackXY(

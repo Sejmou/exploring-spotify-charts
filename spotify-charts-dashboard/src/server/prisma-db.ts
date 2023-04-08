@@ -45,10 +45,3 @@ prisma.$on("query", (e) => {
   console.log("Params: " + e.params);
   console.log(`Duration: ${e.duration} ms`);
 });
-
-function truncate(input: string, maxTotalLength = 20) {
-  if (input.length > maxTotalLength - 3) {
-    return input.substring(0, maxTotalLength - 3) + "...";
-  }
-  return input;
-}
