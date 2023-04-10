@@ -1,4 +1,3 @@
-import { divergingColors } from "../../utils/misc";
 import type { RouterOutputs } from "../../utils/api";
 import {
   Chart as ChartJS,
@@ -15,6 +14,7 @@ import { Line } from "react-chartjs-2";
 import { color } from "d3";
 import "chartjs-adapter-moment";
 import moment from "moment";
+import { useComparisonTrackColors } from "~/store/trackComparison";
 
 ChartJS.register(
   CategoryScale,
@@ -39,12 +39,14 @@ type Props = {
 };
 
 const ChartsViz = ({ data }: Props) => {
-  const chartDatasets = data.trackChartData.map((data, i) => ({
+  const colors = useComparisonTrackColors();
+
+  const chartDatasets = data.trackChartData.map((data) => ({
     id: data.id,
     label: data.name,
     data: data.charts?.map((c) => c?.rank || null) ?? [],
-    backgroundColor: divergingColors[i] || "white",
-    borderColor: color(divergingColors[i] || "white")
+    backgroundColor: colors[data.id] || "white",
+    borderColor: color(colors[data.id] || "white")
       ?.darker(0.5)
       .toString(),
   }));

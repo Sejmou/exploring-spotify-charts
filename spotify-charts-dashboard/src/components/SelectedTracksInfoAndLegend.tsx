@@ -1,19 +1,21 @@
 import { api } from "../utils/api";
 import TrackInfo from "./TrackDetails";
-import { divergingColors } from "../utils/misc";
 import { useMemo, useState } from "react";
 import { Button } from "@mui/material";
 import BasicTrackInfo from "./BasicTrackInfo";
-import { useTrackComparisonFilterStore } from "../store/trackComparison";
+import {
+  useComparisonTrackColors,
+  useComparisonTrackIds,
+  useTrackComparisonFilterStore,
+} from "../store/trackComparison";
 import DialogWithCloseIcon from "./DialogWithCloseIcon";
 import { useInView } from "react-intersection-observer";
 import classNames from "classnames";
 
 const SelectedTracksInfoAndLegend = () => {
   const [expanded, setExpanded] = useState(false);
-  const trackIds = useTrackComparisonFilterStore(
-    (state) => state.comparisonTrackIds
-  );
+  const trackIds = useComparisonTrackIds();
+  const colors = useComparisonTrackColors();
   const removeTrackId = useTrackComparisonFilterStore(
     (state) => state.removeComparisonTrackId
   );
@@ -37,13 +39,13 @@ const SelectedTracksInfoAndLegend = () => {
 
   const legendElementContent = (
     <div className="flex flex-1 overflow-x-auto">
-      {trackData.map((t, i) => {
+      {trackData.map((t) => {
         return (
           <BasicTrackInfo
             key={t.id}
             onRemove={removeTrackId}
             trackId={t.id}
-            color={divergingColors[i] || "white"}
+            color={colors[t.id] || "white"}
             artists={t.featuringArtists.map((a) => a.name)}
             trackTitle={t.name}
           />
@@ -111,7 +113,7 @@ const SelectedTracksInfoAndLegend = () => {
       >
         <div className="bg-[#121212] p-4 ">
           <div className="flex flex-col gap-4 lg:grid lg:grid-cols-2">
-            {trackData.map((t, i) => (
+            {trackData.map((t) => (
               <TrackInfo
                 key={t.id}
                 trackId={t.id}
@@ -123,7 +125,7 @@ const SelectedTracksInfoAndLegend = () => {
                 genres={t.genres.map((g) => g.label)}
                 label={t.album.label}
                 albumCoverUrl={t.album.thumbnailUrl}
-                color={divergingColors[i]}
+                color={colors[t.id]}
                 previewUrl={t.previewUrl}
               />
             ))}

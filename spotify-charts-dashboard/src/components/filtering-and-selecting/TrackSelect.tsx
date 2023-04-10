@@ -12,7 +12,10 @@ import {
 import { useEffect, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import MusicNoteIcon from "@mui/icons-material/MusicNote";
-import { useTrackComparisonFilterStore } from "../../store/trackComparison";
+import {
+  useComparisonTrackIds,
+  useTrackComparisonFilterStore,
+} from "../../store/trackComparison";
 import classNames from "classnames";
 
 type TrackDataAPIResponse =
@@ -26,9 +29,7 @@ export default function TrackSelect({ className }: { className?: string }) {
   const endInclusive = useTrackComparisonFilterStore(
     (state) => state.endInclusive
   );
-  const trackIds = useTrackComparisonFilterStore(
-    (state) => state.comparisonTrackIds
-  );
+  const trackIds = useComparisonTrackIds();
   const addTrackId = useTrackComparisonFilterStore(
     (state) => state.addComparisonTrackId
   );

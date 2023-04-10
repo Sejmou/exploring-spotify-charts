@@ -9,7 +9,7 @@ import {
 } from "chart.js";
 import { color } from "d3";
 import { Radar } from "react-chartjs-2";
-import { divergingColors } from "../../utils/misc";
+import { useComparisonTrackColors } from "~/store/trackComparison";
 import type { RouterOutputs } from "../../utils/api";
 import { capitalizeFirstLetter } from "../../utils/misc";
 
@@ -37,11 +37,13 @@ ChartJS.register(
 );
 
 export default function TrackDataRadarChart({ trackData }: Props) {
+  const colors = useComparisonTrackColors();
+
   if (!trackData) return <div>RadarChart would show here</div>;
-  const chartDatasets = trackData.map((trackData, i) => {
+  const chartDatasets = trackData.map((trackData) => {
     const data = SpotifySongMetrics.map((metric) => trackData[metric]);
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const colorObj = color(divergingColors[i] || "white")!;
+    const colorObj = color(colors[trackData.id] || "white")!;
     const bgColorObj = colorObj.copy();
     bgColorObj.opacity = 0.1;
 

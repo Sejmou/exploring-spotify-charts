@@ -9,13 +9,13 @@ import {
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
 import { color } from "d3";
-import { divergingColors } from "../../utils/misc";
 
 type Props = {
   propName: string;
   data: {
     x: string;
     y: number;
+    color: string;
   }[];
   yTickFormat?: (value: number, index: number) => string;
 };
@@ -32,13 +32,11 @@ ChartJS.register(
 export default function BarChart({ data, propName, yTickFormat }: Props) {
   const chartData = {
     labels: [propName],
-    datasets: data.map((d, i) => ({
+    datasets: data.map((d) => ({
       label: d.x,
       data: [d.y],
-      backgroundColor: divergingColors[i] || "white",
-      borderColor: color(divergingColors[i] || "white")
-        ?.darker(0.5)
-        .toString(),
+      backgroundColor: d.color,
+      borderColor: color(d.color)?.darker(0.5).toString(),
     })),
   };
 

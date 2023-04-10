@@ -1,3 +1,4 @@
+import { useComparisonTrackColors } from "~/store/trackComparison";
 import type { RouterOutputs } from "../../utils/api";
 import { getFeatureLabel, getFeatureDataFormat } from "../../utils/data";
 import BarChart from "./BarChart";
@@ -17,11 +18,13 @@ type Props = {
 };
 
 const TrackDataBarChart = ({ trackData, feature, className }: Props) => {
+  const colors = useComparisonTrackColors();
   const chartProps = {
     propName: getFeatureLabel(feature),
     data: trackData.map((trackData) => ({
       x: trackData.name,
       y: trackData[feature],
+      color: colors[trackData.id]!,
     })),
     yTickFormat: getFeatureDataFormat(feature),
   };

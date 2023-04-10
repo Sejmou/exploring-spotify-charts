@@ -10,6 +10,7 @@ type Props = {
 };
 
 const BasicTrackInfo = (props: Props) => {
+  console.log(props.color);
   return (
     <div className="flex items-center gap-2  px-2">
       <div
