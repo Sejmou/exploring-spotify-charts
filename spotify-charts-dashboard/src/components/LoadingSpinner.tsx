@@ -1,9 +1,15 @@
 import { CircularProgress } from "@mui/material";
+import classNames from "classnames";
 
-type Props = { text?: string };
-const LoadingSpinner = ({ text = "Loading" }: Props) => {
+type Props = { text?: string; className?: string };
+const LoadingSpinner = ({ text = "Loading", className }: Props) => {
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center gap-2">
+    <div
+      className={classNames(
+        "flex h-full w-full flex-col items-center justify-center gap-2",
+        className
+      )}
+    >
       <span>{text}</span>
       <CircularProgress />
     </div>

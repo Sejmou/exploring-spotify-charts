@@ -3,8 +3,8 @@ import { useState } from "react";
 import { useTracksExplorationStore } from "../../../store/trackDataExploration";
 import { api } from "../../../utils/api";
 import DialogWithCloseIcon from "../../DialogWithCloseIcon";
-import ChoroplethWorld from "../../visualizations/ChoroplethWorld";
 import SpotifyCountrySelectWorldMap from "./SpotifyCountrySelectWorldMap";
+import LoadingSpinner from "~/components/LoadingSpinner";
 
 const RegionFilter = () => {
   const regionNames = useTracksExplorationStore((state) => state.regionNames);
@@ -17,12 +17,10 @@ const RegionFilter = () => {
   const countries = api.countries.getAllWithCharts.useQuery();
   const [popupActive, setPopupActive] = useState(false);
 
-  let countryMap = (
-    <ChoroplethWorld data={[]} propName={""} colorMap={() => ""} />
-  );
+  let content = <LoadingSpinner className="h-full w-full" />;
 
   if (countries.data) {
-    countryMap = (
+    content = (
       <SpotifyCountrySelectWorldMap
         mapZoom={0.75}
         countries={countries.data}
@@ -60,7 +58,7 @@ const RegionFilter = () => {
           include tracks that charted in the countries you selected. Otherwise,
           tracks charting in any chart (including global) will be included.
         </p>
-        {countryMap}
+        {content}
       </DialogWithCloseIcon>
     </div>
   );

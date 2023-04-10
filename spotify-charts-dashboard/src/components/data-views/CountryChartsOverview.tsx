@@ -1,32 +1,67 @@
 import { api } from "../../utils/api";
+import LoadingSpinner from "../LoadingSpinner";
 import PageLinkButton from "../PageLinkButton";
 import ChoroplethWorld from "../visualizations/ChoroplethWorld";
+import type {
+  MatchInput,
+  NumericInput,
+} from "../visualizations/ChoroplethWorld";
 
 export default function CountryTrackCountOverview() {
+  // running two queries in parallel (one for countries, one for countries AND track counts)
+  // this is because the second query is much slower, and we want to show the map as soon as possible
+
+  // skipBatch: true means that the query will not be batched together with any others (i.e. not executed in same HTTP request)
+  // had to do some additional config in api.ts as well for this to work
+  // details: https://trpc.io/docs/v9/links#disable-batching-for-certain-requests
+  const countries = api.charts.getCountriesWithCharts.useQuery(undefined, {
+    trpc: { context: { skipBatch: true } },
+  });
   const trackCounts = api.charts.getTrackCountsByCountry.useQuery();
 
-  let content = <div></div>;
+  let mapContainerContent = <LoadingSpinner />;
 
   if (trackCounts.isError) {
-    content = <div>Error loading data, please try refreshing the page.</div>;
+    mapContainerContent = (
+      <div>Error loading data, please try refreshing the page.</div>
+    );
   }
 
-  if (!trackCounts.data) {
-    content = (
+  const trackCountData = trackCounts.data;
+  const countriesData = countries.data;
+  console.log({ trackCountData, countriesData });
+  if (trackCountData) {
+    const input: NumericInput = {
+      type: "numeric",
+      data: trackCountData.map((d) => ({
+        country: {
+          name: d.name,
+          isoAlpha3: d.isoAlpha3,
+        },
+        value: d.count,
+      })),
+      colorMap: () => "#1ED760",
+    };
+    mapContainerContent = (
       <ChoroplethWorld
-        data={[]}
-        colorMap={() => "#1ED760"}
-        propName={"number of tracks in the dataset"}
+        input={input}
+        propName={"number of Top 50 chart entries"}
       />
     );
-  } else {
-    content = (
+  } else if (countriesData) {
+    const input: MatchInput = {
+      type: "match",
+      data: countriesData.map((d) => ({
+        country: {
+          name: d.name,
+          isoAlpha3: d.isoAlpha3,
+        },
+      })),
+      matchColor: "#1ED760",
+    };
+    mapContainerContent = (
       <ChoroplethWorld
-        data={trackCounts.data.map((d) => ({
-          country: d.country,
-          value: d.count,
-        }))}
-        colorMap={() => "#1ED760"}
+        input={input}
         propName={"number of Top 50 chart entries"}
       />
     );
@@ -39,11 +74,8 @@ export default function CountryTrackCountOverview() {
           <span className="text-[#1ED760]">Spotify</span> Charts
         </h2>
         <p className="mb-2 max-w-5xl">
-          Welcome! On this website, you can explore daily Top 50 Charts for 50
-          regions (Global + 49 countries) from 2017-2021. The map below shows
-          the countries data is available for. Hover over each to see the number
-          of chart entries (i.e. combinations of date, track, and chart
-          position).
+          Welcome! On this website, you can explore daily Top 50 Charts for
+          several regions. The map below shows the included countries.
         </p>
         <p>
           Once you feel ready, click the button below to get started with the
@@ -55,7 +87,7 @@ export default function CountryTrackCountOverview() {
         path="/viz/explore-relationships"
         text="Start Exploring"
       />
-      {content}
+      {mapContainerContent}
     </div>
   );
 }

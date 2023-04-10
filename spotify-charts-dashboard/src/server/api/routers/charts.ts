@@ -1,6 +1,9 @@
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import { z } from "zod";
 import moment from "moment";
+import { country, countryChartEntry } from "~/server/drizzle/schema";
+import { countRows } from "~/server/drizzle/db";
+import { inArray } from "drizzle-orm/expressions";
 
 export const chartsRouter = createTRPCRouter({
   getTrackCharts: publicProcedure
@@ -180,31 +183,57 @@ export const chartsRouter = createTRPCRouter({
         dateRange: datesFromMinToMax,
       };
     }),
-  getTrackCountsByCountry: publicProcedure.query(async ({ ctx }) => {
-    const trackCountsByCountry = await ctx.prisma.countryChartEntry.groupBy({
-      by: ["countryName"],
-      _count: {
-        trackId: true,
-      },
-    });
-    const trackCounts = trackCountsByCountry.map((e) => ({
-      countryName: e.countryName,
-      count: e._count.trackId,
-    }));
-    const trackCountryData = (
-      await ctx.prisma.country.findMany({
-        where: {
-          name: {
-            in: trackCounts.map((tc) => tc.countryName),
-          },
-        },
+  getCountriesWithCharts: publicProcedure.query(async ({ ctx }) => {
+    const countryNames = await ctx.drizzle
+      .select({
+        name: countryChartEntry.countryName,
       })
-    ).map((e) => ({
-      country: e,
+      .from(countryChartEntry)
+      .groupBy(countryChartEntry.countryName);
+
+    const countryNamesAndIsoCodes = await ctx.drizzle
+      .select({
+        name: country.name,
+        isoAlpha3: country.isoAlpha3,
+      })
+      .from(country)
+      .where(
+        inArray(
+          country.name,
+          countryNames.map((c) => c.name)
+        )
+      );
+
+    return countryNamesAndIsoCodes;
+  }),
+  getTrackCountsByCountry: publicProcedure.query(async ({ ctx }) => {
+    const countryNamesAndCounts = await ctx.drizzle
+      .select({
+        name: countryChartEntry.countryName,
+        count: countRows(),
+      })
+      .from(countryChartEntry)
+      .groupBy(countryChartEntry.countryName);
+
+    const countryNamesAndIsoCodes = await ctx.drizzle
+      .select({
+        name: country.name,
+        isoAlpha3: country.isoAlpha3,
+      })
+      .from(country)
+      .where(
+        inArray(
+          country.name,
+          countryNamesAndCounts.map((c) => c.name)
+        )
+      );
+
+    const returnValue = countryNamesAndIsoCodes.map((e) => ({
+      ...e,
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      count: trackCounts.find((tc) => tc.countryName == e.name)!.count,
+      count: countryNamesAndCounts.find((tc) => tc.name == e.name)!.count,
     }));
-    return trackCountryData;
+    return returnValue;
   }),
 });
 
