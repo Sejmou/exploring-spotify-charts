@@ -35,7 +35,7 @@ if (typeof window !== "undefined") {
 }
 
 type Props = {
-  data: RouterOutputs["charts"]["getTrackCharts"];
+  data: RouterOutputs["charts"]["getChartPerformanceOfTracks"];
 };
 
 const ChartsViz = ({ data }: Props) => {

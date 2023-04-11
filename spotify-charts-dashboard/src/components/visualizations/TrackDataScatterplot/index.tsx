@@ -50,6 +50,11 @@ const SpotifyTrackDataScatterPlot = () => {
     { ...filterParams, xFeature, yFeature },
     {
       keepPreviousData: true,
+      trpc: {
+        context: {
+          skipBatching: true,
+        },
+      },
     }
   );
   const [activeDatapointIdx, setActiveDatapointIdx] = useState<number | null>(

@@ -17,6 +17,7 @@ import { and, gte, inArray, lte, not } from "drizzle-orm/expressions";
 import type { PlanetScaleDatabase } from "drizzle-orm/planetscale-serverless";
 import type { MySql2Database } from "drizzle-orm/mysql2";
 import { sql, type SQL } from "drizzle-orm";
+import NodeCache from "node-cache";
 
 const plotFeatureSchema = createUnionSchema(numericTrackFeatures); // really don't understand *how exactly* this works, but it does
 const plotFeatureInput = z.object({
@@ -224,12 +225,44 @@ type FilterParams = {
   regionNames?: string[];
 };
 
+type FilterResult = {
+  matchingTrackIds: string[];
+  notMatchingTrackIds: string[];
+};
+
+// we can cache trackID filter results as the data is static atm
+const filterResultCache = new NodeCache({
+  stdTTL: 20 * 60,
+  checkperiod: 20 * 60, // don't really understand why keeping this at default (should be 600 according to docs) causes the cache to be cleared immediately
+}); // cache key cleared after 20 minutes
+
+function createFilterParamsKey(filterParams: FilterParams) {
+  const key = `${filterParams.startInclusive?.toISOString() ?? ""}-${
+    filterParams.endInclusive?.toISOString() ?? ""
+  }-${[...(filterParams.regionNames ?? "")].sort().join("")}`;
+  console.log("created filter key", key);
+  return key;
+}
+
 async function getTrackIdsMatchingFilter(
   db: PlanetScaleDatabase | MySql2Database,
   filterParams: FilterParams
-) {
+): Promise<FilterResult> {
   const start = Date.now();
   const { startInclusive, endInclusive, regionNames = [] } = filterParams;
+
+  const cacheKey = createFilterParamsKey(filterParams);
+  const cachedTrackIds: FilterResult | undefined =
+    filterResultCache.get(cacheKey);
+  if (cachedTrackIds) {
+    console.log("using cached track ids for key", cacheKey);
+    console.log(
+      "lookup of cached track ID filter result took",
+      Date.now() - start,
+      "ms"
+    );
+    return cachedTrackIds;
+  }
 
   console.log({ filterParams });
 
@@ -296,7 +329,9 @@ async function getTrackIdsMatchingFilter(
       .where(not(inArray(track.id, matchingTrackIds)))
   ).map((row) => row.trackId);
 
-  console.log(`getTrackIdsMatchingFilter took ${Date.now() - start}ms`);
+  console.log(`fetching filter result took ${Date.now() - start}ms`);
+
+  filterResultCache.set(cacheKey, { matchingTrackIds, notMatchingTrackIds });
 
   return { matchingTrackIds, notMatchingTrackIds };
 }
