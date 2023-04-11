@@ -1,12 +1,21 @@
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import { z } from "zod";
 import moment from "moment";
-import { country, countryChartEntry } from "~/server/drizzle/schema";
+import {
+  artist,
+  country,
+  countryChartEntry,
+  globalChartEntry,
+  track,
+  trackArtistEntry,
+} from "~/server/drizzle/schema";
 import { countRows } from "~/server/drizzle/db";
-import { inArray } from "drizzle-orm/expressions";
+import { and, eq, inArray } from "drizzle-orm/expressions";
+import { javaScriptDateToMySQLDate } from "~/utils/data";
+import { sql } from "drizzle-orm/sql";
 
 export const chartsRouter = createTRPCRouter({
-  getTrackCharts: publicProcedure
+  getChartPerformanceOfTracks: publicProcedure
     .input(
       z.object({
         startInclusive: z.date().optional(),
@@ -235,6 +244,109 @@ export const chartsRouter = createTRPCRouter({
     }));
     return returnValue;
   }),
+  getDailyCharts: publicProcedure
+    .input(
+      z.object({
+        date: z.date(),
+        region: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const { date, region } = input;
+
+      const chartsDbRes =
+        region === "Global"
+          ? await ctx.drizzle
+              .select({
+                rank: globalChartEntry.rank,
+                streams: globalChartEntry.streams,
+                trackId: track.id,
+                trackName: track.name,
+                artistIdsString: sql<string>`group_concat(${artist.id} ORDER BY ${trackArtistEntry.rank})`,
+                artistNamesString: sql<string>`group_concat(${artist.name} ORDER BY ${trackArtistEntry.rank})`,
+              })
+              .from(globalChartEntry)
+              .leftJoin(track, eq(globalChartEntry.trackId, track.id))
+              .leftJoin(
+                trackArtistEntry,
+                eq(trackArtistEntry.trackId, track.id)
+              )
+              .leftJoin(artist, eq(trackArtistEntry.artistId, artist.id))
+              .where(
+                and(eq(globalChartEntry.date, javaScriptDateToMySQLDate(date)))
+              )
+              .groupBy(
+                globalChartEntry.rank,
+                globalChartEntry.streams,
+                track.id,
+                track.name
+              )
+          : // equivalent SQL query:
+            // SELECT ce.rank, ce.streams, t.id as track_id, t.name as track_name,
+            // GROUP_CONCAT(a.id ORDER BY tae.rank) as artist_ids, GROUP_CONCAT(a.name ORDER BY tae.rank) as artist_names
+            // FROM CountryChartEntry ce
+            // JOIN Track t ON t.id = ce.trackId
+            // JOIN Country c ON c.name = ce.countryName AND c.name = "Argentina"
+            // JOIN TrackArtistEntry tae ON tae.trackId = t.id
+            // JOIN Artist a ON a.id = tae.artistId
+            // WHERE ce.date = "2021-01-01"
+            // GROUP BY ce.rank, ce.streams, t.id, t.name;
+            await ctx.drizzle
+              .select({
+                rank: countryChartEntry.rank,
+                streams: countryChartEntry.streams,
+                trackId: track.id,
+                trackName: track.name,
+                artistIdsString: sql<string>`group_concat(${artist.id} ORDER BY ${trackArtistEntry.rank})`,
+                artistNamesString: sql<string>`group_concat(${artist.name} ORDER BY ${trackArtistEntry.rank})`,
+              })
+              .from(countryChartEntry)
+              .leftJoin(track, eq(countryChartEntry.trackId, track.id))
+              .leftJoin(
+                country,
+                eq(countryChartEntry.countryName, country.name)
+              )
+              .leftJoin(
+                trackArtistEntry,
+                eq(trackArtistEntry.trackId, track.id)
+              )
+              .leftJoin(artist, eq(trackArtistEntry.artistId, artist.id))
+              .where(
+                and(
+                  eq(countryChartEntry.countryName, region),
+                  eq(countryChartEntry.date, javaScriptDateToMySQLDate(date))
+                )
+              )
+              .groupBy(
+                countryChartEntry.rank,
+                countryChartEntry.streams,
+                track.id,
+                track.name
+              );
+
+      return chartsDbRes.map((row) => {
+        const {
+          artistIdsString,
+          artistNamesString,
+          trackId,
+          trackName,
+          ...rest
+        } = row;
+        const artistIds = artistIdsString.split(",");
+        const artistNames = artistNamesString.split(",");
+        return {
+          ...rest,
+          track: {
+            id: trackId,
+            name: trackName,
+            artists: artistIds.map((id, index) => ({
+              id,
+              name: artistNames[index],
+            })),
+          },
+        };
+      });
+    }),
 });
 
 function groupByTrackId<T extends { trackId: string }>(

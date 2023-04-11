@@ -28,7 +28,7 @@ export default function CompareTracks() {
   );
   const trackIds = useComparisonTrackIds();
 
-  const charts = api.charts.getTrackCharts.useQuery(
+  const charts = api.charts.getChartPerformanceOfTracks.useQuery(
     { region, startInclusive, endInclusive, trackIds },
     {
       enabled: !!region && !!trackIds,

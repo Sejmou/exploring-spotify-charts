@@ -31,7 +31,11 @@ function useViewSubpageData() {
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const currentSubPagePathData = getSubpaths(router).at(-1)!;
 
-  const subpageNamesCamelCase = ["compare-tracks", "explore-relationships"];
+  const subpageNamesCamelCase = [
+    "daily-charts",
+    "compare-tracks",
+    "explore-relationships",
+  ];
   const subpageNamesTitleCase = subpageNamesCamelCase.map((str) =>
     toTitleCase(str.replace(/-/g, " "))
   );

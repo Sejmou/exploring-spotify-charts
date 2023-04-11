@@ -10,10 +10,7 @@ const Home: NextPage = () => {
     <>
       <Head>
         <title>Spotify Charts Dashboard</title>
-        <meta
-          name="description"
-          content="Visualizing Spotify Charts (global and 49 regions) from 2017 to 2021"
-        />
+        <meta name="description" content="Visualizing Spotify Charts" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className="flex min-h-screen flex-col items-center justify-center bg-[#121212]">
