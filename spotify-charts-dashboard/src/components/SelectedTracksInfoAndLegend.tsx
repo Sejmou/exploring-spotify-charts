@@ -1,3 +1,4 @@
+import type { RouterOutputs } from "../utils/api";
 import { api } from "../utils/api";
 import TrackInfo from "./TrackDetails";
 import { useMemo, useState } from "react";
@@ -11,6 +12,11 @@ import {
 import DialogWithCloseIcon from "./DialogWithCloseIcon";
 import { useInView } from "react-intersection-observer";
 import classNames from "classnames";
+import LoadingSpinner from "./LoadingSpinner";
+
+type TrackMetadata = RouterOutputs["tracks"]["getMetadataForIds"][string] & {
+  id: string;
+};
 
 const SelectedTracksInfoAndLegend = () => {
   const [expanded, setExpanded] = useState(false);
@@ -22,59 +28,54 @@ const SelectedTracksInfoAndLegend = () => {
 
   const tracks = api.tracks.getMetadataForIds.useQuery(
     { trackIds },
-    { keepPreviousData: true }
+    { keepPreviousData: true, enabled: trackIds.length > 0 }
   );
 
-  const trackData = useMemo(() => {
-    if (!tracks.data) {
+  const trackMetadata = useMemo(() => {
+    const data = tracks.data;
+    if (!data) {
       return [];
     }
-    const dataComplete = trackIds.every((id) => id in tracks.data);
-    if (!dataComplete) {
-      return [];
+    const arr: TrackMetadata[] = [];
+    for (const id of trackIds) {
+      const value = data[id];
+      if (value) {
+        arr.push({ id, ...value });
+      }
     }
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return trackIds.map((id) => ({ id, ...tracks.data[id]! }));
+    return arr;
   }, [tracks.data, trackIds]);
 
-  const legendElementContent = (
+  const legendContent = (
     <div className="flex flex-1 overflow-x-auto">
-      {trackData.map((t) => {
-        return (
-          <BasicTrackInfo
-            key={t.id}
-            onRemove={removeTrackId}
-            trackId={t.id}
-            color={colors[t.id] || "white"}
-            artists={t.featuringArtists.map((a) => a.name)}
-            trackTitle={t.name}
-          />
-        );
-      })}
+      {trackMetadata?.length > 0 ? (
+        trackMetadata.map((t) => {
+          return (
+            <BasicTrackInfo
+              key={t.id}
+              onRemove={removeTrackId}
+              trackId={t.id}
+              color={colors[t.id] || "white"}
+              artists={t.featuringArtists.map((a) => a.name)}
+              trackTitle={t.name}
+            />
+          );
+        })
+      ) : tracks.isFetching ? (
+        <LoadingSpinner text="" />
+      ) : (
+        <div className="flex h-10">
+          <span className="self-center">
+            Add tracks to see their features and chart performance here.
+          </span>
+        </div>
+      )}
     </div>
   );
 
   const { ref: wrapperRef, inView: wrapperInView } = useInView();
 
   const [showStickyLegend, setShowStickyLegend] = useState(false);
-
-  if (tracks.isFetching) {
-    return (
-      <div className="flex h-10">
-        <span className="self-center">Loading...</span>
-      </div>
-    );
-  }
-
-  if (trackData.length === 0) {
-    return (
-      <div className="flex h-10">
-        <span className="self-center">
-          Add tracks to see their features and chart performance here.
-        </span>
-      </div>
-    );
-  }
 
   return (
     <>
@@ -86,7 +87,7 @@ const SelectedTracksInfoAndLegend = () => {
           )}
         >
           {!showStickyLegend && <div className="flex-1"></div>}
-          {showStickyLegend && legendElementContent}
+          {showStickyLegend && legendContent}
           <div className="self-end bg-[#121212]">
             <Button
               className="self-center"
@@ -98,10 +99,12 @@ const SelectedTracksInfoAndLegend = () => {
         </div>
       )}
       <div ref={wrapperRef} className="flex w-full flex-col gap-2 sm:flex-row">
-        {legendElementContent}
-        <Button className="self-center" onClick={() => setExpanded(true)}>
-          Track Details
-        </Button>
+        {legendContent}
+        {trackMetadata.length > 0 && (
+          <Button className="self-center" onClick={() => setExpanded(true)}>
+            Track Details
+          </Button>
+        )}
       </div>
 
       <DialogWithCloseIcon
@@ -113,7 +116,7 @@ const SelectedTracksInfoAndLegend = () => {
       >
         <div className="bg-[#121212] p-4 ">
           <div className="flex flex-col gap-4 lg:grid lg:grid-cols-2">
-            {trackData.map((t) => (
+            {trackMetadata.map((t) => (
               <TrackInfo
                 key={t.id}
                 trackId={t.id}
