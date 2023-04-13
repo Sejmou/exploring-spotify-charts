@@ -84,7 +84,7 @@ export default function CountryTrackCountOverview() {
       </div>
       <PageLinkButton
         className="self-center"
-        path="/viz/explore-relationships"
+        path="/viz/daily-charts"
         text="Start Exploring"
       />
       {mapContainerContent}

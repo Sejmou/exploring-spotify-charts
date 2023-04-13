@@ -324,18 +324,58 @@ export const chartsRouter = createTRPCRouter({
                 track.name
               );
 
-      return chartsDbRes.map((row) => {
+      const previousDay = new Date(date);
+      previousDay.setDate(date.getDate() - 1);
+
+      const ranksOfPreviousDay =
+        region === "Global"
+          ? await ctx.drizzle
+              .select({
+                trackId: globalChartEntry.trackId,
+                rank: globalChartEntry.rank,
+              })
+              .from(globalChartEntry)
+              .where(
+                and(
+                  eq(countryChartEntry.countryName, region),
+                  eq(
+                    countryChartEntry.date,
+                    javaScriptDateToMySQLDate(previousDay)
+                  )
+                )
+              )
+          : await ctx.drizzle
+              .select({
+                trackId: countryChartEntry.trackId,
+                rank: countryChartEntry.rank,
+              })
+              .from(countryChartEntry)
+              .where(
+                and(
+                  eq(countryChartEntry.countryName, region),
+                  eq(
+                    countryChartEntry.date,
+                    javaScriptDateToMySQLDate(previousDay)
+                  )
+                )
+              );
+
+      const returnValue = chartsDbRes.map((row) => {
         const {
           artistIdsString,
           artistNamesString,
           trackId,
           trackName,
+          rank,
           ...rest
         } = row;
         const artistIds = artistIdsString.split(",");
         const artistNames = artistNamesString.split(",");
+        const previousDayRank = ranksOfPreviousDay.find(
+          (r) => r.trackId === trackId
+        )?.rank;
+        const trend = getChartTrend(rank, previousDayRank);
         return {
-          ...rest,
           track: {
             id: trackId,
             name: trackName,
@@ -344,8 +384,13 @@ export const chartsRouter = createTRPCRouter({
               name: artistNames[index],
             })),
           },
+          rank,
+          trend,
+          ...rest,
         };
       });
+
+      return returnValue;
     }),
 });
 
@@ -359,4 +404,20 @@ function groupByTrackId<T extends { trackId: string }>(
     acc[curr.trackId]?.push(curr);
     return acc;
   }, {} as Record<string, T[]>);
+}
+
+function getChartTrend(
+  currentRank: number,
+  previousRank?: number
+): "new" | "up" | "down" | "same" {
+  if (previousRank === undefined) {
+    return "new";
+  }
+  if (currentRank === previousRank) {
+    return "same";
+  }
+  if (currentRank < previousRank) {
+    return "up";
+  }
+  return "down";
 }
