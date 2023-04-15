@@ -43,107 +43,92 @@ export const tracksRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-      const totalStreamCount =
-        input.region == "Global"
-          ? await ctx.prisma.globalChartEntry.groupBy({
-              by: ["trackId"],
-              where: {
-                date: {
-                  gte: input.startInclusive,
-                  lte: input.endInclusive,
-                },
-              },
-              _sum: { streams: true },
-            })
-          : await ctx.prisma.countryChartEntry.groupBy({
-              by: ["trackId"],
-              where: {
-                date: {
-                  gte: input.startInclusive,
-                  lte: input.endInclusive,
-                },
-                country: {
-                  name: input.region,
-                },
-              },
-              _sum: { streams: true },
-            });
+      const { region, startInclusive, endInclusive } = input;
 
-      const trackArtistsAndNames = await ctx.prisma.track
-        .findMany({
-          select: {
-            name: true,
-            id: true,
-            featuringArtists: {
-              select: {
-                artist: {
-                  select: { name: true },
-                },
-              },
-              orderBy: {
-                rank: "asc",
-              },
-            },
-            album: {
-              select: {
-                name: true,
-                type: true,
-                thumbnailUrl: true,
-                releaseDate: true,
-              },
-            },
-          },
-          where:
-            !input.region || input.region === "Global"
-              ? {
-                  globalChartEntries: {
-                    some: {
-                      date: {
-                        gte: input.startInclusive,
-                        lte: input.endInclusive,
-                      },
-                    },
-                  },
-                }
-              : {
-                  countryChartEntries: {
-                    some: {
-                      date: {
-                        gte: input.startInclusive,
-                        lte: input.endInclusive,
-                      },
-                      country: {
-                        name: input.region,
-                      },
-                    },
-                  },
-                },
+      const country = region && region !== "Global" ? region : undefined;
+
+      const trackIdsAndStreams = await ctx.drizzle
+        .select({
+          trackId: (country ? countryChartEntry : globalChartEntry).trackId,
+          streams: sql<number>`SUM(${
+            (country ? countryChartEntry : globalChartEntry).streams
+          }) as streams`,
         })
-        .then((tracks) =>
-          tracks.map((track) => ({
-            ...track,
-            featuringArtists: track.featuringArtists.map(
-              (entry) => entry.artist.name
-            ),
-          }))
-        );
+        .from(country ? countryChartEntry : globalChartEntry)
+        .where(
+          and(
+            country ? eq(countryChartEntry.countryName, country) : undefined,
+            startInclusive
+              ? gte(
+                  (country ? countryChartEntry : globalChartEntry).date,
+                  javaScriptDateToMySQLDate(startInclusive)
+                )
+              : undefined,
+            endInclusive
+              ? lte(
+                  (country ? countryChartEntry : globalChartEntry).date,
+                  javaScriptDateToMySQLDate(endInclusive)
+                )
+              : undefined
+          )
+        )
+        .groupBy((country ? countryChartEntry : globalChartEntry).trackId)
+        .orderBy(sql`streams DESC`);
 
-      const trackArtistsAndNamesWithStreams = trackArtistsAndNames.map(
-        (track) => {
-          const totalStreams =
-            totalStreamCount.find((entry) => entry.trackId === track.id)?._sum
-              ?.streams || 0;
-          return {
-            ...track,
-            totalStreams,
-          };
-        }
+      const streamsMap = new Map<string, number>(
+        trackIdsAndStreams.map((row) => [row.trackId, row.streams])
       );
-      trackArtistsAndNamesWithStreams.sort(
-        (a, b) => b.totalStreams - a.totalStreams
-      );
+      const trackIds = trackIdsAndStreams.map((row) => row.trackId);
 
-      return trackArtistsAndNamesWithStreams;
+      const trackData = await ctx.drizzle
+        .select({
+          id: track.id,
+          name: track.name,
+          artistsString: sql<string>`GROUP_CONCAT(${artist.name} ORDER BY ${trackArtistEntry.rank}) AS artists`,
+          album: {
+            name: album.name,
+            type: album.type,
+            thumbnailUrl: album.thumbnailUrl,
+            releaseDate: album.releaseDate,
+          },
+        })
+        .from(track)
+        .leftJoin(trackArtistEntry, eq(trackArtistEntry.trackId, track.id))
+        .leftJoin(artist, eq(artist.id, trackArtistEntry.artistId))
+        .leftJoin(album, eq(album.id, track.albumId))
+        .where(inArray(track.id, trackIds))
+        .groupBy(track.id);
+
+      return trackData.map((row) => {
+        const { artistsString, album, name, id } = row;
+        if (!id) throw new Error("Track ID is null for track");
+        if (!name)
+          throw new Error("Track name is null for track with ID " + id);
+        if (!album) throw new Error("Album is null for track with ID " + id);
+        if (!album.name)
+          throw new Error("Album name is null for track with ID " + id);
+        if (!album.type)
+          throw new Error("Album type is null for track with ID " + id);
+
+        const artistNames = artistsString.split(",");
+        const streams = streamsMap.get(id);
+
+        if (!streams)
+          throw new Error("Streams not found for track with ID " + id);
+
+        return {
+          id,
+          name,
+          featuringArtists: artistNames,
+          streams,
+          album: {
+            name: album.name,
+            type: album.type,
+            thumbnailUrl: album.thumbnailUrl,
+            releaseDate: album.releaseDate,
+          },
+        };
+      });
     }),
   getMetadataForIds: publicProcedure
     .input(
@@ -405,6 +390,7 @@ async function getTrackMetadata(
 
   const trackIdsAndArtistIds = new Map<string, string[]>();
   for (const trackArtist of trackArtists) {
+    console.log(trackArtist);
     trackIdsAndArtistIds.set(
       trackArtist.trackId,
       trackArtist.artistIdsString.split(",")
@@ -425,17 +411,20 @@ async function getTrackMetadata(
       .select({
         id: artist.id,
         name: artist.name,
-        genres: sql<string>`group_concat(${artistToGenre.genreLabel})`,
+        genres: sql<string | null>`group_concat(${artistToGenre.genreLabel})`,
       })
       .from(artist)
       .where(inArray(artist.id, distinctTrackArtistIds))
       .leftJoin(artistToGenre, eq(artist.id, artistToGenre.artistId))
       .groupBy(artist.id)
-  ).map((row) => ({
-    id: row.id,
-    name: row.name,
-    genres: row.genres.split(","),
-  }));
+  ).map((row) => {
+    console.log({ row });
+    return {
+      id: row.id,
+      name: row.name,
+      genres: row.genres?.split(",") || [],
+    };
+  });
 
   const artistDataMap = new Map<string, { name: string; genres: string[] }>(
     artistData.map((artist) => [

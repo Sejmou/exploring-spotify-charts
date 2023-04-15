@@ -10,7 +10,7 @@ import {
   trackArtistEntry,
 } from "~/server/drizzle/schema";
 import { countRows } from "~/server/drizzle/db";
-import { and, eq, gte, inArray, lte } from "drizzle-orm/expressions";
+import { and, desc, eq, gte, inArray, lte } from "drizzle-orm/expressions";
 import { javaScriptDateToMySQLDate } from "~/utils/data";
 import { sql } from "drizzle-orm/sql";
 
@@ -165,11 +165,7 @@ export const chartsRouter = createTRPCRouter({
           distinctCountryNames.map((c) => c.name)
         )
       )
-      .orderBy(
-        country.geoRegion,
-        sql`${country.geoSubregion} DESC`,
-        country.name
-      );
+      .orderBy(country.geoRegion, desc(country.geoSubregion), country.name);
 
     return countries;
   }),

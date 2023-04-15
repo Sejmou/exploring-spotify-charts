@@ -37,9 +37,12 @@ export default function CompareTracks() {
   );
 
   const trackIdsAndNumericFeatures =
-    api.tracks.getNumericFeaturesForIds.useQuery({
-      trackIds,
-    });
+    api.tracks.getNumericFeaturesForIds.useQuery(
+      {
+        trackIds,
+      },
+      { enabled: trackIds.length > 0 }
+    );
 
   return (
     <div className="flex h-full w-full flex-col gap-2">
