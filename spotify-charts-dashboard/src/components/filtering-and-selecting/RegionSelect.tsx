@@ -6,7 +6,7 @@ import { api } from "../../utils/api";
 import { useTrackComparisonFilterStore } from "../../store/trackComparison";
 import classNames from "classnames";
 
-type CountriesAPIResponse = RouterOutputs["countries"]["getAllWithCharts"];
+type CountriesAPIResponse = RouterOutputs["charts"]["getCountriesWithCharts"];
 
 const globalRegionSelectOption = {
   name: "Global",
@@ -17,7 +17,7 @@ const globalRegionSelectOption = {
 };
 
 export default function RegionSelect({ className }: { className?: string }) {
-  const countries = api.countries.getAllWithCharts.useQuery();
+  const countries = api.charts.getCountriesWithCharts.useQuery();
 
   const region = useTrackComparisonFilterStore((state) => state.region);
   const setRegion = useTrackComparisonFilterStore((state) => state.setRegion);

@@ -144,27 +144,34 @@ export const chartsRouter = createTRPCRouter({
       return { trackChartData, dates };
     }),
   getCountriesWithCharts: publicProcedure.query(async ({ ctx }) => {
-    const countryNames = await ctx.drizzle
+    const distinctCountryNames = await ctx.drizzle
       .select({
         name: countryChartEntry.countryName,
       })
       .from(countryChartEntry)
       .groupBy(countryChartEntry.countryName);
 
-    const countryNamesAndIsoCodes = await ctx.drizzle
+    const countries = await ctx.drizzle
       .select({
         name: country.name,
         isoAlpha3: country.isoAlpha3,
+        geoRegion: country.geoRegion,
+        geoSubregion: country.geoSubregion,
       })
       .from(country)
       .where(
         inArray(
           country.name,
-          countryNames.map((c) => c.name)
+          distinctCountryNames.map((c) => c.name)
         )
+      )
+      .orderBy(
+        country.geoRegion,
+        sql`${country.geoSubregion} DESC`,
+        country.name
       );
 
-    return countryNamesAndIsoCodes;
+    return countries;
   }),
   getTrackCountsByCountry: publicProcedure.query(async ({ ctx }) => {
     const countryNamesAndCounts = await ctx.drizzle
