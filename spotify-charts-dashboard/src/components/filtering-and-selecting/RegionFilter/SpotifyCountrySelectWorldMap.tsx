@@ -1,4 +1,3 @@
-import type { Country } from "@prisma/client";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import {
@@ -8,6 +7,10 @@ import {
   ZoomableGroup,
 } from "react-simple-maps";
 import dynamic from "next/dynamic";
+
+import type { RouterOutputs } from "~/utils/api";
+
+type Country = RouterOutputs["charts"]["getCountriesWithCharts"][number];
 
 const ReactTooltip = dynamic(() => import("react-tooltip"), {
   ssr: false,

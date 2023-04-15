@@ -32,7 +32,7 @@ const SelectedTrackInfoDialog = ({ trackId, open, onClose }: Props) => {
             albumTitle={t.album.name}
             releaseDate={t.album.releaseDate}
             releaseType={t.album.type}
-            genres={t.genres.map((g) => g.label)}
+            genres={t.genres}
             label={t.album.label}
             albumCoverUrl={t.album.thumbnailUrl}
             color={"#7fc97f"}

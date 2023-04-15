@@ -14,7 +14,7 @@ const RegionFilter = () => {
   const removeRegionName = useTracksExplorationStore(
     (state) => state.removeRegionName
   );
-  const countries = api.countries.getAllWithCharts.useQuery();
+  const countries = api.charts.getCountriesWithCharts.useQuery();
   const [popupActive, setPopupActive] = useState(false);
 
   let content = <LoadingSpinner className="h-full w-full" />;

@@ -201,25 +201,25 @@ export const tracksRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const trackIds = input.trackIds;
-      const numericFeaturesSelect = numericTrackFeatures.reduce(
-        (acc, feature) => ({
-          ...acc,
-          [feature]: true,
-        }),
-        {} as Record<NumericTrackFeatureName, boolean>
-      );
-      const trackData = await ctx.prisma.track.findMany({
-        select: {
-          id: true,
-          name: true,
-          ...numericFeaturesSelect,
-        },
-        where: {
-          id: {
-            in: trackIds,
-          },
-        },
-      });
+      const trackData = await ctx.drizzle
+        .select({
+          id: track.id,
+          name: track.name,
+          acousticness: track.acousticness,
+          danceability: track.danceability,
+          energy: track.energy,
+          instrumentalness: track.instrumentalness,
+          liveness: track.liveness,
+          speechiness: track.speechiness,
+          valence: track.valence,
+          tempo: track.tempo,
+          durationMs: track.durationMs,
+          loudness: track.loudness,
+          isrcYear: track.isrcYear,
+        })
+        .from(track)
+        .where(inArray(track.id, trackIds));
+
       return trackData;
     }),
 });
