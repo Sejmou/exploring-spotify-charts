@@ -89,7 +89,7 @@ export default function CompareTracks() {
               {!charts.data ||
               (charts.data && charts.fetchStatus === "fetching") ? (
                 <LoadingSpinner />
-              ) : charts.data.dateRange.length == 0 ? (
+              ) : charts.data.dates.length == 0 ? (
                 <div className="h-full w-full">
                   Neither of the selected tracks charted in the selected region
                   and timeframe.

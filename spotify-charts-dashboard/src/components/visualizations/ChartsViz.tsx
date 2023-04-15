@@ -44,7 +44,7 @@ const ChartsViz = ({ data }: Props) => {
   const chartDatasets = data.trackChartData.map((data) => ({
     id: data.id,
     label: data.name,
-    data: data.charts?.map((c) => c?.rank || null) ?? [],
+    data: data.chartEntries?.map((c) => c?.rank || null) ?? [],
     backgroundColor: colors[data.id] || "white",
     borderColor: color(colors[data.id] || "white")
       ?.darker(0.5)
@@ -52,7 +52,7 @@ const ChartsViz = ({ data }: Props) => {
   }));
 
   const chartData = {
-    labels: data.dateRange.map((d) => moment(d)),
+    labels: data.dates.map((d) => moment(d)),
     datasets: chartDatasets,
   };
 
@@ -134,10 +134,8 @@ const ChartsViz = ({ data }: Props) => {
                 max: 50,
               },
               x: {
-                min: moment(data.dateRange[0]).valueOf(),
-                max: moment(
-                  data.dateRange[data.dateRange.length - 1]
-                ).valueOf(),
+                min: moment(data.dates[0]).valueOf(),
+                max: moment(data.dates[data.dates.length - 1]).valueOf(),
               },
             },
           },

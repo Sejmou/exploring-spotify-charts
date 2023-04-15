@@ -10,7 +10,7 @@ import {
   trackArtistEntry,
 } from "~/server/drizzle/schema";
 import { countRows } from "~/server/drizzle/db";
-import { and, eq, inArray } from "drizzle-orm/expressions";
+import { and, eq, gte, inArray, lte } from "drizzle-orm/expressions";
 import { javaScriptDateToMySQLDate } from "~/utils/data";
 import { sql } from "drizzle-orm/sql";
 
@@ -25,172 +25,123 @@ export const chartsRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-      if (!input.trackIds) {
+      const { region, trackIds, startInclusive, endInclusive } = input;
+
+      if (!trackIds) {
         console.warn("No track ids provided");
         return {
           trackChartData: [],
-          dateRange: [],
+          dates: [],
         };
       }
-      const trackIds = input.trackIds;
-      const country =
-        input.region && input.region !== "Global" ? input.region : undefined;
-      const trackCharts = country
-        ? await ctx.prisma.countryChartEntry.findMany({
-            where: {
-              trackId: {
-                in: trackIds,
-              },
-              date: {
-                gte: input.startInclusive,
-                lte: input.endInclusive,
-              },
-              country: {
-                name: country,
-              },
-            },
-            orderBy: {
-              date: "asc",
-            },
+      const country = region && region !== "Global" ? region : undefined;
+
+      // this is so ugly, it physically hurts me
+      const queryDateRangeMin =
+        startInclusive ||
+        new Date(
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          (
+            await ctx.drizzle
+              .select({
+                date: sql<string>`MIN(${
+                  country ? countryChartEntry.date : globalChartEntry.date
+                })`,
+              })
+              .from(country ? countryChartEntry : globalChartEntry)
+          )[0]!.date
+        );
+
+      const queryDateRangeMax =
+        endInclusive ||
+        new Date(
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          (
+            await ctx.drizzle
+              .select({
+                date: sql<string>`MAX(${
+                  country ? countryChartEntry.date : globalChartEntry.date
+                })`,
+              })
+              .from(country ? countryChartEntry : globalChartEntry)
+          )[0]!.date
+        );
+
+      const sqlDateStringsForRange = createDateStringsForEveryDayInRange(
+        queryDateRangeMin,
+        queryDateRangeMax
+      );
+
+      const dates = sqlDateStringsForRange.map((date) => new Date(date));
+
+      const trackChartData: {
+        id: string;
+        name: string;
+        chartEntries: (ChartEntry | null)[];
+      }[] = [];
+
+      console.log({ queryDateRangeMin, queryDateRangeMax });
+
+      for (const trackId of trackIds) {
+        const trackName = (
+          await ctx.drizzle
+            .select({
+              name: track.name,
+            })
+            .from(track)
+            .where(eq(track.id, trackId))
+        )[0]?.name;
+
+        if (!trackName) {
+          console.warn(`No track found with id ${trackId}`);
+          continue;
+        }
+
+        // this is quite ugly tbh
+        const chartEntriesDB = await ctx.drizzle
+          .select({
+            date: (country ? countryChartEntry : globalChartEntry).date,
+            rank: (country ? countryChartEntry : globalChartEntry).rank,
+            streams: (country ? countryChartEntry : globalChartEntry).streams,
           })
-        : await ctx.prisma.globalChartEntry.findMany({
-            where: {
-              trackId: {
-                in: trackIds,
-              },
-              date: {
-                gte: input.startInclusive,
-                lte: input.endInclusive,
-              },
-            },
-            orderBy: {
-              date: "asc",
-            },
+          .from(country ? countryChartEntry : globalChartEntry)
+          .where(
+            and(
+              eq(
+                (country ? countryChartEntry : globalChartEntry).trackId,
+                trackId
+              ),
+              gte(
+                (country ? countryChartEntry : globalChartEntry).date,
+                javaScriptDateToMySQLDate(queryDateRangeMin)
+              ),
+              lte(
+                (country ? countryChartEntry : globalChartEntry).date,
+                javaScriptDateToMySQLDate(queryDateRangeMax)
+              ),
+              country ? eq(countryChartEntry.countryName, country) : undefined
+            )
+          )
+          .orderBy((country ? countryChartEntry : globalChartEntry).date);
+
+        const chartEntriesForEveryDayMap = new Map<string, ChartEntry | null>(
+          sqlDateStringsForRange.map((date) => [date, null])
+        );
+        chartEntriesDB.forEach((chartEntry) => {
+          chartEntriesForEveryDayMap.set(chartEntry.date, {
+            rank: chartEntry.rank,
+            streams: chartEntry.streams,
           });
+        });
 
-      console.log("track charts", trackCharts);
-      const chartsGroupedByTrackId = groupByTrackId(trackCharts);
-
-      console.log("TRACK IDS", trackIds);
-
-      const allDatesWithData = !country
-        ? await ctx.prisma.globalChartEntry.findMany({
-            where: {
-              trackId: {
-                in: trackIds,
-              },
-              date: {
-                gte: input.startInclusive,
-                lte: input.endInclusive,
-              },
-            },
-            select: {
-              date: true,
-            },
-            orderBy: {
-              date: "asc",
-            },
-            distinct: ["date"],
-          })
-        : await ctx.prisma.countryChartEntry.findMany({
-            where: {
-              trackId: {
-                in: trackIds,
-              },
-              country: {
-                name: country,
-              },
-              date: {
-                gte: input.startInclusive,
-                lte: input.endInclusive,
-              },
-            },
-            select: {
-              date: true,
-            },
-            orderBy: {
-              date: "asc",
-            },
-            distinct: ["date"],
-          });
-
-      const minDate = allDatesWithData[0]?.date;
-      const maxDate = allDatesWithData[allDatesWithData.length - 1]?.date;
-
-      if (!minDate || !maxDate) {
-        return {
-          trackChartData: [],
-          dateRange: [],
-        };
+        trackChartData.push({
+          id: trackId,
+          name: trackName,
+          chartEntries: [...chartEntriesForEveryDayMap.values()],
+        });
       }
-      const daysFromMinToMax = moment(maxDate).diff(moment(minDate), "days");
-      const datesFromMinToMax = Array.from(
-        { length: daysFromMinToMax + 1 },
-        (_, i) => moment(minDate).add(i, "days").toDate()
-      );
 
-      console.log("minDate", minDate);
-      console.log("maxDate", maxDate);
-
-      // need arrays of equal length for all tracks for building the chart in the frontend
-      const chartDataForStartToEndWithEmptyValues = new Map(
-        Object.entries(chartsGroupedByTrackId).map(
-          ([trackId, trackChartData]) => {
-            const chartEntriesIncludingNullForMissingDates =
-              datesFromMinToMax.map((d) => {
-                const chartEntryForDate = trackChartData.find((entry) =>
-                  moment(entry.date).isSame(moment(d), "day")
-                );
-                return chartEntryForDate || null;
-              });
-            console.log(
-              "number of values in original track chart data",
-              trackChartData?.length
-            );
-            console.log(
-              "non-null values in chart data with nulls for missing",
-              chartEntriesIncludingNullForMissingDates.filter((c) => c !== null)
-                ?.length
-            );
-            console.log(
-              "first and last non-null value in chart data with nulls for missing",
-              chartEntriesIncludingNullForMissingDates.filter(
-                (c) => c !== null
-              )[0]?.date,
-              chartEntriesIncludingNullForMissingDates
-                .filter((c) => c !== null)
-                .at(-1)?.date
-            );
-            console.log(
-              "first and last value in original track chart data",
-              trackChartData[0]?.date,
-              trackChartData.at(-1)?.date
-            );
-            return [trackId, chartEntriesIncludingNullForMissingDates];
-          }
-        )
-      );
-
-      const otherTrackData = await ctx.prisma.track.findMany({
-        select: {
-          id: true,
-          name: true,
-        },
-        where: {
-          id: {
-            in: trackIds,
-          },
-        },
-      });
-
-      return {
-        trackChartData: otherTrackData.map((data) => ({
-          ...data,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          charts: chartDataForStartToEndWithEmptyValues.get(data.id),
-        })),
-        dateRange: datesFromMinToMax,
-      };
+      return { trackChartData, dates };
     }),
   getCountriesWithCharts: publicProcedure.query(async ({ ctx }) => {
     const countryNames = await ctx.drizzle
@@ -281,17 +232,7 @@ export const chartsRouter = createTRPCRouter({
                 track.id,
                 track.name
               )
-          : // equivalent SQL query:
-            // SELECT ce.rank, ce.streams, t.id as track_id, t.name as track_name,
-            // GROUP_CONCAT(a.id ORDER BY tae.rank) as artist_ids, GROUP_CONCAT(a.name ORDER BY tae.rank) as artist_names
-            // FROM CountryChartEntry ce
-            // JOIN Track t ON t.id = ce.trackId
-            // JOIN Country c ON c.name = ce.countryName AND c.name = "Argentina"
-            // JOIN TrackArtistEntry tae ON tae.trackId = t.id
-            // JOIN Artist a ON a.id = tae.artistId
-            // WHERE ce.date = "2021-01-01"
-            // GROUP BY ce.rank, ce.streams, t.id, t.name;
-            await ctx.drizzle
+          : await ctx.drizzle
               .select({
                 rank: countryChartEntry.rank,
                 streams: countryChartEntry.streams,
@@ -421,3 +362,23 @@ function getChartTrend(
   }
   return "down";
 }
+
+function createDateStringsForEveryDayInRange(startDate: Date, endDate: Date) {
+  const dateArray = [];
+  const currentDate = moment(startDate);
+  const endDateMoment = moment(endDate);
+
+  while (currentDate <= endDateMoment) {
+    const dateString = currentDate.format("YYYY-MM-DD");
+    dateArray.push(dateString);
+    currentDate.add(1, "days");
+  }
+
+  return dateArray;
+}
+
+type ChartEntry = {
+  // date: Date;
+  rank: number;
+  streams: number;
+};

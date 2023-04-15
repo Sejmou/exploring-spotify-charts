@@ -1,4 +1,5 @@
-import { RouterOutputs, api } from "~/utils/api";
+import type { RouterOutputs } from "~/utils/api";
+import { api } from "~/utils/api";
 import LoadingSpinner from "../LoadingSpinner";
 import classNames from "classnames";
 
