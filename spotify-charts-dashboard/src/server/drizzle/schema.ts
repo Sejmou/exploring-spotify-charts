@@ -188,14 +188,17 @@ export const trackArtistEntry = mysqlTable(
 export const artistToGenre = mysqlTable(
   "_ArtistToGenre",
   {
-    a: varchar("A", { length: 191 }).notNull(),
-    b: varchar("B", { length: 191 }).notNull(),
+    artistId: varchar("A", { length: 191 }).notNull(),
+    genreLabel: varchar("B", { length: 191 }).notNull(),
   },
   (table) => {
     return {
-      abUnique: uniqueIndex("_ArtistToGenre_AB_unique").on(table.a, table.b),
-      bIdx: index("ArtistToGenre_B").on(table.b),
-      artistToGenreAB: primaryKey(table.a, table.b),
+      abUnique: uniqueIndex("_ArtistToGenre_AB_unique").on(
+        table.artistId,
+        table.genreLabel
+      ),
+      bIdx: index("ArtistToGenre_B").on(table.genreLabel),
+      artistToGenreAB: primaryKey(table.artistId, table.genreLabel),
     };
   }
 );

@@ -1,6 +1,5 @@
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import { z } from "zod";
-import type { Genre, Prisma, PrismaClient } from "@prisma/client";
 import { createUnionSchema } from "../../utils";
 import {
   javaScriptDateToMySQLDate,
@@ -9,11 +8,15 @@ import {
 } from "../../../utils/data";
 import type { NumericTrackFeatureName } from "../../../utils/data";
 import {
+  album,
+  artist,
+  artistToGenre,
   countryChartEntry,
   globalChartEntry,
   track,
+  trackArtistEntry,
 } from "~/server/drizzle/schema";
-import { and, gte, inArray, lte, not } from "drizzle-orm/expressions";
+import { and, gte, inArray, lte, not, eq } from "drizzle-orm/expressions";
 import type { PlanetScaleDatabase } from "drizzle-orm/planetscale-serverless";
 import type { MySql2Database } from "drizzle-orm/mysql2";
 import { sql, type SQL } from "drizzle-orm";
@@ -149,7 +152,7 @@ export const tracksRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-      const trackMetadata = await getTrackMetadata(ctx.prisma, input.trackIds);
+      const trackMetadata = await getTrackMetadata(ctx.drizzle, input.trackIds);
       return trackMetadata;
     }),
   getMetadataForId: publicProcedure
@@ -159,7 +162,9 @@ export const tracksRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-      const trackMetadata = await getTrackMetadata(ctx.prisma, [input.trackId]);
+      const trackMetadata = await getTrackMetadata(ctx.drizzle, [
+        input.trackId,
+      ]);
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       return trackMetadata[input.trackId]!;
     }),
@@ -355,71 +360,121 @@ async function getTrackXY(
 }
 
 async function getTrackMetadata(
-  prisma: PrismaClient<
-    Prisma.PrismaClientOptions,
-    "info" | "warn" | "error" | "query",
-    Prisma.RejectOnNotFound | Prisma.RejectPerOperation | undefined
-  >,
+  db: PlanetScaleDatabase | MySql2Database,
   trackIds: string[]
 ) {
-  const tracks = await prisma.track.findMany({
-    select: {
-      id: true,
-      name: true,
-      previewUrl: true,
-      featuringArtists: {
-        select: {
-          artist: {
-            select: { name: true, genres: true },
-          },
-          rank: true,
-        },
-      },
+  const tracksDB = await db
+    .select({
+      id: track.id,
+      name: track.name,
+      previewUrl: track.previewUrl,
       album: {
-        select: {
-          name: true,
-          type: true,
-          thumbnailUrl: true,
-          releaseDate: true,
-          label: true,
-        },
+        name: album.name,
+        type: album.type,
+        thumbnailUrl: album.thumbnailUrl,
+        releaseDate: album.releaseDate,
+        label: album.label,
       },
-    },
-    where: {
-      id: {
-        in: trackIds,
-      },
-    },
-  });
-  const trackIdsAndMetadata = tracks
-    .map((track) => {
-      const artists = track.featuringArtists.map((entry) => entry.artist);
-      const genres = artists.flatMap((artist) => {
-        return artist.genres;
-      });
-      const genresNoDuplicates = genres.reduce((acc, curr) => {
-        if (!acc.includes(curr)) {
-          acc.push(curr);
-        }
-        return acc;
-      }, [] as Genre[]);
-      return {
-        ...track,
-        featuringArtists: artists,
-        genres: genresNoDuplicates,
-        album: {
-          ...track.album,
-          thumbnailUrl: track.album.thumbnailUrl ?? undefined,
-        },
-        previewUrl: track.previewUrl ?? undefined,
-      };
     })
-    .map((track) => {
-      const { id, ...metadata } = track;
-      return [id, metadata] as [string, typeof metadata];
-    });
-  return Object.fromEntries(trackIdsAndMetadata) as Record<
-    string,
-    (typeof trackIdsAndMetadata)[0][1]
-  >;
+    .from(track)
+    .leftJoin(album, eq(track.albumId, album.id))
+    .where(inArray(track.id, trackIds));
+
+  const tracks = tracksDB
+    .map((t) => ({
+      ...t,
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      album: t.album!, // not sure why this is necessary
+    }))
+    .map((t) => ({
+      ...t,
+      album: {
+        ...t.album,
+        releaseDate: new Date(t.album.releaseDate),
+      },
+    }));
+
+  const trackArtists = await db
+    .select({
+      trackId: trackArtistEntry.trackId,
+      artistIdsString: sql<string>`group_concat(${trackArtistEntry.artistId} ORDER BY ${trackArtistEntry.rank})`,
+    })
+    .from(trackArtistEntry)
+    .where(inArray(trackArtistEntry.trackId, trackIds))
+    .groupBy(trackArtistEntry.trackId);
+
+  const trackIdsAndArtistIds = new Map<string, string[]>();
+  for (const trackArtist of trackArtists) {
+    trackIdsAndArtistIds.set(
+      trackArtist.trackId,
+      trackArtist.artistIdsString.split(",")
+    );
+  }
+
+  const distinctTrackArtistIds = (
+    await db
+      .select({
+        artistId: sql<string>`distinct(${trackArtistEntry.artistId})`,
+      })
+      .from(trackArtistEntry)
+      .where(inArray(trackArtistEntry.trackId, trackIds))
+  ).map((row) => row.artistId);
+
+  const artistData = (
+    await db
+      .select({
+        id: artist.id,
+        name: artist.name,
+        genres: sql<string>`group_concat(${artistToGenre.genreLabel})`,
+      })
+      .from(artist)
+      .where(inArray(artist.id, distinctTrackArtistIds))
+      .leftJoin(artistToGenre, eq(artist.id, artistToGenre.artistId))
+      .groupBy(artist.id)
+  ).map((row) => ({
+    id: row.id,
+    name: row.name,
+    genres: row.genres.split(","),
+  }));
+
+  const artistDataMap = new Map<string, { name: string; genres: string[] }>(
+    artistData.map((artist) => [
+      artist.id,
+      { name: artist.name, genres: artist.genres },
+    ])
+  );
+
+  const metadata = tracks.map((track) => {
+    const artistIds = trackIdsAndArtistIds.get(track.id);
+    if (!artistIds)
+      throw new Error(`artistIds not found for track ID ${track.id}`);
+    const featuringArtists: typeof artistData = [];
+    const artistGenres: string[] = [];
+    for (const artistId of artistIds) {
+      const artistData = artistDataMap.get(artistId);
+      if (!artistData)
+        throw new Error(`artistData not found for artist ID ${artistId}`);
+      artistGenres.push(...artistData.genres);
+      featuringArtists.push({ ...artistData, id: artistId });
+    }
+    // track genres == artist genres without duplicates (primary artist genres come first)
+    const trackGenres = artistGenres.reduce((acc, curr) => {
+      if (!acc.includes(curr)) {
+        acc.push(curr);
+      }
+      return acc;
+    }, [] as string[]);
+
+    return {
+      ...track,
+      featuringArtists,
+      genres: trackGenres,
+    };
+  });
+
+  const returnValue = Object.fromEntries(
+    metadata.map((track) => [track.id, track])
+  );
+
+  return returnValue;
 }

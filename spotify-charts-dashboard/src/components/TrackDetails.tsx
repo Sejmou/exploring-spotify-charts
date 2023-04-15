@@ -15,9 +15,9 @@ type Props = {
   releaseType: string;
   genres: string[];
   label: string;
-  albumCoverUrl?: string;
+  albumCoverUrl: string | null;
   color?: string;
-  previewUrl?: string;
+  previewUrl: string | null;
 };
 
 const TrackInfo = (props: Props) => {

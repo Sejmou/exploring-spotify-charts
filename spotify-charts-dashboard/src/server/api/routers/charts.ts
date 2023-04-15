@@ -342,18 +342,6 @@ export const chartsRouter = createTRPCRouter({
     }),
 });
 
-function groupByTrackId<T extends { trackId: string }>(
-  arr: T[]
-): Record<string, T[]> {
-  return arr.reduce((acc, curr) => {
-    if (!acc[curr.trackId]) {
-      acc[curr.trackId] = [];
-    }
-    acc[curr.trackId]?.push(curr);
-    return acc;
-  }, {} as Record<string, T[]>);
-}
-
 function getChartTrend(
   currentRank: number,
   previousRank?: number

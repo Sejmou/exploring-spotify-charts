@@ -14,9 +14,7 @@ import { useInView } from "react-intersection-observer";
 import classNames from "classnames";
 import LoadingSpinner from "./LoadingSpinner";
 
-type TrackMetadata = RouterOutputs["tracks"]["getMetadataForIds"][string] & {
-  id: string;
-};
+type TrackMetadata = RouterOutputs["tracks"]["getMetadataForIds"][string];
 
 const SelectedTracksInfoAndLegend = () => {
   const [expanded, setExpanded] = useState(false);
@@ -31,6 +29,7 @@ const SelectedTracksInfoAndLegend = () => {
     { keepPreviousData: true, enabled: trackIds.length > 0 }
   );
 
+  // TODO: think about whether this is not actually totally redundant lol
   const trackMetadata = useMemo(() => {
     const data = tracks.data;
     if (!data) {
@@ -40,7 +39,7 @@ const SelectedTracksInfoAndLegend = () => {
     for (const id of trackIds) {
       const value = data[id];
       if (value) {
-        arr.push({ id, ...value });
+        arr.push(value);
       }
     }
     return arr;
@@ -125,7 +124,7 @@ const SelectedTracksInfoAndLegend = () => {
                 albumTitle={t.album.name}
                 releaseDate={t.album.releaseDate}
                 releaseType={t.album.type}
-                genres={t.genres.map((g) => g.label)}
+                genres={t.genres}
                 label={t.album.label}
                 albumCoverUrl={t.album.thumbnailUrl}
                 color={colors[t.id]}
