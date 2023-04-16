@@ -12,7 +12,6 @@ const VizViewSwitcher = ({ className }: { className?: string }) => {
       <BasicSelect
         label={"Current Data View"}
         onChange={(newHref: string) => {
-          console.log(newHref);
           void router.push(newHref);
         }}
         value={subpageData.find((o) => o.isCurrent)?.href}

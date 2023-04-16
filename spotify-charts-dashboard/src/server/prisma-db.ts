@@ -3,6 +3,8 @@ import { PrismaClient } from "@prisma/client";
 
 import { env } from "../env/server.mjs";
 
+// TODO: get rid of all of this - should be fine as I replaced all DB queries with drizzle?
+
 declare global {
   // eslint-disable-next-line no-var
   var prisma:

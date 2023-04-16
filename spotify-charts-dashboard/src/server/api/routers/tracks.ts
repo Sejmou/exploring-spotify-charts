@@ -254,8 +254,6 @@ async function getTrackIdsMatchingFilter(
     return cachedTrackIds;
   }
 
-  console.log({ filterParams });
-
   const countryChartsBase = db
     .select({
       trackId: sql<string>`distinct(${countryChartEntry.trackId})`,
@@ -390,7 +388,6 @@ async function getTrackMetadata(
 
   const trackIdsAndArtistIds = new Map<string, string[]>();
   for (const trackArtist of trackArtists) {
-    console.log(trackArtist);
     trackIdsAndArtistIds.set(
       trackArtist.trackId,
       trackArtist.artistIdsString.split(",")
@@ -418,7 +415,6 @@ async function getTrackMetadata(
       .leftJoin(artistToGenre, eq(artist.id, artistToGenre.artistId))
       .groupBy(artist.id)
   ).map((row) => {
-    console.log({ row });
     return {
       id: row.id,
       name: row.name,

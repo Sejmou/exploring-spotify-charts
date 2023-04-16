@@ -10,11 +10,15 @@ The project makes use of the [T3 Stack](https://create.t3.gg/) and was bootstrap
 
 - [Next.js](https://nextjs.org)
 - [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
 - [Tailwind CSS](https://tailwindcss.com)
 - [tRPC](https://trpc.io)
+- [Prisma](https://prisma.io) (though I switched to [Drizzle](https://github.com/drizzle-team/drizzle-orm) recently in the hope of improving query execution time, migration off of Prisma is not entirely completed yet)
 
 The app fetches data from a MySQL cloud database hosted on [PlanetScale](https://planetscale.com/).
+
+## TODOs
+
+ [ ] remove Prisma completely (using drizzle for the most part now)
 
 ## Local Development, Deployment etc.
 Most information can probably be found on the [T3 Stack](https://create.t3.gg/) website. I only added some additional stuff that might potentially be relevant for me for future reference 
