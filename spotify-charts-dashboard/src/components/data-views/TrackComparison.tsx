@@ -1,10 +1,6 @@
 import dynamic from "next/dynamic";
-import {
-  useComparisonTrackIds,
-  useTrackComparisonFilterStore,
-} from "../../store/trackComparison";
 import { api } from "../../utils/api";
-import { DateRangeFilterTrackComparison as DateRangeFilter } from "../filtering-and-selecting/DateRangeFilter";
+import DateRangeFilter from "../filtering-and-selecting/DateRangeFilter";
 import RegionSelect from "../filtering-and-selecting/RegionSelect";
 import SelectedTracksInfoAndLegend from "../SelectedTracksInfoAndLegend";
 import TrackSelect from "../filtering-and-selecting/TrackSelect";
@@ -13,19 +9,17 @@ import TrackDataRadarChart from "../visualizations/TrackDataRadarChart";
 import SpotifyChartsHeading from "../SpotifyChartsHeading";
 import VizViewSwitcher from "../VizViewSwitcher";
 import LoadingSpinner from "../LoadingSpinner";
+import { useChartsStore } from "~/store";
+import { useComparisonTrackIds } from "~/store/track-comparison";
 
 const ChartsViz = dynamic(() => import("../visualizations/ChartsViz"), {
   ssr: false,
 });
 
 export default function CompareTracks() {
-  const region = useTrackComparisonFilterStore((state) => state.region);
-  const startInclusive = useTrackComparisonFilterStore(
-    (state) => state.startInclusive
-  );
-  const endInclusive = useTrackComparisonFilterStore(
-    (state) => state.endInclusive
-  );
+  const region = useChartsStore((state) => state.region);
+  const startInclusive = useChartsStore((state) => state.startInclusive);
+  const endInclusive = useChartsStore((state) => state.endInclusive);
   const trackIds = useComparisonTrackIds();
 
   const charts = api.charts.getChartPerformanceOfTracks.useQuery(

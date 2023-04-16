@@ -7,8 +7,8 @@ import BasicTrackInfo from "./BasicTrackInfo";
 import {
   useComparisonTrackColors,
   useComparisonTrackIds,
-  useTrackComparisonFilterStore,
-} from "../store/trackComparison";
+} from "../store/track-comparison";
+import { useChartsStore } from "~/store";
 import DialogWithCloseIcon from "./DialogWithCloseIcon";
 import { useInView } from "react-intersection-observer";
 import classNames from "classnames";
@@ -20,7 +20,7 @@ const SelectedTracksInfoAndLegend = () => {
   const [expanded, setExpanded] = useState(false);
   const trackIds = useComparisonTrackIds();
   const colors = useComparisonTrackColors();
-  const removeTrackId = useTrackComparisonFilterStore(
+  const removeTrackId = useChartsStore(
     (state) => state.removeComparisonTrackId
   );
 

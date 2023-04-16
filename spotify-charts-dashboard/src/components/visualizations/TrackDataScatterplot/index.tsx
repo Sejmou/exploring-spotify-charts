@@ -4,7 +4,6 @@ import { useCallback, useMemo, useState } from "react";
 import BasicSelect from "../../filtering-and-selecting/BasicSelect";
 import SelectedTrackInfoDialog from "./SelectedTrackInfoDialog";
 
-import { useTracksExplorationStore } from "../../../store/trackDataExploration";
 import {
   getFeatureDataFormat,
   getFeatureLabel,
@@ -20,6 +19,7 @@ const ReactTooltip = dynamic(() => import("react-tooltip"), {
   ssr: false,
 });
 
+import { useChartsStore } from "~/store";
 import type { RouterOutputs } from "../../../utils/api";
 import type {
   AxisConfig,
@@ -29,11 +29,9 @@ import type {
 type TrackData = RouterOutputs["tracks"]["getXYDataForIds"];
 
 const SpotifyTrackDataScatterPlot = () => {
-  const regionNames = useTracksExplorationStore((state) => state.regionNames);
-  const startInclusive = useTracksExplorationStore(
-    (state) => state.startInclusive
-  );
-  const endInclusive = useTracksExplorationStore((state) => state.endInclusive);
+  const regionNames = useChartsStore((state) => state.regionNames);
+  const startInclusive = useChartsStore((state) => state.startInclusive);
+  const endInclusive = useChartsStore((state) => state.endInclusive);
   const filterParams = useMemo(() => {
     return {
       regionNames,
@@ -41,10 +39,10 @@ const SpotifyTrackDataScatterPlot = () => {
       endInclusive,
     };
   }, [regionNames, startInclusive, endInclusive]);
-  const xFeature = useTracksExplorationStore((state) => state.xFeature);
-  const yFeature = useTracksExplorationStore((state) => state.yFeature);
-  const setXFeature = useTracksExplorationStore((state) => state.setXFeature);
-  const setYFeature = useTracksExplorationStore((state) => state.setYFeature);
+  const xFeature = useChartsStore((state) => state.xFeature);
+  const yFeature = useChartsStore((state) => state.yFeature);
+  const setXFeature = useChartsStore((state) => state.setXFeature);
+  const setYFeature = useChartsStore((state) => state.setYFeature);
 
   const trackXYData = api.tracks.getXYDataForIds.useQuery(
     { ...filterParams, xFeature, yFeature },

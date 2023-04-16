@@ -1,4 +1,4 @@
-import { DateRangeFilterTrackExploration as DateRangeFilter } from "../filtering-and-selecting/DateRangeFilter";
+import DateRangeFilter from "../filtering-and-selecting/DateRangeFilter";
 import RegionFilter from "../filtering-and-selecting/RegionFilter";
 import SpotifyChartsHeading from "../SpotifyChartsHeading";
 import TrackDataScatterplot from "../visualizations/TrackDataScatterplot";

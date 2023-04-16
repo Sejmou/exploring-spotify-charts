@@ -1,4 +1,4 @@
-import { useComparisonTrackColors } from "~/store/trackComparison";
+import { useComparisonTrackColors } from "~/store/track-comparison";
 import type { RouterOutputs } from "../../utils/api";
 import { getFeatureLabel, getFeatureDataFormat } from "../../utils/data";
 import BarChart from "./BarChart";
@@ -24,6 +24,7 @@ const TrackDataBarChart = ({ trackData, feature, className }: Props) => {
     data: trackData.map((trackData) => ({
       x: trackData.name,
       y: trackData[feature],
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       color: colors[trackData.id]!,
     })),
     yTickFormat: getFeatureDataFormat(feature),

@@ -14,7 +14,7 @@ import { Line } from "react-chartjs-2";
 import { color } from "d3";
 import "chartjs-adapter-moment";
 import moment from "moment";
-import { useComparisonTrackColors } from "~/store/trackComparison";
+import { useComparisonTrackColors } from "~/store/track-comparison";
 
 ChartJS.register(
   CategoryScale,

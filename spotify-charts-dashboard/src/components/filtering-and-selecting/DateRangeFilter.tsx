@@ -1,10 +1,9 @@
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
 import { useState } from "react";
-import { useTrackComparisonFilterStore } from "../../store/trackComparison";
-import BasicDatePicker from "./BasicDatePicker";
+import { BasicDatePicker } from "./DatePicker";
 import classNames from "classnames";
-import { useTracksExplorationStore } from "~/store/trackDataExploration";
+import { useChartsStore } from "~/store";
 
 const minDate = dayjs("2017-01-01");
 const maxDate = dayjs("2021-12-31");
@@ -24,6 +23,7 @@ const DateRangeFilter = ({
   setStartInclusive,
   setEndInclusive,
 }: Props) => {
+  // TODO: rethink whether we should use dayjs or Date - also, this code is really kinda hacky lol
   const [startDate, setStartDate] = useState<Dayjs | null>(
     startInclusive ? dayjs(startInclusive) : null
   );
@@ -57,25 +57,11 @@ const DateRangeFilter = ({
   );
 };
 
-//TODO: is this the best solution to configure the same component for different stores?
-
-export const DateRangeFilterTrackComparison = ({
-  className,
-}: {
-  className?: string;
-}) => {
-  const startInclusive = useTrackComparisonFilterStore(
-    (state) => state.startInclusive
-  );
-  const endInclusive = useTrackComparisonFilterStore(
-    (state) => state.endInclusive
-  );
-  const setStartInclusive = useTrackComparisonFilterStore(
-    (state) => state.setStartInclusive
-  );
-  const setEndInclusive = useTrackComparisonFilterStore(
-    (state) => state.setEndInclusive
-  );
+const ChartsDateRangeFilter = ({ className }: { className?: string }) => {
+  const startInclusive = useChartsStore((state) => state.startInclusive);
+  const endInclusive = useChartsStore((state) => state.endInclusive);
+  const setStartInclusive = useChartsStore((state) => state.setStartInclusive);
+  const setEndInclusive = useChartsStore((state) => state.setEndInclusive);
 
   return (
     <DateRangeFilter
@@ -88,29 +74,4 @@ export const DateRangeFilterTrackComparison = ({
   );
 };
 
-export const DateRangeFilterTrackExploration = ({
-  className,
-}: {
-  className?: string;
-}) => {
-  const startInclusive = useTracksExplorationStore(
-    (state) => state.startInclusive
-  );
-  const endInclusive = useTracksExplorationStore((state) => state.endInclusive);
-  const setStartInclusive = useTracksExplorationStore(
-    (state) => state.setStartInclusive
-  );
-  const setEndInclusive = useTracksExplorationStore(
-    (state) => state.setEndInclusive
-  );
-
-  return (
-    <DateRangeFilter
-      startInclusive={startInclusive}
-      endInclusive={endInclusive}
-      setStartInclusive={setStartInclusive}
-      setEndInclusive={setEndInclusive}
-      className={className}
-    />
-  );
-};
+export default ChartsDateRangeFilter;

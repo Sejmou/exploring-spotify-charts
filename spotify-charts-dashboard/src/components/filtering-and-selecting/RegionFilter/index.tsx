@@ -1,19 +1,15 @@
 import { Button } from "@mui/material";
 import { useState } from "react";
-import { useTracksExplorationStore } from "../../../store/trackDataExploration";
 import { api } from "../../../utils/api";
 import DialogWithCloseIcon from "../../DialogWithCloseIcon";
 import SpotifyCountrySelectWorldMap from "./SpotifyCountrySelectWorldMap";
 import LoadingSpinner from "~/components/LoadingSpinner";
+import { useChartsStore } from "~/store";
 
 const RegionFilter = () => {
-  const regionNames = useTracksExplorationStore((state) => state.regionNames);
-  const addRegionName = useTracksExplorationStore(
-    (state) => state.addRegionName
-  );
-  const removeRegionName = useTracksExplorationStore(
-    (state) => state.removeRegionName
-  );
+  const regionNames = useChartsStore((state) => state.regionNames);
+  const addRegionName = useChartsStore((state) => state.addRegionName);
+  const removeRegionName = useChartsStore((state) => state.removeRegionName);
   const countries = api.charts.getCountriesWithCharts.useQuery();
   const [popupActive, setPopupActive] = useState(false);
 

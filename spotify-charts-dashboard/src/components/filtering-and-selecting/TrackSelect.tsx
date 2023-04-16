@@ -12,27 +12,19 @@ import {
 import { useEffect, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import MusicNoteIcon from "@mui/icons-material/MusicNote";
-import {
-  useComparisonTrackIds,
-  useTrackComparisonFilterStore,
-} from "../../store/trackComparison";
+import { useComparisonTrackIds } from "../../store/track-comparison";
 import classNames from "classnames";
+import { useChartsStore } from "~/store";
 
 type TrackDataAPIResponse =
   RouterOutputs["tracks"]["getNamesArtistsAndStreamsOrdered"];
 
 export default function TrackSelect({ className }: { className?: string }) {
-  const region = useTrackComparisonFilterStore((state) => state.region);
-  const startInclusive = useTrackComparisonFilterStore(
-    (state) => state.startInclusive
-  );
-  const endInclusive = useTrackComparisonFilterStore(
-    (state) => state.endInclusive
-  );
+  const region = useChartsStore((state) => state.region);
+  const startInclusive = useChartsStore((state) => state.startInclusive);
+  const endInclusive = useChartsStore((state) => state.endInclusive);
   const trackIds = useComparisonTrackIds();
-  const addTrackId = useTrackComparisonFilterStore(
-    (state) => state.addComparisonTrackId
-  );
+  const addTrackId = useChartsStore((state) => state.addComparisonTrackId);
 
   const tracks = api.tracks.getNamesArtistsAndStreamsOrdered.useQuery(
     { startInclusive, endInclusive, region },
