@@ -29,19 +29,25 @@ export function BasicDatePicker(props: Props) {
 const chartsMinDate = dayjs("2017-01-01");
 const chartsMaxDate = dayjs("2021-12-31");
 
-export default function ChartsDatePicker() {
+export default function ChartsDatePicker({
+  className,
+}: {
+  className?: string;
+}) {
   const day = useChartsStore((state) => state.day);
   const setDay = useChartsStore((state) => state.setDay);
 
   return (
-    <BasicDatePicker
-      value={day}
-      label="Date"
-      onChange={(newValue) => {
-        if (newValue) setDay(newValue);
-      }}
-      minDate={chartsMinDate}
-      maxDate={chartsMaxDate}
-    />
+    <div className={className}>
+      <BasicDatePicker
+        value={day}
+        label="Date"
+        onChange={(newValue) => {
+          if (newValue) setDay(newValue);
+        }}
+        minDate={chartsMinDate}
+        maxDate={chartsMaxDate}
+      />
+    </div>
   );
 }

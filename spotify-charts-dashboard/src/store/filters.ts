@@ -27,7 +27,7 @@ export const createFilterSlice: StateCreator<
   [],
   FilterState
 > = (set) => ({
-  day: dayjs("2021-01-01"),
+  day: dayjs("2021-06-01"),
   region: "Global",
   setDay(day) {
     set({ day });

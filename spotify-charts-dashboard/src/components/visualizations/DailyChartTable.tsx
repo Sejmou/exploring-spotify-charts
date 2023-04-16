@@ -2,97 +2,99 @@ import type { RouterOutputs } from "~/utils/api";
 import { api } from "~/utils/api";
 import LoadingSpinner from "../LoadingSpinner";
 import classNames from "classnames";
+import { useChartsStore } from "~/store";
+import { useMemo } from "react";
 
 type Data = RouterOutputs["charts"]["getDailyCharts"];
 
 type ChartTrend = Data[number]["trend"];
 
 const Table = () => {
-  const region = "Argentina";
-  const date = new Date("2021-01-01T00:00:00.000Z");
+  const region = useChartsStore((state) => state.region);
+  const day = useChartsStore((state) => state.day);
+  const date = useMemo(() => new Date(day.format("YYYY-MM-DD")), [day]); // timezone information is included in date which can lead to wrong date being selected -> dirty hack to still get right date
   const charts = api.charts.getDailyCharts.useQuery({ region, date });
 
   if (!charts.data) return <LoadingSpinner />;
 
   return (
-    <>
-      <table className="w-full text-left">
-        <thead>
-          <tr className="text-gray-400">
-            <th className="border-b  border-gray-800 px-3 pt-0 pb-3 font-normal">
-              #
-            </th>
-            <th className="border-b  border-gray-800 px-3 pt-0 pb-3 font-normal">
-              Track
-            </th>
-            <th className="border-b  border-gray-800 px-3 pt-0 pb-3 font-normal">
-              <span className="hidden sm:inline">Streams</span>
-            </th>
+    <table className="w-full text-left">
+      <thead>
+        <tr className="text-gray-400">
+          <th className="border-b  border-gray-800 px-3 pt-0 pb-3 font-normal">
+            #
+          </th>
+          <th className="border-b  border-gray-800 px-3 pt-0 pb-3 font-normal">
+            Track
+          </th>
+          <th className="border-b  border-gray-800 px-3 pt-0 pb-3 font-normal">
+            <span className="hidden sm:inline">Streams</span>
+          </th>
+        </tr>
+      </thead>
+      <tbody className="text-gray-100">
+        {charts.data.map((entry) => (
+          <tr key={entry.track.id}>
+            <td className="border-b  border-gray-800 py-2 px-1 sm:p-3">
+              <div className="flex items-center">
+                <span>{entry.rank}</span>
+                <ChartTrendIndicator trend={entry.trend} className="ml-4" />
+                {entry.change !== null && <span>{Math.abs(entry.change)}</span>}
+              </div>
+            </td>
+            <td className="border-b border-gray-800 py-2 px-1 sm:p-3">
+              <div className="flex flex-col">
+                <h3 className="">
+                  <a
+                    className=""
+                    target="_blank"
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    href={createSpotifyTrackLink(entry.track.id!)}
+                  >
+                    {entry.track.name}
+                  </a>
+                </h3>
+                <p>
+                  {entry.track.artists.map((a, i) => (
+                    <>
+                      <a
+                        key={a.id}
+                        target="_blank"
+                        href={createSpotifyArtistLink(a.id)}
+                        className="text-sm"
+                      >
+                        {a.name}
+                      </a>
+                      {i !== entry.track.artists.length - 1 && ", "}
+                    </>
+                  ))}
+                </p>
+              </div>
+            </td>
+            <td className="border-b  border-gray-800 py-2 px-1 sm:p-3">
+              <div className="flex items-center">
+                <div className="hidden flex-col sm:flex">{entry.streams}</div>
+                <button className="ml-auto inline-flex h-8 w-8 items-center justify-center text-gray-400">
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="w-5"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    fill="none"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="1"></circle>
+                    <circle cx="19" cy="12" r="1"></circle>
+                    <circle cx="5" cy="12" r="1"></circle>
+                  </svg>
+                </button>
+              </div>
+            </td>
           </tr>
-        </thead>
-        <tbody className="text-gray-100">
-          {charts.data.map((entry) => (
-            <tr key={entry.track.id}>
-              <td className="border-b  border-gray-800 py-2 px-1 sm:p-3">
-                <div className="flex items-center">
-                  <span>{entry.rank}</span>
-                  <NewEntryBadge className="ml-4" />
-                </div>
-              </td>
-              <td className="border-b border-gray-800 py-2 px-1 sm:p-3">
-                <div className="flex flex-col">
-                  <h3 className="">
-                    <a
-                      className=""
-                      target="_blank"
-                      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                      href={createSpotifyTrackLink(entry.track.id!)}
-                    >
-                      {entry.track.name}
-                    </a>
-                  </h3>
-                  <p>
-                    {entry.track.artists.map((a, i) => (
-                      <>
-                        <a
-                          key={a.id}
-                          target="_blank"
-                          href={createSpotifyArtistLink(a.id)}
-                          className="text-sm"
-                        >
-                          {a.name}
-                        </a>
-                        {i !== entry.track.artists.length - 1 && ", "}
-                      </>
-                    ))}
-                  </p>
-                </div>
-              </td>
-              <td className="border-b  border-gray-800 py-2 px-1 sm:p-3">
-                <div className="flex items-center">
-                  <div className="hidden flex-col sm:flex">{entry.streams}</div>
-                  <button className="ml-auto inline-flex h-8 w-8 items-center justify-center text-gray-400">
-                    <svg
-                      viewBox="0 0 24 24"
-                      className="w-5"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      fill="none"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
-                      <circle cx="12" cy="12" r="1"></circle>
-                      <circle cx="19" cy="12" r="1"></circle>
-                      <circle cx="5" cy="12" r="1"></circle>
-                    </svg>
-                  </button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </>
+        ))}
+      </tbody>
+    </table>
   );
 };
 export default Table;
@@ -105,16 +107,22 @@ function createSpotifyTrackLink(trackId: string) {
   return `https://open.spotify.com/track/${trackId}`;
 }
 
-const ChartTrendIndicator = ({ trend }: { trend: ChartTrend }) => {
+const ChartTrendIndicator = ({
+  trend,
+  className,
+}: {
+  trend: ChartTrend;
+  className?: string;
+}) => {
   switch (trend) {
     case "up":
-      return <UpArrowSVG />;
+      return <UpArrowSVG className={className} />;
     case "down":
-      return <DownArrowSVG />;
+      return <DownArrowSVG className={className} />;
     case "same":
-      return <NoChangeSVG />;
+      return <NoChangeSVG className={className} />;
     default:
-      return null;
+      return <NewEntryBadge className={className} />;
   }
 };
 

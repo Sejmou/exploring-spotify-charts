@@ -80,8 +80,6 @@ export const chartsRouter = createTRPCRouter({
         chartEntries: (ChartEntry | null)[];
       }[] = [];
 
-      console.log({ queryDateRangeMin, queryDateRangeMax });
-
       for (const trackId of trackIds) {
         const trackName = (
           await ctx.drizzle
@@ -280,12 +278,9 @@ export const chartsRouter = createTRPCRouter({
               })
               .from(globalChartEntry)
               .where(
-                and(
-                  eq(countryChartEntry.countryName, region),
-                  eq(
-                    countryChartEntry.date,
-                    javaScriptDateToMySQLDate(previousDay)
-                  )
+                eq(
+                  globalChartEntry.date,
+                  javaScriptDateToMySQLDate(previousDay)
                 )
               )
           : await ctx.drizzle
@@ -319,6 +314,10 @@ export const chartsRouter = createTRPCRouter({
           (r) => r.trackId === trackId
         )?.rank;
         const trend = getChartTrend(rank, previousDayRank);
+        const change =
+          previousDayRank && previousDayRank !== rank
+            ? previousDayRank - rank
+            : null;
         return {
           track: {
             id: trackId,
@@ -330,6 +329,7 @@ export const chartsRouter = createTRPCRouter({
           },
           rank,
           trend,
+          change,
           ...rest,
         };
       });
