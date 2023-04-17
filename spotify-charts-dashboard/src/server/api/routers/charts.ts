@@ -214,8 +214,12 @@ export const chartsRouter = createTRPCRouter({
                 streams: globalChartEntry.streams,
                 trackId: track.id,
                 trackName: track.name,
-                artistIdsString: sql<string>`group_concat(${artist.id} ORDER BY ${trackArtistEntry.rank})`,
-                artistNamesString: sql<string>`group_concat(${artist.name} ORDER BY ${trackArtistEntry.rank})`,
+                artistIdsString: sql<
+                  string | null
+                >`group_concat(${artist.id} ORDER BY ${trackArtistEntry.rank})`,
+                artistNamesString: sql<
+                  string | null
+                >`group_concat(${artist.name} ORDER BY ${trackArtistEntry.rank})`,
               })
               .from(globalChartEntry)
               .leftJoin(track, eq(globalChartEntry.trackId, track.id))
@@ -299,7 +303,7 @@ export const chartsRouter = createTRPCRouter({
                 )
               );
 
-      const returnValue = chartsDbRes.map((row) => {
+      const mappedDBValuesWithNulls = chartsDbRes.map((row) => {
         const {
           artistIdsString,
           artistNamesString,
@@ -308,6 +312,15 @@ export const chartsRouter = createTRPCRouter({
           rank,
           ...rest
         } = row;
+
+        if (!trackId || !trackName || !artistIdsString || !artistNamesString) {
+          console.warn(
+            "No data for track on chart position",
+            rank,
+            " - TODO: fix database"
+          );
+          return null;
+        }
         const artistIds = artistIdsString.split(",");
         const artistNames = artistNamesString.split(",");
         const previousDayRank = ranksOfPreviousDay.find(
@@ -333,6 +346,10 @@ export const chartsRouter = createTRPCRouter({
           ...rest,
         };
       });
+
+      const returnValue = mappedDBValuesWithNulls.filter(
+        (e) => e !== null
+      ) as NonNullable<(typeof mappedDBValuesWithNulls)[number]>[];
 
       return returnValue;
     }),
