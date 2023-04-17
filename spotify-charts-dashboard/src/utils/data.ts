@@ -1,5 +1,5 @@
-import type { Track } from "@prisma/client";
-import type { PickByType } from "../server/utils";
+import type { Track } from "~/server/drizzle/schema";
+import type { PickByType } from "~/server/utils";
 import { capitalizeFirstLetter, millisecondsToMinutesAndSeconds } from "./misc";
 
 export type NumericTrackFeatures = PickByType<Track, number>;

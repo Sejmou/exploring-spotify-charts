@@ -18,8 +18,6 @@
  */
 import { type CreateNextContextOptions } from "@trpc/server/adapters/next";
 
-import { prisma } from "../prisma-db";
-
 type CreateContextOptions = Record<string, never>;
 
 /**
@@ -32,11 +30,10 @@ type CreateContextOptions = Record<string, never>;
  * @see https://create.t3.gg/en/usage/trpc#-servertrpccontextts
  */
 const createInnerTRPCContext = (_opts: CreateContextOptions) => {
-  const drizzle = createDrizzleDb(); // not sure if this should be here or rather in createTRPCContext
+  const db = createDrizzleDb(); // not sure if this should be here or rather in createTRPCContext
 
   return {
-    prisma,
-    drizzle,
+    db,
   };
 };
 

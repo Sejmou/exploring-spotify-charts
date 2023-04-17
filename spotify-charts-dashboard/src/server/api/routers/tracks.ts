@@ -47,7 +47,7 @@ export const tracksRouter = createTRPCRouter({
 
       const country = region && region !== "Global" ? region : undefined;
 
-      const trackIdsAndStreams = await ctx.drizzle
+      const trackIdsAndStreams = await ctx.db
         .select({
           trackId: (country ? countryChartEntry : globalChartEntry).trackId,
           streams: sql<number>`SUM(${
@@ -80,7 +80,7 @@ export const tracksRouter = createTRPCRouter({
       );
       const trackIds = trackIdsAndStreams.map((row) => row.trackId);
 
-      const trackData = await ctx.drizzle
+      const trackData = await ctx.db
         .select({
           id: track.id,
           name: track.name,
@@ -137,7 +137,7 @@ export const tracksRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-      const trackMetadata = await getTrackMetadata(ctx.drizzle, input.trackIds);
+      const trackMetadata = await getTrackMetadata(ctx.db, input.trackIds);
       return trackMetadata;
     }),
   getMetadataForId: publicProcedure
@@ -147,9 +147,7 @@ export const tracksRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-      const trackMetadata = await getTrackMetadata(ctx.drizzle, [
-        input.trackId,
-      ]);
+      const trackMetadata = await getTrackMetadata(ctx.db, [input.trackId]);
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       return trackMetadata[input.trackId]!;
     }),
@@ -157,9 +155,9 @@ export const tracksRouter = createTRPCRouter({
     .input(plotFeatureInput.merge(filterParams))
     .query(async ({ ctx, input }) => {
       const { matchingTrackIds, notMatchingTrackIds } =
-        await getTrackIdsMatchingFilter(ctx.drizzle, input);
+        await getTrackIdsMatchingFilter(ctx.db, input);
       const trackXYMatching = (
-        await getTrackXY(ctx.drizzle, {
+        await getTrackXY(ctx.db, {
           trackIds: matchingTrackIds,
           ...input,
         })
@@ -168,7 +166,7 @@ export const tracksRouter = createTRPCRouter({
         matching: true,
       }));
       const trackXYNotMatching = (
-        await getTrackXY(ctx.drizzle, {
+        await getTrackXY(ctx.db, {
           trackIds: notMatchingTrackIds,
           ...input,
         })
@@ -186,7 +184,7 @@ export const tracksRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const trackIds = input.trackIds;
-      const trackData = await ctx.drizzle
+      const trackData = await ctx.db
         .select({
           id: track.id,
           name: track.name,

@@ -42,7 +42,7 @@ export const chartsRouter = createTRPCRouter({
         new Date(
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           (
-            await ctx.drizzle
+            await ctx.db
               .select({
                 date: sql<string>`MIN(${
                   country ? countryChartEntry.date : globalChartEntry.date
@@ -57,7 +57,7 @@ export const chartsRouter = createTRPCRouter({
         new Date(
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           (
-            await ctx.drizzle
+            await ctx.db
               .select({
                 date: sql<string>`MAX(${
                   country ? countryChartEntry.date : globalChartEntry.date
@@ -82,7 +82,7 @@ export const chartsRouter = createTRPCRouter({
 
       for (const trackId of trackIds) {
         const trackName = (
-          await ctx.drizzle
+          await ctx.db
             .select({
               name: track.name,
             })
@@ -96,7 +96,7 @@ export const chartsRouter = createTRPCRouter({
         }
 
         // this is quite ugly tbh
-        const chartEntriesDB = await ctx.drizzle
+        const chartEntriesDB = await ctx.db
           .select({
             date: (country ? countryChartEntry : globalChartEntry).date,
             rank: (country ? countryChartEntry : globalChartEntry).rank,
@@ -142,14 +142,14 @@ export const chartsRouter = createTRPCRouter({
       return { trackChartData, dates };
     }),
   getCountriesWithCharts: publicProcedure.query(async ({ ctx }) => {
-    const distinctCountryNames = await ctx.drizzle
+    const distinctCountryNames = await ctx.db
       .select({
         name: countryChartEntry.countryName,
       })
       .from(countryChartEntry)
       .groupBy(countryChartEntry.countryName);
 
-    const countries = await ctx.drizzle
+    const countries = await ctx.db
       .select({
         name: country.name,
         isoAlpha3: country.isoAlpha3,
@@ -168,7 +168,7 @@ export const chartsRouter = createTRPCRouter({
     return countries;
   }),
   getTrackCountsByCountry: publicProcedure.query(async ({ ctx }) => {
-    const countryNamesAndCounts = await ctx.drizzle
+    const countryNamesAndCounts = await ctx.db
       .select({
         name: countryChartEntry.countryName,
         count: countRows(),
@@ -176,7 +176,7 @@ export const chartsRouter = createTRPCRouter({
       .from(countryChartEntry)
       .groupBy(countryChartEntry.countryName);
 
-    const countryNamesAndIsoCodes = await ctx.drizzle
+    const countryNamesAndIsoCodes = await ctx.db
       .select({
         name: country.name,
         isoAlpha3: country.isoAlpha3,
@@ -208,7 +208,7 @@ export const chartsRouter = createTRPCRouter({
 
       const chartsDbRes =
         region === "Global"
-          ? await ctx.drizzle
+          ? await ctx.db
               .select({
                 rank: globalChartEntry.rank,
                 streams: globalChartEntry.streams,
@@ -233,7 +233,7 @@ export const chartsRouter = createTRPCRouter({
                 track.id,
                 track.name
               )
-          : await ctx.drizzle
+          : await ctx.db
               .select({
                 rank: countryChartEntry.rank,
                 streams: countryChartEntry.streams,
@@ -271,7 +271,7 @@ export const chartsRouter = createTRPCRouter({
 
       const ranksOfPreviousDay =
         region === "Global"
-          ? await ctx.drizzle
+          ? await ctx.db
               .select({
                 trackId: globalChartEntry.trackId,
                 rank: globalChartEntry.rank,
@@ -283,7 +283,7 @@ export const chartsRouter = createTRPCRouter({
                   javaScriptDateToMySQLDate(previousDay)
                 )
               )
-          : await ctx.drizzle
+          : await ctx.db
               .select({
                 trackId: countryChartEntry.trackId,
                 rank: countryChartEntry.rank,

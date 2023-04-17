@@ -1,5 +1,6 @@
 // schema created by running
 // npx drizzle-kit introspect:mysql --out=migrations/ --connectionString=mysql://spotify_admin:yourpass@localhost/spotify_db
+import type { InferModel } from "drizzle-orm";
 import {
   mysqlTable,
   varchar,
@@ -202,3 +203,5 @@ export const artistToGenre = mysqlTable(
     };
   }
 );
+
+export type Track = InferModel<typeof track>;
