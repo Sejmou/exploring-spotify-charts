@@ -48,8 +48,7 @@ const Table = () => {
                   <a
                     className=""
                     target="_blank"
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    href={createSpotifyTrackLink(entry.track.id!)}
+                    href={createSpotifyTrackLink(entry.track.id)}
                   >
                     {entry.track.name}
                   </a>
