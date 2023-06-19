@@ -5,6 +5,7 @@ import moment from "moment";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import PauseIcon from "@mui/icons-material/Pause";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import classNames from "classnames";
 
 type Props = {
   trackId: string;
@@ -18,6 +19,7 @@ type Props = {
   albumCoverUrl: string | null;
   color?: string;
   previewUrl: string | null;
+  className?: string;
 };
 
 const TrackInfo = (props: Props) => {
@@ -32,6 +34,7 @@ const TrackInfo = (props: Props) => {
     label,
     color,
     previewUrl,
+    className,
   } = props;
 
   const audio = useMemo(() => {
@@ -66,7 +69,12 @@ const TrackInfo = (props: Props) => {
   const [isPlaying, setIsPlaying] = useState(false);
 
   return (
-    <div className="relative flex  flex-col bg-[#1d1d1d] p-4 hover:bg-[#222]">
+    <div
+      className={classNames(
+        "relative flex  flex-col bg-[#1d1d1d] p-4 hover:bg-[#222]",
+        className
+      )}
+    >
       <div
         className="flex"
         style={{

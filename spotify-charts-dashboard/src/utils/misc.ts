@@ -25,3 +25,5 @@ export const divergingColors = [
   "#bf5b17",
   "#666666",
 ] as const;
+
+export const spotifyGreen = "#1DB954";
